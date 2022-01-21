@@ -38,7 +38,6 @@ class _MessagesTabState extends State<MessagesTab> {
   List<MiniProfile> userSearchResults = [];
   Future<void> getProducts(String _myUsername) async {
     if (!hasMore) {
-      print('No More Products');
       return;
     }
     if (isLoading) {
@@ -265,27 +264,62 @@ class _MessagesTabState extends State<MessagesTab> {
                           onPressed: () async {
                             Navigator.pop(context);
                             _showIt();
-
                             final myMsgsCollec = await firestore
                                 .collection('Users/$_myUsername/chats')
                                 .doc(id)
                                 .collection('messages')
                                 .get();
                             final docs = myMsgsCollec.docs;
-                            for (var theid in docs) {
-                              final docID = theid.id;
+                            final getDeleted = await firestore
+                                .collection('Deleted Chats')
+                                .doc('$_myUsername - $id')
+                                .get();
+                            firestore
+                                .collection('Deleted Chats')
+                                .doc('$_myUsername - $id')
+                                .set(
+                                    {'date deleted': DateTime.now()},
+                                    SetOptions(
+                                        merge: (getDeleted.exists)
+                                            ? true
+                                            : false)).then((value) {
+                              for (var theid in docs) {
+                                final docID = theid.id;
+                                final date = theid.get('date').toDate();
+                                final description = theid.get('description');
+                                final isRead = theid.get('isRead');
+                                final isDeleted = theid.get('isDeleted');
+                                final isPost = theid.get('isPost');
+                                final isMedia = theid.get('isMedia');
+                                final sender = theid.get('user');
+                                final token = theid.get('token');
+                                firestore
+                                    .collection('Deleted Chats')
+                                    .doc('$_myUsername - $id')
+                                    .collection('messages')
+                                    .add({
+                                  'date': date,
+                                  'description': description,
+                                  'isRead': isRead,
+                                  'isDeleted': isDeleted,
+                                  'isPost': isPost,
+                                  'isMedia': isMedia,
+                                  'user': sender,
+                                  'token': token,
+                                });
+                                firestore
+                                    .collection('Users/$_myUsername/chats')
+                                    .doc(id)
+                                    .collection('messages')
+                                    .doc(docID)
+                                    .delete();
+                              }
                               firestore
                                   .collection('Users/$_myUsername/chats')
                                   .doc(id)
-                                  .collection('messages')
-                                  .doc(docID)
-                                  .delete();
-                            }
-                            firestore
-                                .collection('Users/$_myUsername/chats')
-                                .doc(id)
-                                .delete()
-                                .then((value) => Navigator.pop(context));
+                                  .delete()
+                                  .then((value) => Navigator.pop(context));
+                            });
                           },
                           child: const Text(
                             'Yes',

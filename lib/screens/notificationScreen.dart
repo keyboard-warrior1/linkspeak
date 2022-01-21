@@ -1,10 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-
 import '../routes.dart';
-import '../my_flutter_app_icons.dart' as customIcons;
+import 'package:badges/badges.dart';
 import '../providers/myProfileProvider.dart';
+import '../providers/themeModel.dart';
 import '../widgets/notificationTile.dart';
 import '../widgets/settingsBar.dart';
 
@@ -192,6 +193,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
     final ThemeData _theme = Theme.of(context);
     final Color _primarySwatch = _theme.primaryColor;
     final Color _accentColor = _theme.accentColor;
+    final themeIconHelper = Provider.of<ThemeModel>(context, listen: false);
+    final Color likeColor = themeIconHelper.likeColor;
+    final String currentIconName = themeIconHelper.selectedIconName;
+    final IconData currentIcon = themeIconHelper.themeIcon;
+    final String activeIconPath = themeIconHelper.themeIconPathActive;
     return Scaffold(
       backgroundColor: Colors.grey.shade200,
       appBar: null,
@@ -455,12 +461,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                   },
                                   child: ListView(
                                     children: <Widget>[
-                                      if (myNumOfPostLikesNotifs != 0)
+                                      if (myNumOfPostLikesNotifs != 0 &&
+                                          currentIconName != 'Custom')
                                         NotificationTile(
                                           title: 'Likes',
                                           mykey: null,
-                                          icon: customIcons.MyFlutterApp.upvote,
-                                          mainIconColor: _primarySwatch,
+                                          icon: currentIcon,
+                                          mainIconColor: likeColor,
                                           badgeColor:
                                               Colors.lightGreenAccent.shade700,
                                           badgeText:
@@ -469,6 +476,109 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                           routeName: RouteGenerator
                                               .postLikesNotifScreen,
                                           enabled: true,
+                                        ),
+                                      if (myNumOfPostLikesNotifs != 0 &&
+                                          currentIconName == 'Custom')
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8.0, vertical: 0.0),
+                                          child: Card(
+                                            shadowColor: Colors.grey.shade300,
+                                            color: Colors.white,
+                                            margin: const EdgeInsets.all(
+                                              .5,
+                                            ),
+                                            elevation: 9.0,
+                                            child: ListTile(
+                                              enabled: true,
+                                              onTap: () {
+                                                Navigator.of(context).pushNamed(
+                                                    RouteGenerator
+                                                        .postLikesNotifScreen);
+                                              },
+                                              enableFeedback: false,
+                                              leading: ImageIcon(
+                                                FileImage(
+                                                  File(activeIconPath),
+                                                ),
+                                                size: 35.0,
+                                              ),
+                                              title: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: <Widget>[
+                                                  Text(
+                                                    'Likes',
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 10.0),
+                                                  Badge(
+                                                    elevation: 0.0,
+                                                    toAnimate: false,
+                                                    badgeColor: Colors
+                                                        .lightGreenAccent
+                                                        .shade700,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5.0),
+                                                    shape: BadgeShape.square,
+                                                    badgeContent: Center(
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                    .symmetric(
+                                                                horizontal:
+                                                                    2.0),
+                                                        child: Stack(
+                                                          children: <Widget>[
+                                                            Text(
+                                                              '${_topicNumber(myNumOfPostLikesNotifs)}',
+                                                              softWrap: false,
+                                                              textAlign:
+                                                                  TextAlign.end,
+                                                              style: TextStyle(
+                                                                foreground:
+                                                                    Paint()
+                                                                      ..style =
+                                                                          PaintingStyle
+                                                                              .stroke
+                                                                      ..strokeWidth =
+                                                                          .5
+                                                                      ..color =
+                                                                          Colors
+                                                                              .black,
+                                                              ),
+                                                            ),
+                                                            Text(
+                                                              '${_topicNumber(myNumOfPostLikesNotifs)}',
+                                                              softWrap: false,
+                                                              textAlign:
+                                                                  TextAlign.end,
+                                                              style:
+                                                                  const TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
                                         ),
                                       if (myNumOfNewLinksNotifs != 0)
                                         NotificationTile(

@@ -55,7 +55,7 @@ class Field extends StatelessWidget {
           border: OutlineInputBorder(
             borderSide: BorderSide(color: Colors.lightGreenAccent.shade400),
           ),
-          errorBorder: OutlineInputBorder(
+          errorBorder: const OutlineInputBorder(
             borderSide: BorderSide(color: Colors.redAccent),
           ),
           errorStyle: const TextStyle(color: Colors.white),

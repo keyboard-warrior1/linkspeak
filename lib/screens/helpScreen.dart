@@ -19,11 +19,14 @@ class _HelpScreenState extends State<HelpScreen> {
   late FirebaseFirestore firestore;
   late User? user;
   bool showField1 = false;
+  bool showfield2 = false;
   bool emailSent = false;
+  bool feedbackSent = false;
   bool isLoading = false;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _feedBackController = TextEditingController();
   void _showDialog(IconData icon, Color iconColor, String title, String rule) {
     showDialog(
       context: context,
@@ -61,6 +64,16 @@ class _HelpScreenState extends State<HelpScreen> {
       return '* Invalid username';
     }
     if (_exp.hasMatch(value)) {
+      return null;
+    }
+  }
+
+  String? feedbackValidator(String? value) {
+    if (value!.isEmpty ||
+        value.replaceAll(' ', '') == '' ||
+        value.trim() == '') {
+      return '* Invalid input';
+    } else {
       return null;
     }
   }
@@ -146,6 +159,7 @@ class _HelpScreenState extends State<HelpScreen> {
     super.dispose();
     _usernameController.dispose();
     _emailController.dispose();
+    _feedBackController.dispose();
   }
 
   @override
@@ -168,7 +182,7 @@ class _HelpScreenState extends State<HelpScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 const SettingsBar('Help'),
-                if (!showField1)
+                if (!showField1 && !showfield2)
                   Container(
                     margin: const EdgeInsets.all(10.0),
                     decoration: BoxDecoration(
@@ -181,8 +195,32 @@ class _HelpScreenState extends State<HelpScreen> {
                         margin: const EdgeInsets.all(0.0),
                         child: ListTile(
                           onTap: () => setState(() => showField1 = true),
-                          title:const Text(
+                          title: const Text(
                             'Reset password',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 17.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (!showField1 && !showfield2)
+                  Container(
+                    margin: const EdgeInsets.all(10.0),
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10.0),
+                        border: Border.all(color: Colors.grey.shade300)),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(9.0),
+                      child: Card(
+                        borderOnForeground: false,
+                        margin: const EdgeInsets.all(0.0),
+                        child: ListTile(
+                          onTap: () => setState(() => showfield2 = true),
+                          title: const Text(
+                            'Send us your feedback',
                             style: TextStyle(
                               color: Colors.black,
                               fontSize: 17.0,
@@ -224,8 +262,27 @@ class _HelpScreenState extends State<HelpScreen> {
                       ),
                     ),
                   ),
+                if (showfield2)
+                  Container(
+                    margin: const EdgeInsets.all(10.0),
+                    child: TextFormField(
+                      minLines: 5,
+                      maxLines: 25,
+                      maxLength: 1000,
+                      controller: _feedBackController,
+                      validator: feedbackValidator,
+                      decoration: const InputDecoration(
+                        filled: true,
+                        border: OutlineInputBorder(),
+                        fillColor: Colors.white,
+                        focusColor: Colors.transparent,
+                        hoverColor: Colors.transparent,
+                        hintText: 'Feedback',
+                      ),
+                    ),
+                  ),
                 const Spacer(),
-                if (showField1)
+                if (showField1 || showfield2)
                   TextButton(
                     style: ButtonStyle(
                       enableFeedback: false,
@@ -244,17 +301,52 @@ class _HelpScreenState extends State<HelpScreen> {
                     onPressed: () {
                       if (isLoading) {
                       } else {
-                        if (emailSent) {
-                          _showDialog(
-                            Icons.help,
-                            Colors.blue,
-                            'Code sent',
-                            'A reset code has been sent to your email address',
-                          );
+                        if (showField1) {
+                          if (emailSent) {
+                            _showDialog(
+                              Icons.help,
+                              Colors.blue,
+                              'Code sent',
+                              'A reset code has been sent to your email address',
+                            );
+                          } else {
+                            if (_formKey.currentState!.validate() &&
+                                showField1) {
+                              _sendResetCode(_emailController.value.text,
+                                  _usernameController.value.text);
+                            } else {}
+                          }
                         } else {
-                          if (_formKey.currentState!.validate() && showField1) {
-                            _sendResetCode(_emailController.value.text,
-                                _usernameController.value.text);
+                          if (_formKey.currentState!.validate() && showfield2) {
+                            if (feedbackSent) {
+                              _showDialog(
+                                Icons.help,
+                                Colors.blue,
+                                'Feedback sent',
+                                'Your feedback has been sent succesfully.',
+                              );
+                            } else {
+                              setState(() {
+                                isLoading = true;
+                              });
+                              firestore.collection('Feedback').doc().set(
+                                {
+                                  'description': _feedBackController.value.text,
+                                  'date': DateTime.now(),
+                                },
+                              ).then((value) {
+                                _showDialog(
+                                  Icons.help,
+                                  Colors.blue,
+                                  'Feedback sent',
+                                  'Your feedback has been sent successfully.',
+                                );
+                                setState(() {
+                                  isLoading = false;
+                                  feedbackSent = true;
+                                });
+                              });
+                            }
                           } else {}
                         }
                       }

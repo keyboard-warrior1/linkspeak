@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/myProfileProvider.dart';
+import '../providers/otherProfileProvider.dart';
 
 class ProfileTabBar extends StatefulWidget {
   final int numOfPosts;
   final TabController tabController;
   final bool imBlocked;
-  const ProfileTabBar(this.numOfPosts, this.tabController, this.imBlocked);
+  final bool isMyProfile;
+  const ProfileTabBar(
+    this.numOfPosts,
+    this.tabController,
+    this.imBlocked,
+    this.isMyProfile,
+  );
   @override
   _ProfileTabBarState createState() => _ProfileTabBarState();
 }
@@ -32,9 +39,13 @@ class _ProfileTabBarState extends State<ProfileTabBar> {
   Widget build(BuildContext context) {
     final Size _querySize = MediaQuery.of(context).size;
     final double _deviceHeight = _querySize.height;
-    final Color _primarySwatch = Theme.of(context).primaryColor;
+    Color _primarySwatch = Theme.of(context).primaryColor;
     final String myUsername =
         Provider.of<MyProfile>(context, listen: false).getUsername;
+    if (!widget.isMyProfile) {
+      _primarySwatch =
+          Provider.of<OtherProfile>(context, listen: false).getPrimaryColor;
+    }
     final Widget _postsTab = Container(
       height: double.infinity,
       child: Center(

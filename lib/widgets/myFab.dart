@@ -3,7 +3,6 @@ import 'dart:math';
 
 class MyFab extends StatefulWidget {
   final ScrollController scrollController;
-
   const MyFab(this.scrollController);
 
   @override

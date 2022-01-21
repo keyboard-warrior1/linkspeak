@@ -21,6 +21,7 @@ class UserResult extends StatelessWidget {
     final String myUsername =
         Provider.of<MyProfile>(context, listen: false).getUsername;
     void _visitProfile({required final String username}) {
+      FocusScope.of(context).unfocus();
       if ((username == myUsername)) {
       } else {
         final OtherProfileScreenArguments args =

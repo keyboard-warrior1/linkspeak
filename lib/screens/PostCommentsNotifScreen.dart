@@ -1,9 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:link_speak/providers/myProfileProvider.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../providers/myProfileProvider.dart';
 import '../widgets/newComments.dart';
-
 import '../widgets/settingsBar.dart';
 
 class PostCommentsNotifScreen extends StatefulWidget {
@@ -162,9 +161,11 @@ class _PostCommentsNotifScreenState extends State<PostCommentsNotifScreen> {
                               }
                             } else {
                               return NewComments(
-                                commentUserName: source[index].data()['user'].toString(),
+                                commentUserName:
+                                    source[index].data()['user'].toString(),
                                 postUrl:
                                     source[index].data()['post'].toString(),
+                                date: source[index].data()['date'].toDate(),
                               );
                             }
                             return emptyBox;

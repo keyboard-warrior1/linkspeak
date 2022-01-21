@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/profile.dart';
@@ -5,7 +6,18 @@ import '../models/miniProfile.dart';
 import '../models/post.dart';
 
 class OtherProfile with ChangeNotifier implements Profile {
+  String _otherAdditionalWebsite = '';
+  String _otherAdditionalEmail = '';
+  String _otherAdditionalNumber = '';
+  dynamic _otherAdditionalAddress = '';
+  String _otherAdditionalAddressName = '';
   String _otherProfileImageUrl = '';
+  String _otherProfileBanner = '';
+  Color _otherProfilePrimary = Colors.blue;
+  Color _otherProfileAccent = Colors.yellow;
+  bool _bannerNSFW = false;
+  bool _showBanner = false;
+  bool _hasSpotlight = false;
   String _otherUsername = '';
   String _name = '';
   String _surname = '';
@@ -117,6 +129,24 @@ class OtherProfile with ChangeNotifier implements Profile {
   @override
   String get getProfileImage => _otherProfileImageUrl;
   @override
+  String get getProfileBanner => _otherProfileBanner;
+  Color get getPrimaryColor => _otherProfilePrimary;
+  Color get getAccentColor => _otherProfileAccent;
+  bool get getBannerNSFW => _bannerNSFW;
+  bool get getShowBanner => _showBanner;
+  @override
+  String get getAdditionalWebsite => _otherAdditionalWebsite;
+  @override
+  String get getAdditionalEmail => _otherAdditionalEmail;
+  @override
+  String get getAdditionalNumber => _otherAdditionalNumber;
+  @override
+  dynamic get getAdditionalAddress => _otherAdditionalAddress;
+  @override
+  String get getAdditionalAddressName => _otherAdditionalAddressName;
+  @override
+  bool get getHasSpotlight => _hasSpotlight;
+  @override
   String get getUsername => _otherUsername;
   @override
   String get getEmail => _otherUserEmail;
@@ -174,6 +204,61 @@ class OtherProfile with ChangeNotifier implements Profile {
   int get getcommentRemovedNotifs => _otherUserCommentsRemovedNotifs;
   @override
   int get getpostsRemovedNotifs => _otherUserPostsRemovedNotifs;
+
+  @override
+  set setAdditionalWebsite(String website) {
+    _otherAdditionalWebsite = website;
+  }
+
+  void setOtherAdditionalWebsite(String website) {
+    _otherAdditionalWebsite = website;
+  }
+
+  @override
+  set setAdditionalEmail(String email) {
+    _otherAdditionalEmail = email;
+  }
+
+  void setOtherAdditionalEmail(String email) {
+    _otherAdditionalEmail = email;
+  }
+
+  @override
+  set setAdditionalNumber(String number) {
+    _otherAdditionalNumber = number;
+  }
+
+  void setOtherAdditionalNumber(String number) {
+    _otherAdditionalNumber = number;
+  }
+
+  @override
+  set setAdditionalAddress(dynamic address) {
+    _otherAdditionalAddress = address;
+  }
+
+  void setOtherAdditionalAddress(dynamic address) {
+    _otherAdditionalAddress = address;
+  }
+
+  @override
+  set setAdditionalAddressName(String name) {
+    _otherAdditionalAddressName = name;
+  }
+
+  void setOtherAdditionalAddressName(String name) {
+    _otherAdditionalAddressName = name;
+  }
+
+  @override
+  set setHasSpotlight(bool hasSpotlight) {
+    _hasSpotlight = hasSpotlight;
+  }
+
+  void setOtherHasSpotlight(bool hasSpotlight) {
+    _hasSpotlight = hasSpotlight;
+  }
+
   @override
   set setpostLikesNotifs(List<Map<String, String>> postLikesNotifs) {
     _otherUserPostLikesNotifs = postLikesNotifs;
@@ -212,6 +297,11 @@ class OtherProfile with ChangeNotifier implements Profile {
   @override
   set setProfileImage(String imgUrl) {
     _otherProfileImageUrl = imgUrl;
+  }
+
+  @override
+  set setProfileBanner(String bannerUrl) {
+    _otherProfileBanner = bannerUrl;
   }
 
   @override
@@ -311,6 +401,27 @@ class OtherProfile with ChangeNotifier implements Profile {
     _otherProfileImageUrl = imgUrl;
   }
 
+  void setOtherUserBanner(String bannerUrl) {
+    _otherProfileBanner = bannerUrl;
+  }
+
+  void setOtherPrimary(Color primary) {
+    _otherProfilePrimary = primary;
+  }
+
+  void setOtherAccent(Color accent) {
+    _otherProfileAccent = accent;
+  }
+
+  void setOtherUserBannerNSFW(bool bannerNSFW) {
+    _bannerNSFW = bannerNSFW;
+  }
+
+  void showNSFWBanner() {
+    _showBanner = true;
+    notifyListeners();
+  }
+
   void setOtherUsername(String username) {
     _otherUsername = username;
   }
@@ -355,6 +466,12 @@ class OtherProfile with ChangeNotifier implements Profile {
     required TheVisibility vis,
     required String activity,
     required String imgUrl,
+    required String bannerUrl,
+    required String additionalWebsite,
+    required String additionalEmail,
+    required String additionalNumber,
+    required dynamic additionalAddress,
+    required String additionalAddressName,
     required String username,
     required String bio,
     required int numOfLinks,
@@ -367,10 +484,24 @@ class OtherProfile with ChangeNotifier implements Profile {
     required bool requestSent,
     required bool isBlocked,
     required bool imBlocked,
+    required bool bannerNSFW,
+    required bool hasSpotlight,
+    required Color primaryColor,
+    required Color accentColor,
   }) {
     setActivityStatus(activity);
     setOtherUserVis(vis);
     setOtherUserIMG(imgUrl);
+    setOtherUserBanner(bannerUrl);
+    setOtherUserBannerNSFW(bannerNSFW);
+    setOtherAdditionalWebsite(additionalWebsite);
+    setOtherAdditionalEmail(additionalEmail);
+    setOtherAdditionalNumber(additionalNumber);
+    setOtherAdditionalAddress(additionalAddress);
+    setOtherAdditionalAddressName(additionalAddressName);
+    setOtherPrimary(primaryColor);
+    setOtherAccent(accentColor);
+    setOtherHasSpotlight(hasSpotlight);
     setOtherUsername(username);
     setOtherUserBio(bio);
     setOtherUserNumOfLinks(numOfLinks);

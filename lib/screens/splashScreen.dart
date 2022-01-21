@@ -128,9 +128,44 @@ class _SplashScreenState extends State<SplashScreen> {
                 final myPostIDs2 = myPostsDocs.docs;
                 final thePostIDs = myPostIDs2.map((post) => post.id).toList();
                 final reversedPostIDs = thePostIDs.reversed.toList();
+                final mySpotlight =
+                    await myDoc.collection('My Spotlight').get();
+                final spotlightDocs = mySpotlight.docs;
                 final MyProfile profile =
                     Provider.of<MyProfile>(context, listen: false);
                 final visbility = getter('Visibility');
+                String bannerUrl = 'None';
+                if (documentSnapshot.data()!.containsKey('Banner')) {
+                  final currentBanner = getter('Banner');
+                  bannerUrl = currentBanner;
+                }
+                String additionalWebsite = '';
+                String additionalEmail = '';
+                String additionalNumber = '';
+                dynamic additionalAddress = '';
+                String additionalAddressName = '';
+                if (documentSnapshot.data()!.containsKey('additionalWebsite')) {
+                  final actualWebsite = getter('additionalWebsite');
+                  additionalWebsite = actualWebsite;
+                }
+                if (documentSnapshot.data()!.containsKey('additionalEmail')) {
+                  final actualEmail = getter('additionalEmail');
+                  additionalEmail = actualEmail;
+                }
+                if (documentSnapshot.data()!.containsKey('additionalNumber')) {
+                  final actualNumber = getter('additionalNumber');
+                  additionalNumber = actualNumber;
+                }
+                if (documentSnapshot.data()!.containsKey('additionalAddress')) {
+                  final actualAddress = getter('additionalAddress');
+                  additionalAddress = actualAddress;
+                }
+                if (documentSnapshot
+                    .data()!
+                    .containsKey('additionalAddressName')) {
+                  final actualAddressName = getter('additionalAddressName');
+                  additionalAddressName = actualAddressName;
+                }
                 final imgUrl = getter('Avatar');
                 final email = getter('Email');
                 final bio = getter('Bio');
@@ -152,29 +187,37 @@ class _SplashScreenState extends State<SplashScreen> {
                 final int numOfBlocked = getter('numOfBlocked');
                 final List<String> myTopics =
                     serverTopics.map((topic) => topic as String).toList();
-                profile.setMyVis(visbility);
-                profile.setMyProfileImage(imgUrl);
-                profile.setMyEmail(email);
-                profile.setMyUsername(username);
-                profile.changeBio(bio);
-                profile.setMyTopics(myTopics);
-                profile.setLikedIDs(reversedLiked);
-                profile.setFavIDs(reversedFavs);
-                profile.setHiddenIDs(theHiddenIDs);
-                profile.setMyNumOfLinks(numOfLinks);
-                profile.setMyNumOfLinked(numOfLinked);
-                profile.setNumOfPosts(numOfPosts);
-                profile.setNumOfNewLinksNotifs(numOfNewLinksNotifs);
-                profile.setNumOfNewLinkedNotifs(numOfNewLinkedNotifs);
-                profile.setNumOfLinkRequestNotifs(numOfLinkRequestsNotifs);
-                profile.setNumOfPostLikesNotifs(numOfPostLikesNotifs);
-                profile.setNumOfPostCommentsNotifs(numOfPostCommentsNotifs);
-                profile.setNumOfCommentRepliesNotifs(numOfCommentRepliesNotifs);
-                profile.setmyNumOfPostsRemovedNotifs(numOfPostsRemoved);
-                profile.setNumOfCommentsRemovedNotifs(numOfCommentsRemoved);
-                profile.setNumOfBlocked(numOfBlocked);
-                profile.setBlockedUserIDs(theBlockedIDs);
-                profile.setMyPostIDs(reversedPostIDs);
+                profile.initializeMyProfile(
+                    visbility: visbility,
+                    additionalWebsite: additionalWebsite,
+                    additionalEmail: additionalEmail,
+                    additionalNumber: additionalNumber,
+                    additionalAddress: additionalAddress,
+                    additionalAddressName: additionalAddressName,
+                    hasSpotlight: spotlightDocs.isNotEmpty,
+                    imgUrl: imgUrl,
+                    bannerUrl: bannerUrl,
+                    email: email,
+                    username: username,
+                    bio: bio,
+                    myTopics: myTopics,
+                    reversedLiked: reversedLiked,
+                    reversedFavs: reversedFavs,
+                    theHiddenIDs: theHiddenIDs,
+                    numOfLinks: numOfLinks,
+                    numOfLinked: numOfLinked,
+                    numOfPosts: numOfPosts,
+                    numOfNewLinksNotifs: numOfNewLinksNotifs,
+                    numOfNewLinkedNotifs: numOfNewLinkedNotifs,
+                    numOfLinkRequestsNotifs: numOfLinkRequestsNotifs,
+                    numOfPostLikesNotifs: numOfPostLikesNotifs,
+                    numOfPostCommentsNotifs: numOfPostCommentsNotifs,
+                    numOfCommentRepliesNotifs: numOfCommentRepliesNotifs,
+                    numOfPostsRemoved: numOfPostsRemoved,
+                    numOfCommentsRemoved: numOfCommentsRemoved,
+                    numOfBlocked: numOfBlocked,
+                    theBlockedIDs: theBlockedIDs,
+                    reversedPostIDs: reversedPostIDs);
                 Navigator.pushReplacementNamed(
                   context,
                   RouteGenerator.feedScreen,
@@ -256,9 +299,44 @@ class _SplashScreenState extends State<SplashScreen> {
                 final myPostIDs2 = myPostsDocs.docs;
                 final thePostIDs = myPostIDs2.map((post) => post.id).toList();
                 final reversedPostIDs = thePostIDs.reversed.toList();
+                final mySpotlight =
+                    await myDoc.collection('My Spotlight').get();
+                final spotlightDocs = mySpotlight.docs;
                 final MyProfile profile =
                     Provider.of<MyProfile>(context, listen: false);
                 final visbility = getter('Visibility');
+                String bannerUrl = 'None';
+                if (documentSnapshot.data()!.containsKey('Banner')) {
+                  final currentBanner = getter('Banner');
+                  bannerUrl = currentBanner;
+                }
+                String additionalWebsite = '';
+                String additionalEmail = '';
+                String additionalNumber = '';
+                dynamic additionalAddress = '';
+                String additionalAddressName = '';
+                if (documentSnapshot.data()!.containsKey('additionalWebsite')) {
+                  final actualWebsite = getter('additionalWebsite');
+                  additionalWebsite = actualWebsite;
+                }
+                if (documentSnapshot.data()!.containsKey('additionalEmail')) {
+                  final actualEmail = getter('additionalEmail');
+                  additionalEmail = actualEmail;
+                }
+                if (documentSnapshot.data()!.containsKey('additionalNumber')) {
+                  final actualNumber = getter('additionalNumber');
+                  additionalNumber = actualNumber;
+                }
+                if (documentSnapshot.data()!.containsKey('additionalAddress')) {
+                  final actualAddress = getter('additionalAddress');
+                  additionalAddress = actualAddress;
+                }
+                if (documentSnapshot
+                    .data()!
+                    .containsKey('additionalAddressName')) {
+                  final actualAddressName = getter('additionalAddressName');
+                  additionalAddressName = actualAddressName;
+                }
                 final imgUrl = getter('Avatar');
                 final bio = getter('Bio');
                 final serverTopics = getter('Topics') as List;
@@ -279,29 +357,37 @@ class _SplashScreenState extends State<SplashScreen> {
                 final int numOfBlocked = getter('numOfBlocked');
                 final List<String> myTopics =
                     serverTopics.map((topic) => topic as String).toList();
-                profile.setMyVis(visbility);
-                profile.setMyProfileImage(imgUrl);
-                profile.setMyEmail(email);
-                profile.setMyUsername(username);
-                profile.changeBio(bio);
-                profile.setMyTopics(myTopics);
-                profile.setLikedIDs(reversedLiked);
-                profile.setFavIDs(reversedFavs);
-                profile.setHiddenIDs(theHiddenIDs);
-                profile.setMyNumOfLinks(numOfLinks);
-                profile.setMyNumOfLinked(numOfLinked);
-                profile.setNumOfPosts(numOfPosts);
-                profile.setNumOfNewLinksNotifs(numOfNewLinksNotifs);
-                profile.setNumOfNewLinkedNotifs(numOfNewLinkedNotifs);
-                profile.setNumOfLinkRequestNotifs(numOfLinkRequestsNotifs);
-                profile.setNumOfPostLikesNotifs(numOfPostLikesNotifs);
-                profile.setNumOfPostCommentsNotifs(numOfPostCommentsNotifs);
-                profile.setNumOfCommentRepliesNotifs(numOfCommentRepliesNotifs);
-                profile.setmyNumOfPostsRemovedNotifs(numOfPostsRemoved);
-                profile.setNumOfCommentsRemovedNotifs(numOfCommentsRemoved);
-                profile.setNumOfBlocked(numOfBlocked);
-                profile.setBlockedUserIDs(theBlockedIDs);
-                profile.setMyPostIDs(reversedPostIDs);
+                profile.initializeMyProfile(
+                    visbility: visbility,
+                    additionalWebsite: additionalWebsite,
+                    additionalEmail: additionalEmail,
+                    additionalNumber: additionalNumber,
+                    additionalAddress: additionalAddress,
+                    additionalAddressName: additionalAddressName,
+                    hasSpotlight: spotlightDocs.isNotEmpty,
+                    imgUrl: imgUrl,
+                    bannerUrl: bannerUrl,
+                    email: email,
+                    username: username,
+                    bio: bio,
+                    myTopics: myTopics,
+                    reversedLiked: reversedLiked,
+                    reversedFavs: reversedFavs,
+                    theHiddenIDs: theHiddenIDs,
+                    numOfLinks: numOfLinks,
+                    numOfLinked: numOfLinked,
+                    numOfPosts: numOfPosts,
+                    numOfNewLinksNotifs: numOfNewLinksNotifs,
+                    numOfNewLinkedNotifs: numOfNewLinkedNotifs,
+                    numOfLinkRequestsNotifs: numOfLinkRequestsNotifs,
+                    numOfPostLikesNotifs: numOfPostLikesNotifs,
+                    numOfPostCommentsNotifs: numOfPostCommentsNotifs,
+                    numOfCommentRepliesNotifs: numOfCommentRepliesNotifs,
+                    numOfPostsRemoved: numOfPostsRemoved,
+                    numOfCommentsRemoved: numOfCommentsRemoved,
+                    numOfBlocked: numOfBlocked,
+                    theBlockedIDs: theBlockedIDs,
+                    reversedPostIDs: reversedPostIDs);
                 Navigator.pushReplacementNamed(
                   context,
                   RouteGenerator.feedScreen,
@@ -379,9 +465,44 @@ class _SplashScreenState extends State<SplashScreen> {
                 final myPostIDs2 = myPostsDocs.docs;
                 final thePostIDs = myPostIDs2.map((post) => post.id).toList();
                 final reversedPostIDs = thePostIDs.reversed.toList();
+                final mySpotlight =
+                    await myDoc.collection('My Spotlight').get();
+                final spotlightDocs = mySpotlight.docs;
                 final MyProfile profile =
                     Provider.of<MyProfile>(context, listen: false);
                 final visbility = getter('Visibility');
+                String bannerUrl = 'None';
+                if (documentSnapshot.data()!.containsKey('Banner')) {
+                  final currentBanner = getter('Banner');
+                  bannerUrl = currentBanner;
+                }
+                String additionalWebsite = '';
+                String additionalEmail = '';
+                String additionalNumber = '';
+                dynamic additionalAddress = '';
+                String additionalAddressName = '';
+                if (documentSnapshot.data()!.containsKey('additionalWebsite')) {
+                  final actualWebsite = getter('additionalWebsite');
+                  additionalWebsite = actualWebsite;
+                }
+                if (documentSnapshot.data()!.containsKey('additionalEmail')) {
+                  final actualEmail = getter('additionalEmail');
+                  additionalEmail = actualEmail;
+                }
+                if (documentSnapshot.data()!.containsKey('additionalNumber')) {
+                  final actualNumber = getter('additionalNumber');
+                  additionalNumber = actualNumber;
+                }
+                if (documentSnapshot.data()!.containsKey('additionalAddress')) {
+                  final actualAddress = getter('additionalAddress');
+                  additionalAddress = actualAddress;
+                }
+                if (documentSnapshot
+                    .data()!
+                    .containsKey('additionalAddressName')) {
+                  final actualAddressName = getter('additionalAddressName');
+                  additionalAddressName = actualAddressName;
+                }
                 final imgUrl = getter('Avatar');
                 final bio = getter('Bio');
                 final serverTopics = getter('Topics') as List;
@@ -402,29 +523,37 @@ class _SplashScreenState extends State<SplashScreen> {
                 final int numOfBlocked = getter('numOfBlocked');
                 final List<String> myTopics =
                     serverTopics.map((topic) => topic as String).toList();
-                profile.setMyVis(visbility);
-                profile.setMyProfileImage(imgUrl);
-                profile.setMyEmail(email);
-                profile.setMyUsername(username);
-                profile.changeBio(bio);
-                profile.setMyTopics(myTopics);
-                profile.setLikedIDs(reversedLiked);
-                profile.setFavIDs(reversedFavs);
-                profile.setHiddenIDs(theHiddenIDs);
-                profile.setMyNumOfLinks(numOfLinks);
-                profile.setMyNumOfLinked(numOfLinked);
-                profile.setNumOfPosts(numOfPosts);
-                profile.setNumOfNewLinksNotifs(numOfNewLinksNotifs);
-                profile.setNumOfNewLinkedNotifs(numOfNewLinkedNotifs);
-                profile.setNumOfLinkRequestNotifs(numOfLinkRequestsNotifs);
-                profile.setNumOfPostLikesNotifs(numOfPostLikesNotifs);
-                profile.setNumOfPostCommentsNotifs(numOfPostCommentsNotifs);
-                profile.setNumOfCommentRepliesNotifs(numOfCommentRepliesNotifs);
-                profile.setmyNumOfPostsRemovedNotifs(numOfPostsRemoved);
-                profile.setNumOfCommentsRemovedNotifs(numOfCommentsRemoved);
-                profile.setNumOfBlocked(numOfBlocked);
-                profile.setBlockedUserIDs(theBlockedIDs);
-                profile.setMyPostIDs(reversedPostIDs);
+                profile.initializeMyProfile(
+                    visbility: visbility,
+                    additionalWebsite: additionalWebsite,
+                    additionalEmail: additionalEmail,
+                    additionalNumber: additionalNumber,
+                    additionalAddress: additionalAddress,
+                    additionalAddressName: additionalAddressName,
+                    hasSpotlight: spotlightDocs.isNotEmpty,
+                    imgUrl: imgUrl,
+                    bannerUrl: bannerUrl,
+                    email: email,
+                    username: username,
+                    bio: bio,
+                    myTopics: myTopics,
+                    reversedLiked: reversedLiked,
+                    reversedFavs: reversedFavs,
+                    theHiddenIDs: theHiddenIDs,
+                    numOfLinks: numOfLinks,
+                    numOfLinked: numOfLinked,
+                    numOfPosts: numOfPosts,
+                    numOfNewLinksNotifs: numOfNewLinksNotifs,
+                    numOfNewLinkedNotifs: numOfNewLinkedNotifs,
+                    numOfLinkRequestsNotifs: numOfLinkRequestsNotifs,
+                    numOfPostLikesNotifs: numOfPostLikesNotifs,
+                    numOfPostCommentsNotifs: numOfPostCommentsNotifs,
+                    numOfCommentRepliesNotifs: numOfCommentRepliesNotifs,
+                    numOfPostsRemoved: numOfPostsRemoved,
+                    numOfCommentsRemoved: numOfCommentsRemoved,
+                    numOfBlocked: numOfBlocked,
+                    theBlockedIDs: theBlockedIDs,
+                    reversedPostIDs: reversedPostIDs);
                 Navigator.pushReplacementNamed(
                   context,
                   RouteGenerator.feedScreen,
@@ -526,15 +655,30 @@ class _SplashScreenState extends State<SplashScreen> {
                       minHeight: 10,
                       maxHeight: _deviceHeight * 0.2,
                       fit: BoxFit.scaleDown,
-                      child: const Text(
-                        'Linkspeak',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w300,
-                          fontSize: 80.0,
-                        ),
+                      child: Stack(
+                        children: <Widget>[
+                          Text(
+                            'Linkspeak',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 80.0,
+                              fontFamily: 'JosefinSans',
+                              foreground: Paint()
+                                ..style = PaintingStyle.stroke
+                                ..strokeWidth = 5.75
+                                ..color = Colors.black,
+                            ),
+                          ),
+                          const Text(
+                            'Linkspeak',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 80.0,
+                              fontFamily: 'JosefinSans',
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

@@ -3,6 +3,34 @@ class ScreenArguments extends Object {
   const ScreenArguments({this.argument});
 }
 
+class BrowserScreenArgs extends ScreenArguments {
+  final Object? url;
+  const BrowserScreenArgs(this.url);
+}
+
+class ProfilePickAddressScreenArgs extends ScreenArguments {
+  final Object? isInPost;
+  final Object? somethingChanged;
+  final Object? changeAddress;
+  final Object? changeAddressName;
+  final Object? changeStateAddressName;
+  final Object? changePoint;
+  const ProfilePickAddressScreenArgs({
+    required this.isInPost,
+    required this.somethingChanged,
+    required this.changeAddress,
+    required this.changeAddressName,
+    required this.changeStateAddressName,
+    required this.changePoint,
+  });
+}
+
+class MapScreenArgs extends ScreenArguments {
+  final Object? address;
+  final Object? addressName;
+  const MapScreenArgs({required this.address, required this.addressName});
+}
+
 class PickNameArgs extends ScreenArguments {
   final Object? emailXid;
   final Object? isGmail;
@@ -40,11 +68,13 @@ class CommentRepliesScreenArguments extends ScreenArguments {
   final Object? postID;
   final Object? commentID;
   final Object? isNotif;
+  final Object? commenterName;
   const CommentRepliesScreenArguments({
     required this.instance,
     required this.postID,
     required this.commentID,
     required this.isNotif,
+    required this.commenterName,
   });
 }
 

@@ -1,10 +1,19 @@
+import 'package:flutter/material.dart';
 import 'profile.dart';
 import '../providers/otherProfileProvider.dart';
 
 class Profiler {
   final TheVisibility visibility;
   final String username;
+  final String additionalWebsite;
+  final String additionalEmail;
+  final String additionalNumber;
+  final dynamic additionalAddress;
+  final String additionalAddressName;
   final String imgUrl;
+  final String bannerUrl;
+  final bool bannerNSFW;
+  final bool hasSpotlight;
   final String bio;
   final int numOfLinks;
   final int numOfLinkedTo;
@@ -18,11 +27,21 @@ class Profiler {
   final bool isBlocked;
   final bool imBlocked;
   final String activityStatus;
+  final Color primaryColor;
+  final Color accentColor;
   const Profiler({
     required this.otherProfileProvider,
     required this.visibility,
     required this.username,
+    required this.additionalWebsite,
+    required this.additionalEmail,
+    required this.additionalNumber,
+    required this.additionalAddress,
+    required this.additionalAddressName,
     required this.imgUrl,
+    required this.bannerUrl,
+    required this.bannerNSFW,
+    required this.hasSpotlight,
     required this.bio,
     required this.numOfLinks,
     required this.numOfLinkedTo,
@@ -35,5 +54,7 @@ class Profiler {
     required this.isBlocked,
     required this.imBlocked,
     required this.activityStatus,
+    required this.primaryColor,
+    required this.accentColor,
   });
 }

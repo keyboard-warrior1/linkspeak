@@ -1,11 +1,14 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
-
+import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter_nsfw/flutter_nsfw.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:badges/badges.dart';
@@ -20,6 +23,7 @@ import '../widgets/profileImage.dart';
 import '../widgets/visSnack.dart';
 import '../widgets/registrationDialog.dart';
 import '../widgets/deleteProfileButton.dart';
+import '../widgets/myProfileBanner.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen();
@@ -140,7 +144,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   List<AssetEntity> assets = [];
-  Future<void> _choose(String myUsername) async {
+  Future<void> _choose(String myUsername, Color primaryColor) async {
     const int _maxAssets = 1;
     final _english = EnglishTextDelegate();
     final List<AssetEntity>? _result = await AssetPicker.pickAssets(
@@ -149,6 +153,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       textDelegate: _english,
       selectedAssets: assets,
       requestType: RequestType.image,
+      themeColor: primaryColor,
     );
     if (_result != null) {
       assets = List<AssetEntity>.from(_result);
@@ -191,7 +196,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           FirebaseStorage.instance.refFromURL(profileImageUrl).delete();
         }
         File? imageFile = await assets[0].originFile;
-        final int fileSize = imageFile!.lengthSync();
+        final String filePath = imageFile!.absolute.path;
+        final int fileSize = imageFile.lengthSync();
         if (fileSize > 15000000) {
           setState(() {
             isLoading = false;
@@ -203,47 +209,80 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             "Avatars can be up to 15 MB",
           );
         } else {
-          await storage.ref(myImgUrl).putFile(imageFile).then((value) async {
-            final String downloadUrl =
-                await storage.ref(myImgUrl).getDownloadURL();
-            await users.doc(myUsername).update(
-              {
-                'Avatar': downloadUrl,
-                'Visibility': '${generateVis(_newVis)}',
-                'Bio': '${_bioController.value.text}',
-                'Topics': _newTopicNames,
-              },
-            ).then((value) async {
-              EasyLoading.showSuccess('Success',
-                  duration: const Duration(seconds: 2), dismissOnTap: true);
-              _changeBio(_bioController.value.text);
-              _changeTopics(_newTopicNames);
-              _changeVisibility!(_newVis);
-              _changeImage(downloadUrl);
+          Directory appDocDir = await getApplicationDocumentsDirectory();
+          String appDocPath = appDocDir.path;
+          var file = File(appDocPath + "/nsfw.tflite");
+          if (!file.existsSync()) {
+            var data = await rootBundle.load("assets/nsfw.tflite");
+            final buffer = data.buffer;
+            await file.writeAsBytes(
+                buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+          }
+          await FlutterNsfw.initNsfw(
+            file.path,
+            enableLog: false,
+            isOpenGPU: false,
+            numThreads: 4,
+          );
+          await FlutterNsfw.getPhotoNSFWScore(filePath).then((result) async {
+            if (result > 0.75) {
               setState(() {
                 isLoading = false;
-                somethingChanged = false;
-                changedImage = false;
               });
-            }).catchError((_) {
-              EasyLoading.showError(
-                'Failed',
-                duration: const Duration(seconds: 2),
-                dismissOnTap: true,
+              EasyLoading.dismiss();
+              _showDialog(
+                Icons.info_outline,
+                Colors.blue,
+                'Notice',
+                "Image contains content that violates our avatar safety guidelines.",
               );
-              setState(() {
-                isLoading = false;
+            } else {
+              await storage
+                  .ref(myImgUrl)
+                  .putFile(imageFile)
+                  .then((value) async {
+                final String downloadUrl =
+                    await storage.ref(myImgUrl).getDownloadURL();
+                await users.doc(myUsername).update(
+                  {
+                    'Avatar': downloadUrl,
+                    'Visibility': '${generateVis(_newVis)}',
+                    'Bio': '${_bioController.value.text}',
+                    'Topics': _newTopicNames,
+                  },
+                ).then((value) async {
+                  EasyLoading.showSuccess('Success',
+                      duration: const Duration(seconds: 2), dismissOnTap: true);
+                  _changeBio(_bioController.value.text);
+                  _changeTopics(_newTopicNames);
+                  _changeVisibility!(_newVis);
+                  _changeImage(downloadUrl);
+                  setState(() {
+                    isLoading = false;
+                    somethingChanged = false;
+                    changedImage = false;
+                  });
+                }).catchError((_) {
+                  EasyLoading.showError(
+                    'Failed',
+                    duration: const Duration(seconds: 2),
+                    dismissOnTap: true,
+                  );
+                  setState(() {
+                    isLoading = false;
+                  });
+                });
+              }).catchError((_) {
+                EasyLoading.showError(
+                  'Failed',
+                  duration: const Duration(seconds: 2),
+                  dismissOnTap: true,
+                );
+                setState(() {
+                  isLoading = false;
+                });
               });
-            });
-          }).catchError((_) {
-            EasyLoading.showError(
-              'Failed',
-              duration: const Duration(seconds: 2),
-              dismissOnTap: true,
-            );
-            setState(() {
-              isLoading = false;
-            });
+            }
           });
         }
       } else if (myImgUrl == 'none') {
@@ -335,7 +374,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                _choose(myUsername);
+                _choose(myUsername, _primaryColor);
               },
               style: const ButtonStyle(splashFactory: NoSplash.splashFactory),
               child: const Text(
@@ -428,6 +467,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   (myImgUrl != 'none' && assets.isNotEmpty) ? assets[0] : null,
             );
             final Widget visMenu = DropdownButton(
+              borderRadius: BorderRadius.circular(15.0),
               onChanged: (_) => setState(() {}),
               underline: Container(color: Colors.transparent),
               icon: const Icon(
@@ -585,6 +625,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 isLoading = true;
               });
             });
+            final Widget _additionalInfoButton = Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextButton(
+                    onPressed: () {
+                      FocusScope.of(context).unfocus();
+                      if (!isLoading) {
+                        Navigator.pushNamed(
+                            context, RouteGenerator.additionalInfoScreen);
+                      }
+                    },
+                    style: ButtonStyle(
+                      backgroundColor:
+                          MaterialStateProperty.all<Color?>(_primaryColor),
+                    ),
+                    child: const Center(
+                      child: const Text(
+                        'Additional details',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
             final Widget _saveButton = Opacity(
               opacity: (somethingChanged) ? 1.0 : .65,
               child: TextButton(
@@ -646,6 +717,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
+                      _heightBox,
+                      MyProfileBanner(true),
                       _heightBox,
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 5.0),
@@ -755,6 +828,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                       ),
                       const Divider(),
+                      _additionalInfoButton,
                       _deleteProfile,
                     ],
                   ),

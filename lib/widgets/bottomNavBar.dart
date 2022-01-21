@@ -62,10 +62,22 @@ class _BottomNavBarState extends State<BottomNavBar> {
         customIcons.MyFlutterApp.feed,
       ),
     );
+    const BottomNavigationBarItem _spotlight = const BottomNavigationBarItem(
+      label: 'Spotlight',
+      icon: const Icon(
+        customIcons.MyFlutterApp.spotlight,
+      ),
+    );
     const BottomNavigationBarItem _newPost = BottomNavigationBarItem(
       label: 'Publish',
       icon: const Icon(
         customIcons.MyFlutterApp.add_cross_outlined_symbol,
+      ),
+    );
+    const BottomNavigationBarItem _clubs = const BottomNavigationBarItem(
+      label: 'Clubs',
+      icon: const Icon(
+        customIcons.MyFlutterApp.clubs,
       ),
     );
     final BottomNavigationBarItem _chats = BottomNavigationBarItem(
@@ -119,7 +131,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
       },
       items: [
         _feed,
+        _spotlight,
         _newPost,
+        _clubs,
         _chats,
       ],
     );

@@ -23,8 +23,8 @@ class MyTitle extends StatelessWidget {
               softWrap: false,
               textAlign: TextAlign.end,
               style: TextStyle(
-                fontFamily: 'JosefinSans',
                 fontSize: 50.0,
+                fontFamily: 'JosefinSans',
                 foreground: Paint()
                   ..style = PaintingStyle.stroke
                   ..strokeWidth = 3.75

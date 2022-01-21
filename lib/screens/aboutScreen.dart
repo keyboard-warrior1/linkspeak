@@ -47,7 +47,7 @@ class AboutScreen extends StatelessWidget {
               Container(
                 margin: const EdgeInsets.only(top: 5.0, bottom: 5.0),
                 child: const Text(
-                  'Linkspeak v1.9.9',
+                  'Linkspeak v2.0.2',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.grey,

@@ -6,7 +6,9 @@ import '../models/comment.dart';
 import '../models/reply.dart';
 import '../providers/myProfileProvider.dart';
 import '../providers/commentProvider.dart';
+import '../providers/themeModel.dart';
 import '../widgets/settingsBar.dart';
+import '../widgets/myFab.dart';
 import '../widgets/addReply.dart';
 import '../widgets/replyTile.dart';
 
@@ -15,11 +17,13 @@ class CommentRepliesScreen extends StatefulWidget {
   final dynamic postID;
   final dynamic commentID;
   final dynamic isNotif;
+  final dynamic commenterName;
   const CommentRepliesScreen({
     required this.instance,
     required this.postID,
     required this.commentID,
     required this.isNotif,
+    required this.commenterName,
   });
 
   @override
@@ -352,6 +356,7 @@ class _CommentRepliesScreenState extends State<CommentRepliesScreen> {
     final _primaryColor = Theme.of(context).primaryColor;
     final _accentColor = Theme.of(context).accentColor;
     const Widget emptyBox = SizedBox(height: 0, width: 0);
+    final bool selectedAnchorMode = Provider.of<ThemeModel>(context).anchorMode;
     return FutureBuilder(
       future: _getReplies,
       builder: (ctx, snapshot) {
@@ -371,7 +376,6 @@ class _CommentRepliesScreenState extends State<CommentRepliesScreen> {
         }
 
         if (snapshot.hasError) {
-          print(snapshot.error);
           return SafeArea(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -441,6 +445,11 @@ class _CommentRepliesScreenState extends State<CommentRepliesScreen> {
                         Provider.of<FullCommentHelper>(context).numOfReplies;
                     return Scaffold(
                       appBar: null,
+                      floatingActionButton: (selectedAnchorMode)
+                          ? MyFab(_scrollController)
+                          : null,
+                      floatingActionButtonLocation:
+                          FloatingActionButtonLocation.centerFloat,
                       body: SafeArea(
                         child: Container(
                           color: Colors.white,
@@ -451,6 +460,7 @@ class _CommentRepliesScreenState extends State<CommentRepliesScreen> {
                               children: [
                                 const SettingsBar('Replies'),
                                 AddReply(
+                                  commenterUsername: widget.commenterName,
                                   postID: widget.postID,
                                   commentID: widget.commentID,
                                 ),
@@ -478,6 +488,9 @@ class _CommentRepliesScreenState extends State<CommentRepliesScreen> {
                                         return false;
                                       },
                                       child: ListView.builder(
+                                        padding: EdgeInsets.only(
+                                          bottom: 85.0,
+                                        ),
                                         controller: _scrollController,
                                         itemCount: _replies.length + 1,
                                         itemBuilder: (_, index) {

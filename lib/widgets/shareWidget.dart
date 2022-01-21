@@ -368,7 +368,6 @@ class _ShareWidgetState extends State<ShareWidget> {
               );
             }
             if (snapshot.hasError) {
-              print(snapshot.error);
               return ClipRRect(
                 borderRadius: const BorderRadius.only(
                   topLeft: const Radius.circular(

@@ -218,8 +218,15 @@ class _TopicsTabState extends State<TopicsTab> {
                             margin: const EdgeInsets.all(
                               1.0,
                             ),
-                            child: TopicChip(name, null, null, Colors.white,
-                                FontWeight.normal),
+                            child: TopicChip(
+                                name,
+                                null,
+                                null,
+                                Colors.white,
+                                FontWeight.normal,
+                                Provider.of<OtherProfile>(context,
+                                        listen: false)
+                                    .getPrimaryColor),
                           ),
                         );
                       },

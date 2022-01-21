@@ -9,6 +9,7 @@ import '../models/screenArguments.dart';
 import '../providers/myProfileProvider.dart';
 import '../providers/topicScreenProvider.dart';
 import '../providers/fullPostHelper.dart';
+import '../providers/themeModel.dart';
 import '../widgets/settingsBar.dart';
 import '../widgets/myFab.dart';
 import '../widgets/postWidget.dart';
@@ -96,10 +97,10 @@ class TopicPostsScreen extends StatefulWidget {
 class _TopicPostsScreenState extends State<TopicPostsScreen> {
   final ScrollController _scrollController = ScrollController();
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
-  final ScrollPhysics _bounce = BouncingScrollPhysics();
   List<Post> feedPosts = [];
   bool noPostsFound = false;
   late Future _getPosts;
+  late Future<void> _viewTopic;
   bool isLoading = false;
   bool isLastPage = false;
   TheVisibility generateVis(String vis) {
@@ -109,6 +110,26 @@ class _TopicPostsScreenState extends State<TopicPostsScreen> {
       return TheVisibility.private;
     }
     return TheVisibility.private;
+  }
+
+  Future<void> viewTopic(String myUsername) async {
+    final _rightNow = DateTime.now();
+    final myViewedTopics = firestore
+        .collection('Users')
+        .doc(myUsername)
+        .collection('Viewed Topics');
+    final topicViewers =
+        firestore.collection('Topics').doc(widget.topic).collection('Viewers');
+    var batch = firestore.batch();
+    batch.set(myViewedTopics.doc(), {
+      'topic': widget.topic,
+      'date': _rightNow,
+    });
+    batch.set(topicViewers.doc(), {
+      'ID': myUsername,
+      'date': _rightNow,
+    });
+    return batch.commit();
   }
 
   Future<void> getPosts(String myUsername) async {
@@ -138,6 +159,16 @@ class _TopicPostsScreenState extends State<TopicPostsScreen> {
               .collection('Linked')
               .doc(poster)
               .get();
+          dynamic location = '';
+          String locationName = '';
+          if (post.data()!.containsKey('location')) {
+            final actualLocation = getter('location');
+            location = actualLocation;
+          }
+          if (post.data()!.containsKey('locationName')) {
+            final actualLocationName = getter('locationName');
+            locationName = actualLocationName;
+          }
           final String description = getter('description');
           final serverpostedDate = getter('date').toDate();
           final int numOfLikes = getter('likes');
@@ -184,6 +215,8 @@ class _TopicPostsScreenState extends State<TopicPostsScreen> {
               postedDate: serverpostedDate,
               topics: postTopics,
               imgUrls: imgUrls,
+              location: location,
+              locationName: locationName,
             );
             _post.setter();
             tempPosts.add(_post);
@@ -234,6 +267,16 @@ class _TopicPostsScreenState extends State<TopicPostsScreen> {
                 .collection('Linked')
                 .doc(poster)
                 .get();
+            dynamic location = '';
+            String locationName = '';
+            if (post.data()!.containsKey('location')) {
+              final actualLocation = getter('location');
+              location = actualLocation;
+            }
+            if (post.data()!.containsKey('locationName')) {
+              final actualLocationName = getter('locationName');
+              locationName = actualLocationName;
+            }
             final String description = getter('description');
             final serverpostedDate = getter('date').toDate();
             final int numOfLikes = getter('likes');
@@ -280,6 +323,8 @@ class _TopicPostsScreenState extends State<TopicPostsScreen> {
                 postedDate: serverpostedDate,
                 topics: postTopics,
                 imgUrls: imgUrls,
+                location: location,
+                locationName: locationName,
               );
               _post.setter();
               tempPosts.add(_post);
@@ -302,6 +347,7 @@ class _TopicPostsScreenState extends State<TopicPostsScreen> {
     final String myUsername =
         Provider.of<MyProfile>(context, listen: false).getUsername;
     _getPosts = getPosts(myUsername);
+    _viewTopic = viewTopic(myUsername);
     _scrollController.addListener(() {
       if (_scrollController.position.pixels ==
           _scrollController.position.maxScrollExtent) {
@@ -341,12 +387,12 @@ class _TopicPostsScreenState extends State<TopicPostsScreen> {
     final Color _accentColor = Theme.of(context).accentColor;
     final String myUsername =
         Provider.of<MyProfile>(context, listen: false).getUsername;
-
-    final ScrollPhysics _always =
-        AlwaysScrollableScrollPhysics(parent: _bounce);
+    const ScrollPhysics _always = const AlwaysScrollableScrollPhysics();
+    final bool selectedAnchorMode = Provider.of<ThemeModel>(context).anchorMode;
     const emptyBox = SizedBox(height: 0, width: 0);
     return Scaffold(
-      floatingActionButton: MyFab(_scrollController),
+      floatingActionButton:
+          (selectedAnchorMode) ? MyFab(_scrollController) : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       appBar: null,
       body: SafeArea(

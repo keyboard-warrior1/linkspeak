@@ -101,6 +101,7 @@ class _LinkButtonState extends State<LinkButton> {
       setState(() {
         isLoading = true;
       });
+      final DateTime _rightNow = DateTime.now();
       var batch = firestore.batch();
       final userLinks =
           firestore.collection('Users').doc(username).collection('Links');
@@ -113,14 +114,15 @@ class _LinkButtonState extends State<LinkButton> {
           .collection('NewLinksNotifs');
       final myLinked =
           firestore.collection('Users').doc(myUsername).collection('Linked');
-      batch.set(userLinks.doc(myUsername), {'0': 1});
-      batch.set(myLinked.doc(username), {'0': 1});
+      batch.set(userLinks.doc(myUsername), {'date': _rightNow});
+      batch.set(myLinked.doc(username), {'date': _rightNow});
       if (targetUser.data()!.containsKey('AllowLinks')) {
         final allowLinks = targetUser.get('AllowLinks');
         if (allowLinks) {
           batch.set(userLinksNotifs.doc(myUsername), {
             'user': myUsername,
             'token': token,
+            'date': _rightNow,
           });
           batch.update(firestore.collection('Users').doc(username),
               {'numOfNewLinksNotifs': FieldValue.increment(1)});
@@ -129,6 +131,7 @@ class _LinkButtonState extends State<LinkButton> {
         batch.set(userLinksNotifs.doc(myUsername), {
           'user': myUsername,
           'token': token,
+          'date': _rightNow,
         });
         batch.update(firestore.collection('Users').doc(username),
             {'numOfNewLinksNotifs': FieldValue.increment(1)});
@@ -187,6 +190,7 @@ class _LinkButtonState extends State<LinkButton> {
       void Function() sendLinkRequest) async {
     if (isLoading) {
     } else {
+      final DateTime _rightNow = DateTime.now();
       final targetUser =
           await firestore.collection('Users').doc(username).get();
       final token = targetUser.get('fcm');
@@ -201,6 +205,7 @@ class _LinkButtonState extends State<LinkButton> {
       batch.set(userLinkRequests.doc(myUsername), {
         'user': myUsername,
         'token': token,
+        'date': _rightNow,
       });
       batch.update(firestore.collection('Users').doc(username),
           {'numOfLinkRequestsNotifs': FieldValue.increment(1)});
@@ -266,8 +271,8 @@ class _LinkButtonState extends State<LinkButton> {
     final bool isPrivate = Provider.of<OtherProfile>(context).getVisibility ==
         TheVisibility.private;
     final bool imBlocked = Provider.of<OtherProfile>(context).imBlocked;
-    final Color _primaryColor = Theme.of(context).primaryColor;
-    final Color _accentColor = Theme.of(context).accentColor;
+    final Color _primaryColor = otherProfile.getPrimaryColor;
+    final Color _accentColor = otherProfile.getAccentColor;
     Future<void> _unlink() =>
         unlink(username, myUsername, unlinkMe, profileUnlink);
     Future<void> _cancelRequest() =>

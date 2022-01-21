@@ -1,6 +1,9 @@
+import 'package:flip_card/flip_card_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:measured_size/measured_size.dart';
+import 'package:flip_card/flip_card.dart';
 import '../models/screenArguments.dart';
 import '../providers/topicScreenProvider.dart';
 import '../providers/feedProvider.dart';
@@ -22,6 +25,7 @@ import 'postWidgetTitile.dart';
 import 'postsTab.dart';
 import 'sensitiveBanner.dart';
 import 'postWidgetCarouselStamp.dart';
+import 'postBackside.dart';
 import '../my_flutter_app_icons.dart' as customIcons;
 
 class PostWidget extends StatefulWidget {
@@ -52,8 +56,10 @@ class PostWidget extends StatefulWidget {
 
 class _PostWidgetState extends State<PostWidget>
     with AutomaticKeepAliveClientMixin {
+  double occupiedHeight = 0.0;
+  double occupiedWidth = 0.0;
+  late FlipCardController flipController;
   static const _carousel = const PostWidgetCarousel();
-  static const _stamp = const PostCarouselStamp();
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final void Function(BuildContext, String) feedsharePost =
       FeedScreen.sharePost;
@@ -206,11 +212,19 @@ class _PostWidgetState extends State<PostWidget>
   }
 
   @override
+  void initState() {
+    super.initState();
+    flipController = FlipCardController();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final Color _primaryColor = Theme.of(context).primaryColor;
+    Color _primaryColor = Theme.of(context).primaryColor;
+    Color _accentColor = Theme.of(context).accentColor;
     final Size _sizeQuery = MediaQuery.of(context).size;
     final double _deviceHeight = _sizeQuery.height;
     final FullHelper helper = Provider.of<FullHelper>(context, listen: false);
+    final bool measuresGiven = helper.measuresGiven;
     final void Function() helperHide = helper.hidePost;
     final void Function() helperDelete = helper.deletePost;
     final void Function() helperUnhide = helper.unhidePost;
@@ -231,6 +245,9 @@ class _PostWidgetState extends State<PostWidget>
     final bool _withDescription = description.isNotEmpty;
     final bool _noMedia = postImgUrls.isEmpty;
     final bool _withMedia = postImgUrls.isNotEmpty;
+    final bool sensitiveContent = helper.sensitiveContent;
+    final bool _showPost = helper.showPost;
+    final bool isMyPost = title == _myUsername;
     final List<String> _hiddenPosts =
         Provider.of<MyProfile>(context, listen: false).getHiddenPostIDs;
     final bool helperHidden =
@@ -238,27 +255,37 @@ class _PostWidgetState extends State<PostWidget>
     final bool helperDeleted =
         Provider.of<FullHelper>(context, listen: false).isDeleted;
     final bool postHidden = _hiddenPosts.contains(postId);
-    final Color _accentColor = Theme.of(context).accentColor;
+    final _stamp = PostCarouselStamp(widget.isInOtherTab);
+
+    if (widget.isInOtherTab) {
+      _primaryColor =
+          Provider.of<OtherProfile>(context, listen: false).getPrimaryColor;
+      _accentColor =
+          Provider.of<OtherProfile>(context, listen: false).getAccentColor;
+    }
     void previewSetStae() {
       setState(() {});
     }
 
     void _visitPost(ViewMode viewMode) {
-      _goToPost(
-        context,
-        viewMode,
-        giveInstance(
-            context,
-            postId,
-            widget.isInFeed,
-            widget.isInLike,
-            widget.isInFav,
-            widget.isInTab,
-            widget.isInMyTab,
-            widget.isInOtherTab,
-            widget.isInTopics),
-        previewSetStae,
-      );
+      if (sensitiveContent && !_showPost && !isMyPost) {
+      } else {
+        _goToPost(
+          context,
+          viewMode,
+          giveInstance(
+              context,
+              postId,
+              widget.isInFeed,
+              widget.isInLike,
+              widget.isInFav,
+              widget.isInTab,
+              widget.isInMyTab,
+              widget.isInOtherTab,
+              widget.isInTopics),
+          previewSetStae,
+        );
+      }
     }
 
     void likedHandler() {
@@ -314,8 +341,6 @@ class _PostWidgetState extends State<PostWidget>
       );
     }
 
-    final Widget _button = PostWidgetButton(visitPost: () {});
-
     final Widget _postBar = PostBar(
       postID: postId,
       shareView: false,
@@ -328,6 +353,7 @@ class _PostWidgetState extends State<PostWidget>
       upView: false,
       commentView: false,
       topicsView: false,
+      isInOtherProfile: widget.isInOtherTab,
     );
     final Widget _title = PostWidgetTitle(
       isInTopics: widget.isInTopics,
@@ -353,176 +379,215 @@ class _PostWidgetState extends State<PostWidget>
       previewSetstate: previewSetStae,
     );
     super.build(context);
-    return AnimatedContainer(
-      height: postHidden || helperHidden || helperDeleted ? 0.0 : null,
-      duration: kThemeAnimationDuration,
-      key: UniqueKey(),
-      width: postHidden ? double.infinity : 0.0,
-      margin: EdgeInsets.symmetric(
-        vertical: !postHidden || !helperHidden || !helperDeleted ? 15.0 : 0.0,
-        horizontal: !postHidden || !helperHidden || !helperDeleted ? 7.0 : 0.0,
-      ),
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10.0),
-          border: Border.all(color: Colors.grey.shade300)),
-      child: ElevatedButton(
-        style: ButtonStyle(
-          elevation: MaterialStateProperty.all<double>(0.0),
-          padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-            const EdgeInsets.all(0.0),
+    return FlipCard(
+      controller: flipController,
+      direction: FlipDirection.VERTICAL,
+      flipOnTouch: false,
+      front: MeasuredSize(
+        onChange: (size) {
+          if (!measuresGiven) {
+            occupiedHeight = size.height;
+            occupiedWidth = size.width;
+            Provider.of<FullHelper>(context, listen: false).giveMeasure();
+            setState(() {});
+          }
+        },
+        child: AnimatedContainer(
+          key: UniqueKey(),
+          height: postHidden || helperHidden || helperDeleted ? 0.0 : null,
+          duration: kThemeAnimationDuration,
+          width: postHidden ? double.infinity : 0.0,
+          margin: EdgeInsets.symmetric(
+            vertical:
+                !postHidden || !helperHidden || !helperDeleted ? 1.0 : 0.0,
+            horizontal:
+                !postHidden || !helperHidden || !helperDeleted ? 7.0 : 0.0,
           ),
-          backgroundColor:
-              MaterialStateProperty.all<Color?>(Colors.transparent),
-          foregroundColor:
-              MaterialStateProperty.all<Color?>(Colors.transparent),
-          shadowColor: MaterialStateProperty.all<Color?>(Colors.black54),
-          splashFactory: InkRipple.splashFactory,
-        ),
-        onPressed: () => _visitPost(ViewMode.post),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(9.0),
-          child: Card(
-            borderOnForeground: false,
-            margin: const EdgeInsets.all(0.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                _title,
-                const SizedBox(height: 3.0),
-                Stack(
+          decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10.0),
+              border: Border.all(color: Colors.grey.shade300)),
+          child: ElevatedButton(
+            style: ButtonStyle(
+              elevation: MaterialStateProperty.all<double>(0.0),
+              padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                const EdgeInsets.all(0.0),
+              ),
+              backgroundColor:
+                  MaterialStateProperty.all<Color?>(Colors.transparent),
+              foregroundColor:
+                  MaterialStateProperty.all<Color?>(Colors.transparent),
+              shadowColor: MaterialStateProperty.all<Color?>(Colors.black54),
+              splashFactory: InkRipple.splashFactory,
+            ),
+            onPressed: () => _visitPost(ViewMode.post),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(9.0),
+              child: Card(
+                borderOnForeground: false,
+                margin: const EdgeInsets.all(0.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
+                    _title,
+                    const SizedBox(height: 3.0),
+                    Stack(
                       children: <Widget>[
-                        if (_withDescription && _withMedia)
-                          Flexible(
-                            fit: FlexFit.loose,
-                            child: DescriptionPreview(
-                              description,
-                              giveController(
-                                  widget.isInFeed,
-                                  widget.isInLike,
-                                  widget.isInFav,
-                                  widget.isInTab,
-                                  widget.isInTopics,
-                                  widget.isInMyTab,
-                                  widget.isInOtherTab),
-                            ),
-                          ),
-                        if (_withDescription && _noMedia)
-                          Flexible(
-                            fit: FlexFit.loose,
-                            child: NoMediaPostDescriptionPreview(
-                              description,
-                              giveController(
-                                  widget.isInFeed,
-                                  widget.isInLike,
-                                  widget.isInFav,
-                                  widget.isInTab,
-                                  widget.isInTopics,
-                                  widget.isInMyTab,
-                                  widget.isInOtherTab),
-                            ),
-                          ),
-                        if (_withDescription && _noMedia) _button,
-                        if (_withDescription && _withMedia)
-                          ConstrainedBox(
-                            constraints: BoxConstraints(
-                              minHeight: _deviceHeight * 0.50,
-                              maxHeight: _deviceHeight * 0.50,
-                            ),
-                            child: Stack(
-                              children: <Widget>[
-                                _carousel,
-                                Align(
-                                  alignment: Alignment.topCenter,
-                                  child: _stamp,
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            if (_withDescription && _withMedia)
+                              Flexible(
+                                fit: FlexFit.loose,
+                                child: DescriptionPreview(
+                                  description,
+                                  giveController(
+                                      widget.isInFeed,
+                                      widget.isInLike,
+                                      widget.isInFav,
+                                      widget.isInTab,
+                                      widget.isInTopics,
+                                      widget.isInMyTab,
+                                      widget.isInOtherTab),
                                 ),
-                                if (postImgUrls.length > 1)
-                                  Align(
-                                    alignment: Alignment.topRight,
-                                    child: Container(
-                                      padding: const EdgeInsets.only(
-                                        top: 4.0,
-                                        left: 8.0,
-                                        right: 4.0,
-                                        bottom: 6.0,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: _primaryColor.withOpacity(0.5),
-                                        borderRadius: BorderRadius.only(
-                                          bottomLeft:
-                                              const Radius.circular(15.0),
+                              ),
+                            if (_withDescription && _noMedia)
+                              Flexible(
+                                fit: FlexFit.loose,
+                                child: NoMediaPostDescriptionPreview(
+                                  description,
+                                  giveController(
+                                      widget.isInFeed,
+                                      widget.isInLike,
+                                      widget.isInFav,
+                                      widget.isInTab,
+                                      widget.isInTopics,
+                                      widget.isInMyTab,
+                                      widget.isInOtherTab),
+                                ),
+                              ),
+                            if (_withDescription && _noMedia)
+                              PostWidgetButton(flipController.toggleCard,
+                                  widget.isInOtherTab),
+                            if (_withDescription && _withMedia)
+                              ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: _deviceHeight * 0.50,
+                                  maxHeight: _deviceHeight * 0.50,
+                                ),
+                                child: Stack(
+                                  children: <Widget>[
+                                    _carousel,
+                                    Align(
+                                      alignment: Alignment.topCenter,
+                                      child: _stamp,
+                                    ),
+                                    if (postImgUrls.length > 1)
+                                      Align(
+                                        alignment: Alignment.topRight,
+                                        child: Container(
+                                          padding: const EdgeInsets.only(
+                                            top: 4.0,
+                                            left: 8.0,
+                                            right: 4.0,
+                                            bottom: 6.0,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color:
+                                                _primaryColor.withOpacity(0.5),
+                                            borderRadius: BorderRadius.only(
+                                              bottomLeft:
+                                                  const Radius.circular(15.0),
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            customIcons.MyFlutterApp.brochure,
+                                            color: _accentColor,
+                                            size: 35.0,
+                                          ),
                                         ),
                                       ),
-                                      child: Icon(
-                                        customIcons.MyFlutterApp.brochure,
-                                        color: _accentColor,
-                                        size: 35.0,
-                                      ),
-                                    ),
-                                  ),
-                                Align(
-                                    alignment: Alignment.bottomCenter,
-                                    child: _button),
-                              ],
-                            ),
-                          ),
-                        if (_noDescription && _withMedia)
-                          ConstrainedBox(
-                            constraints: BoxConstraints(
-                              minHeight: _deviceHeight * 0.52,
-                              maxHeight: _deviceHeight * 0.52,
-                            ),
-                            child: Stack(
-                              children: <Widget>[
-                                _carousel,
-                                Align(
-                                  alignment: Alignment.topCenter,
-                                  child: _stamp,
+                                    Align(
+                                        alignment: Alignment.bottomCenter,
+                                        child: PostWidgetButton(
+                                            flipController.toggleCard,
+                                            widget.isInOtherTab)),
+                                  ],
                                 ),
-                                if (postImgUrls.length > 1)
-                                  Align(
-                                    alignment: Alignment.topRight,
-                                    child: Container(
-                                      padding: const EdgeInsets.only(
-                                        top: 4.0,
-                                        left: 8.0,
-                                        right: 4.0,
-                                        bottom: 6.0,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: _primaryColor.withOpacity(0.5),
-                                        borderRadius: BorderRadius.only(
-                                          bottomLeft: Radius.circular(15.0),
+                              ),
+                            if (_noDescription && _withMedia)
+                              ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: _deviceHeight * 0.52,
+                                  maxHeight: _deviceHeight * 0.52,
+                                ),
+                                child: Stack(
+                                  children: <Widget>[
+                                    _carousel,
+                                    Align(
+                                      alignment: Alignment.topCenter,
+                                      child: _stamp,
+                                    ),
+                                    if (postImgUrls.length > 1)
+                                      Align(
+                                        alignment: Alignment.topRight,
+                                        child: Container(
+                                          padding: const EdgeInsets.only(
+                                            top: 4.0,
+                                            left: 8.0,
+                                            right: 4.0,
+                                            bottom: 6.0,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color:
+                                                _primaryColor.withOpacity(0.5),
+                                            borderRadius: BorderRadius.only(
+                                              bottomLeft: Radius.circular(15.0),
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            customIcons.MyFlutterApp.brochure,
+                                            color: _accentColor,
+                                            size: 35.0,
+                                          ),
                                         ),
                                       ),
-                                      child: Icon(
-                                        customIcons.MyFlutterApp.brochure,
-                                        color: _accentColor,
-                                        size: 35.0,
-                                      ),
-                                    ),
-                                  ),
-                                Align(
-                                    alignment: Alignment.bottomCenter,
-                                    child: _button),
-                              ],
-                            ),
-                          ),
+                                    Align(
+                                        alignment: Alignment.bottomCenter,
+                                        child: PostWidgetButton(
+                                            flipController.toggleCard,
+                                            widget.isInOtherTab)),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                        SensitiveBanner(previewSetStae),
                       ],
                     ),
-                    const SensitiveBanner(),
+                    _postBar,
                   ],
                 ),
-                _postBar,
-              ],
+              ),
             ),
           ),
         ),
+      ),
+      back: PostBackSide(
+        toggleCard: flipController.toggleCard,
+        givenHeight: occupiedHeight,
+        givenWidth: occupiedWidth,
+        controller: giveController(
+            widget.isInFeed,
+            widget.isInLike,
+            widget.isInFav,
+            widget.isInTab,
+            widget.isInTopics,
+            widget.isInMyTab,
+            widget.isInOtherTab),
+        isInOtherProfile: widget.isInOtherTab,
       ),
     );
   }

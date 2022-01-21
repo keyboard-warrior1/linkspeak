@@ -6,7 +6,13 @@ import '../models/profile.dart';
 import '../models/post.dart';
 
 class MyProfile with ChangeNotifier implements Profile {
+  String _additionalWebsite = '';
+  String _additionalEmail = '';
+  String _additionalNumber = '';
+  dynamic _additionalAddress = '';
+  String _additionalAddressName = '';
   String _myProfileImageUrl = '';
+  String _myProfileBanner = '';
   String _myusername = '';
   String _myemail = '';
   String _myname = '';
@@ -14,6 +20,7 @@ class MyProfile with ChangeNotifier implements Profile {
   String _mybio = '';
   String _myActivity = '';
   bool _setupComplete = true;
+  bool _hasSpotlight = false;
   String _myStatus = '';
   int _myAge = 18;
   TheVisibility _myVisibilityStatus = TheVisibility.public;
@@ -59,6 +66,20 @@ class MyProfile with ChangeNotifier implements Profile {
   bool get getSetup => _setupComplete;
   @override
   String get getProfileImage => _myProfileImageUrl;
+  @override
+  bool get getHasSpotlight => _hasSpotlight;
+  @override
+  String get getProfileBanner => _myProfileBanner;
+  @override
+  String get getAdditionalWebsite => _additionalWebsite;
+  @override
+  String get getAdditionalEmail => _additionalEmail;
+  @override
+  String get getAdditionalNumber => _additionalNumber;
+  @override
+  dynamic get getAdditionalAddress => _additionalAddress;
+  @override
+  String get getAdditionalAddressName => _additionalAddressName;
   @override
   String get getUsername => _myusername;
   @override
@@ -258,9 +279,73 @@ class MyProfile with ChangeNotifier implements Profile {
     _myProfileImageUrl = imgUrl;
   }
 
+  @override
+  set setHasSpotlight(bool hasSpotlight) {
+    _hasSpotlight = hasSpotlight;
+  }
+
+  void setMySpotlight(bool hasSpotlight) {
+    _hasSpotlight = hasSpotlight;
+  }
+
   void setMyProfileImage(String url) {
     _myProfileImageUrl = url;
     notifyListeners();
+  }
+
+  @override
+  set setProfileBanner(String bannerUrl) {
+    _myProfileBanner = bannerUrl;
+  }
+
+  void setMyProfileBanner(String url) {
+    _myProfileBanner = url;
+    notifyListeners();
+  }
+
+  @override
+  set setAdditionalWebsite(String website) {
+    _additionalWebsite = website;
+  }
+
+  void setMyAdditionalWebsite(String website) {
+    _additionalWebsite = website;
+  }
+
+  @override
+  set setAdditionalEmail(String email) {
+    _additionalEmail = email;
+  }
+
+  void setMyAdditionalEmail(String email) {
+    _additionalEmail = email;
+  }
+
+  @override
+  set setAdditionalNumber(String number) {
+    _additionalNumber = number;
+  }
+
+  void setMyAdditionalNumber(String number) {
+    _additionalNumber = number;
+  }
+
+  @override
+  set setAdditionalAddress(dynamic address) {
+    _additionalAddress = address;
+  }
+
+  void setMyAdditionalAddress(dynamic address) {
+    _additionalAddress = address;
+  }
+
+  @override
+  set setAdditionalAddressName(String name) {
+    _additionalAddressName = name;
+  }
+
+  void setMyAdditionalAddressName(String name) {
+    _additionalAddressName = name;
   }
 
   @override
@@ -475,12 +560,12 @@ class MyProfile with ChangeNotifier implements Profile {
   }
 
   void deletePost(String postID) {
-    _myposts.removeWhere((post) => post.postID == postID);
-    _postsLiked.removeWhere((post) => post.postID == postID);
-    _favoritePosts.removeWhere((post) => post.postID == postID);
-    _myPostIDs.remove(postID);
-    _likedPostIDs.remove(postID);
-    _favPostIDs.remove(postID);
+    // _myposts.removeWhere((post) => post.postID == postID);
+    // _postsLiked.removeWhere((post) => post.postID == postID);
+    // _favoritePosts.removeWhere((post) => post.postID == postID);
+    // _myPostIDs.remove(postID);
+    // _likedPostIDs.remove(postID);
+    // _favPostIDs.remove(postID);
     _myNumOfPosts--;
     notifyListeners();
   }
@@ -583,15 +668,86 @@ class MyProfile with ChangeNotifier implements Profile {
     notifyListeners();
   }
 
+  void initializeMyProfile({
+    required String visbility,
+    required String additionalWebsite,
+    required String additionalEmail,
+    required String additionalNumber,
+    required dynamic additionalAddress,
+    required String additionalAddressName,
+    required String imgUrl,
+    required String bannerUrl,
+    required String email,
+    required String username,
+    required String bio,
+    required bool hasSpotlight,
+    required List<String> myTopics,
+    required List<String> reversedLiked,
+    required List<String> reversedFavs,
+    required List<String> theHiddenIDs,
+    required int numOfLinks,
+    required int numOfLinked,
+    required int numOfPosts,
+    required int numOfNewLinksNotifs,
+    required int numOfNewLinkedNotifs,
+    required int numOfLinkRequestsNotifs,
+    required int numOfPostLikesNotifs,
+    required int numOfPostCommentsNotifs,
+    required int numOfCommentRepliesNotifs,
+    required int numOfPostsRemoved,
+    required int numOfCommentsRemoved,
+    required int numOfBlocked,
+    required List<String> theBlockedIDs,
+    required List<String> reversedPostIDs,
+  }) {
+    setMyVis(visbility);
+    setMyAdditionalWebsite(additionalWebsite);
+    setMyAdditionalEmail(additionalEmail);
+    setMyAdditionalNumber(additionalNumber);
+    setMyAdditionalAddress(additionalAddress);
+    setMyAdditionalAddressName(additionalAddressName);
+    setMySpotlight(hasSpotlight);
+    setMyProfileImage(imgUrl);
+    setMyProfileBanner(bannerUrl);
+    setMyEmail(email);
+    setMyUsername(username);
+    changeBio(bio);
+    setMyTopics(myTopics);
+    setLikedIDs(reversedLiked);
+    setFavIDs(reversedFavs);
+    setHiddenIDs(theHiddenIDs);
+    setMyNumOfLinks(numOfLinks);
+    setMyNumOfLinked(numOfLinked);
+    setNumOfPosts(numOfPosts);
+    setNumOfNewLinksNotifs(numOfNewLinksNotifs);
+    setNumOfNewLinkedNotifs(numOfNewLinkedNotifs);
+    setNumOfLinkRequestNotifs(numOfLinkRequestsNotifs);
+    setNumOfPostLikesNotifs(numOfPostLikesNotifs);
+    setNumOfPostCommentsNotifs(numOfPostCommentsNotifs);
+    setNumOfCommentRepliesNotifs(numOfCommentRepliesNotifs);
+    setmyNumOfPostsRemovedNotifs(numOfPostsRemoved);
+    setNumOfCommentsRemovedNotifs(numOfCommentsRemoved);
+    setNumOfBlocked(numOfBlocked);
+    setBlockedUserIDs(theBlockedIDs);
+    setMyPostIDs(reversedPostIDs);
+  }
+
   void resetProfile() {
     _myProfileImageUrl = '';
+    _myProfileBanner = '';
     _myusername = '';
     _myemail = '';
     _myname = '';
+    _additionalWebsite = '';
+    _additionalEmail = '';
+    _additionalNumber = '';
+    _additionalAddress = '';
+    _additionalAddressName = '';
     _mysurname = '';
     _mybio = '';
     _myActivity = '';
     _setupComplete = true;
+    _hasSpotlight = false;
     _myStatus = '';
     _myAge = 18;
     _myVisibilityStatus = TheVisibility.public;

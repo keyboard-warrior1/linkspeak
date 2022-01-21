@@ -1,8 +1,12 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:dart_ipify/dart_ipify.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter_nsfw/flutter_nsfw.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -68,7 +72,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
     scrollController.dispose();
   }
 
-  Future<void> _choose(String myUsername) async {
+  Future<void> _choose(String myUsername, Color primaryColor) async {
     const int _maxAssets = 1;
     final _english = EnglishTextDelegate();
     final List<AssetEntity>? _result = await AssetPicker.pickAssets(
@@ -77,6 +81,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
       textDelegate: _english,
       selectedAssets: assets,
       requestType: RequestType.image,
+      themeColor: primaryColor,
     );
     if (_result != null) {
       assets = List<AssetEntity>.from(_result);
@@ -161,7 +166,8 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
       final users = firestore.collection('Users');
       if (_myImgUrl != 'none') {
         File? imageFile = await assets![0].originFile;
-        final int fileSize = imageFile!.lengthSync();
+        final String filePath = imageFile!.absolute.path;
+        final int fileSize = imageFile.lengthSync();
         if (fileSize > 15000000) {
           setState(() {
             isLoading = false;
@@ -179,64 +185,102 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
           );
 
           String _ipAddress = await Ipify.ipv4();
-
-          await storage.ref(_myImgUrl).putFile(imageFile).then((value) async {
-            final String downloadUrl =
-                await storage.ref(_myImgUrl).getDownloadURL();
-            await users.doc(myUsername).update(
-              {
-                'Activity': 'Online',
-                'Avatar': downloadUrl,
-                'SetupComplete': 'true',
-                'Visibility': '${generateVis(_newVis)}',
-                'Bio': '${_bioController.value.text}',
-                'Topics': _newTopicNames,
-                'IP address': '$_ipAddress',
-              },
-            ).then((value) async {
-              final MyProfile profile =
-                  Provider.of<MyProfile>(context, listen: false);
-              profile.setMyVis(generateVis(_newVis));
-              profile.setMyProfileImage(downloadUrl);
-              profile.setMyUsername(myUsername);
-              profile.changeBio(_bioController.value.text);
-              profile.setMyTopics(_newTopicNames);
-              profile.setLikedIDs([]);
-              profile.setFavIDs([]);
-              profile.setHiddenIDs([]);
-              profile.setMyNumOfLinks(0);
-              profile.setMyNumOfLinked(0);
-              profile.setNumOfPosts(0);
-              profile.setNumOfNewLinksNotifs(0);
-              profile.setNumOfNewLinkedNotifs(0);
-              profile.setNumOfLinkRequestNotifs(0);
-              profile.setNumOfPostLikesNotifs(0);
-              profile.setNumOfPostCommentsNotifs(0);
-              profile.setNumOfCommentRepliesNotifs(0);
-              profile.setmyNumOfPostsRemovedNotifs(0);
-              profile.setNumOfCommentsRemovedNotifs(0);
-              profile.setNumOfBlocked(0);
-              EasyLoading.dismiss();
-              Navigator.popUntil(context, (route) {
-                return route.isFirst;
+          Directory appDocDir = await getApplicationDocumentsDirectory();
+          String appDocPath = appDocDir.path;
+          var file = File(appDocPath + "/nsfw.tflite");
+          if (!file.existsSync()) {
+            var data = await rootBundle.load("assets/nsfw.tflite");
+            final buffer = data.buffer;
+            await file.writeAsBytes(
+                buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+          }
+          await FlutterNsfw.initNsfw(
+            file.path,
+            enableLog: false,
+            isOpenGPU: false,
+            numThreads: 4,
+          );
+          await FlutterNsfw.getPhotoNSFWScore(filePath).then((result) async {
+            if (result > 0.75) {
+              setState(() {
+                isLoading = false;
               });
-              Navigator.pushReplacementNamed(
-                context,
-                RouteGenerator.feedScreen,
+              EasyLoading.dismiss();
+              _showDialog(
+                Icons.info_outline,
+                Colors.blue,
+                'Notice',
+                "Image contains content that violates our avatar safety guidelines.",
               );
-            }).catchError((e) {
-              EasyLoading.showError(
-                'Failed',
-                duration: const Duration(milliseconds: 1000),
-                dismissOnTap: true,
-              );
-            });
-          }).catchError((e) {
-            EasyLoading.showError(
-              'Failed',
-              duration: const Duration(milliseconds: 1000),
-              dismissOnTap: true,
-            );
+            } else {
+              await storage
+                  .ref(_myImgUrl)
+                  .putFile(imageFile)
+                  .then((value) async {
+                final String downloadUrl =
+                    await storage.ref(_myImgUrl).getDownloadURL();
+                await users.doc(myUsername).update(
+                  {
+                    'Activity': 'Online',
+                    'Avatar': downloadUrl,
+                    'SetupComplete': 'true',
+                    'Visibility': '${generateVis(_newVis)}',
+                    'Bio': '${_bioController.value.text}',
+                    'Topics': _newTopicNames,
+                    'IP address': '$_ipAddress',
+                  },
+                ).then((value) async {
+                  final MyProfile profile =
+                      Provider.of<MyProfile>(context, listen: false);
+                  profile.setMyAdditionalWebsite('');
+                  profile.setMyAdditionalEmail('');
+                  profile.setMyAdditionalNumber('');
+                  profile.setMyAdditionalAddress('');
+                  profile.setMyAdditionalAddressName('');
+                  profile.setMyVis(generateVis(_newVis));
+                  profile.setMyProfileImage(downloadUrl);
+                  profile.setMyProfileBanner('None');
+                  profile.setMyUsername(myUsername);
+                  profile.changeBio(_bioController.value.text);
+                  profile.setMyTopics(_newTopicNames);
+                  profile.setLikedIDs([]);
+                  profile.setFavIDs([]);
+                  profile.setHiddenIDs([]);
+                  profile.setMyNumOfLinks(0);
+                  profile.setMyNumOfLinked(0);
+                  profile.setNumOfPosts(0);
+                  profile.setNumOfNewLinksNotifs(0);
+                  profile.setNumOfNewLinkedNotifs(0);
+                  profile.setNumOfLinkRequestNotifs(0);
+                  profile.setNumOfPostLikesNotifs(0);
+                  profile.setNumOfPostCommentsNotifs(0);
+                  profile.setNumOfCommentRepliesNotifs(0);
+                  profile.setmyNumOfPostsRemovedNotifs(0);
+                  profile.setNumOfCommentsRemovedNotifs(0);
+                  profile.setNumOfBlocked(0);
+                  EasyLoading.dismiss();
+                  Navigator.popUntil(context, (route) {
+                    return route.isFirst;
+                  });
+                  Navigator.pushReplacementNamed(
+                    context,
+                    RouteGenerator.feedScreen,
+                  );
+                }).catchError((e) {
+                  EasyLoading.showError(
+                    'Failed',
+                    duration: const Duration(milliseconds: 1000),
+                    dismissOnTap: true,
+                  );
+                });
+              }).catchError((e) {
+                EasyLoading.showError(
+                  'Failed',
+                  duration: const Duration(milliseconds: 1000),
+                  dismissOnTap: true,
+                );
+              });
+            }
           });
         }
       } else {
@@ -259,8 +303,14 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
         ).then((value) async {
           final MyProfile profile =
               Provider.of<MyProfile>(context, listen: false);
+          profile.setMyAdditionalWebsite('');
+          profile.setMyAdditionalEmail('');
+          profile.setMyAdditionalNumber('');
+          profile.setMyAdditionalAddress('');
+          profile.setMyAdditionalAddressName('');
           profile.setMyVis(generateVis(_newVis));
           profile.setMyProfileImage(_myImgUrl);
+          profile.setMyProfileBanner('None');
           profile.setMyUsername(myUsername);
           profile.changeBio(_bioController.value.text);
           profile.setMyTopics(_newTopicNames);
@@ -327,7 +377,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                _choose(myUsername);
+                _choose(myUsername, _primaryColor);
               },
               style: const ButtonStyle(splashFactory: NoSplash.splashFactory),
               child: const Text(

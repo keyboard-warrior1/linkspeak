@@ -1,9 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:badges/badges.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../providers/fullPostHelper.dart';
 import '../providers/myProfileProvider.dart';
-import 'package:badges/badges.dart';
+import '../providers/otherProfileProvider.dart';
+import '../providers/themeModel.dart';
 import '../my_flutter_app_icons.dart' as customIcons;
 
 class PostBar extends StatefulWidget {
@@ -17,6 +20,7 @@ class PostBar extends StatefulWidget {
   final bool commentView;
   final bool topicsView;
   final bool shareView;
+  final bool isInOtherProfile;
 
   const PostBar({
     required this.postID,
@@ -29,6 +33,7 @@ class PostBar extends StatefulWidget {
     required this.commentView,
     required this.topicsView,
     required this.shareView,
+    required this.isInOtherProfile,
   });
 
   @override
@@ -61,7 +66,8 @@ class _PostBarState extends State<PostBar> {
     }
   }
 
-  Color? upvoteColor(Color _accentColor, bool uppedByMe) {
+  Color? upvoteColor(
+      Color _accentColor, bool uppedByMe, Color selectedLikeColor) {
     if (widget.upView && uppedByMe) {
       return _accentColor;
     } else if (widget.upView && !uppedByMe) {
@@ -69,7 +75,7 @@ class _PostBarState extends State<PostBar> {
     } else if (!widget.upView && !uppedByMe) {
       return Colors.white;
     } else if (!widget.upView && uppedByMe) {
-      return Colors.lightGreenAccent.shade400;
+      return selectedLikeColor;
     }
   }
 
@@ -88,6 +94,7 @@ class _PostBarState extends State<PostBar> {
       setState(() {
         likeLoading = true;
       });
+      final DateTime _rightNow = DateTime.now();
       final FirebaseFirestore firestore = FirebaseFirestore.instance;
       var likebatch = firestore.batch();
       var unlikeBatch = firestore.batch();
@@ -101,7 +108,7 @@ class _PostBarState extends State<PostBar> {
       var myLike = postLikers.doc(_myUsername);
       var addLikers = posts.doc(postId);
       likebatch.set(thislikedPost, {'date': postedDate});
-      likebatch.set(myLike, {'0': 1});
+      likebatch.set(myLike, {'date': _rightNow});
       likebatch.update(addLikers, {'likes': FieldValue.increment(1)});
       unlikeBatch.delete(thislikedPost);
       unlikeBatch.delete(myLike);
@@ -139,6 +146,7 @@ class _PostBarState extends State<PostBar> {
                   'post': '$postId',
                   'user': _myUsername,
                   'token': token,
+                  'date': _rightNow,
                 });
                 secondBatch.update(
                     firestore.collection('Users').doc(posterUsername),
@@ -152,6 +160,7 @@ class _PostBarState extends State<PostBar> {
                 'post': '$postId',
                 'user': _myUsername,
                 'token': token,
+                'date': _rightNow,
               });
               secondBatch.update(
                   firestore.collection('Users').doc(posterUsername),
@@ -177,8 +186,14 @@ class _PostBarState extends State<PostBar> {
     final Size _sizeQuery = MediaQuery.of(context).size;
     final double _deviceWidth = _sizeQuery.width;
     final double _deviceHeight = _sizeQuery.height;
-    final Color _primarySwatch = _theme.primaryColor;
-    final Color _accentColor = _theme.accentColor;
+    Color _primarySwatch = _theme.primaryColor;
+    Color _accentColor = _theme.accentColor;
+    final themeIconHelper = Provider.of<ThemeModel>(context);
+    final String currentIconName = themeIconHelper.selectedIconName;
+    final IconData currentIcon = themeIconHelper.themeIcon;
+    final Color currentIconColor = themeIconHelper.likeColor;
+    final String inactiveIconPath = themeIconHelper.themeIconPathInactive;
+    final String activeIconPath = themeIconHelper.themeIconPathActive;
     final String poster = Provider.of<FullHelper>(context).posterId;
     final DateTime postDate = Provider.of<FullHelper>(context).postedDate;
     final int numOfLikes = Provider.of<FullHelper>(context).getNumOfLikes;
@@ -195,6 +210,12 @@ class _PostBarState extends State<PostBar> {
         Provider.of<FullHelper>(context, listen: false).unlikePost;
     final void Function(String) like =
         Provider.of<MyProfile>(context, listen: false).likePost;
+    if (widget.isInOtherProfile) {
+      _primarySwatch =
+          Provider.of<OtherProfile>(context, listen: false).getPrimaryColor;
+      _accentColor =
+          Provider.of<OtherProfile>(context, listen: false).getAccentColor;
+    }
     void likeLogic() {
       _upVote(like, likePost, unlikePost, poster, _myUsername, _myUserImg,
           _likedPosts, widget.postID, postDate);
@@ -202,8 +223,9 @@ class _PostBarState extends State<PostBar> {
 
     final Widget _upvoteButton = ConstrainedBox(
       constraints: BoxConstraints(
-        minWidth: _deviceWidth * 0.20,
-        maxWidth: _deviceWidth * 0.20,
+        minWidth: _deviceWidth * 1 / 6,
+        maxWidth:
+            (!widget.isInFeed) ? _deviceWidth * 1 / 4 : _deviceWidth * 1 / 3,
         minHeight: _deviceHeight * 0.05,
         maxHeight: _deviceHeight * 0.05,
       ),
@@ -216,33 +238,43 @@ class _PostBarState extends State<PostBar> {
                 : () => widget.upButtonHandler(likeLogic),
         style: ButtonStyle(
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          splashFactory: NoSplash.splashFactory,
           padding: MaterialStateProperty.all<EdgeInsetsGeometry?>(
-            const EdgeInsets.all(0.0),
+            const EdgeInsets.only(left: 10.0, right: 5.0),
           ),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             FittedBox(
               fit: BoxFit.scaleDown,
-              child: Icon(
-                customIcons.MyFlutterApp.upvote,
-                size: 32.0,
-                color: upvoteColor(_accentColor, uppedByMe),
-              ),
+              child: (currentIconName != 'Custom')
+                  ? Icon(
+                      currentIcon,
+                      size: 32.0,
+                      color: upvoteColor(
+                          _accentColor, uppedByMe, currentIconColor),
+                    )
+                  : ImageIcon(
+                      FileImage(
+                        File(uppedByMe ? activeIconPath : inactiveIconPath),
+                      ),
+                    ),
             ),
             FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
-                (numOfLikes != 0) ? _optimisedNumbers(numOfLikes) : ' ',
+                (numOfLikes != 0)
+                    ? "  ${_optimisedNumbers(numOfLikes)}"
+                    : '   ',
                 textAlign: TextAlign.start,
                 softWrap: false,
                 style: TextStyle(
-                  fontSize: _deviceHeight * 0.02,
+                  fontSize: 15.0,
                   color: (uppedByMe)
-                      ? Colors.lightGreenAccent.shade400
+                      ? currentIconColor
                       : Colors.white,
                   fontFamily: 'RobotoCondensed',
                 ),
@@ -256,19 +288,21 @@ class _PostBarState extends State<PostBar> {
       constraints: BoxConstraints(
         minHeight: _deviceHeight * 0.05,
         maxHeight: _deviceHeight * 0.05,
-        minWidth: _deviceWidth * 0.20,
-        maxWidth: _deviceWidth * 0.20,
+        minWidth: _deviceWidth * 1 / 6,
+        maxWidth:
+            (!widget.isInFeed) ? _deviceWidth * 1 / 4 : _deviceWidth * 1 / 3,
       ),
       child: TextButton(
         onPressed: widget.commentButtonHandler,
         style: ButtonStyle(
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          splashFactory: NoSplash.splashFactory,
           padding: MaterialStateProperty.all<EdgeInsetsGeometry?>(
-            const EdgeInsets.all(0.0),
+            const EdgeInsets.only(left: 10.0, right: 5.0),
           ),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
@@ -282,31 +316,40 @@ class _PostBarState extends State<PostBar> {
                 color: widget.commentView ? _accentColor : Colors.white,
               ),
             ),
-            if (!_noComments)
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Container(
-                  child: Text(
-                    _optimisedNumbers(numOfComments),
-                    style: TextStyle(
-                      fontSize: _deviceHeight * 0.02,
-                      color: widget.commentView ? _accentColor : Colors.white,
-                      fontFamily: 'RobotoCondensed',
-                    ),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Container(
+                child: Text(
+                  (!_noComments)
+                      ? "   ${_optimisedNumbers(numOfComments)}"
+                      : '   ',
+                  style: TextStyle(
+                    fontSize: 15.0,
+                    color: widget.commentView ? _accentColor : Colors.white,
+                    fontFamily: 'RobotoCondensed',
                   ),
                 ),
               ),
+            ),
           ],
         ),
       ),
     );
 
     final Widget _topicsButton = TextButton(
+      style: ButtonStyle(
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        splashFactory: NoSplash.splashFactory,
+        padding: MaterialStateProperty.all<EdgeInsetsGeometry?>(
+          const EdgeInsets.only(left: 10.0, right: 5.0),
+        ),
+      ),
       onPressed: widget.topicButtonHandler,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          minWidth: _deviceWidth * 0.20,
-          maxWidth: _deviceWidth * 0.20,
+          minWidth: _deviceWidth * 1 / 6,
+          maxWidth: _deviceWidth * 1 / 4,
+          minHeight: _deviceHeight * 0.05,
           maxHeight: _deviceHeight * 0.05,
         ),
         child: FittedBox(
@@ -334,7 +377,7 @@ class _PostBarState extends State<PostBar> {
                     child: Text(
                       _topicNumber(numOfTopics),
                       style: TextStyle(
-                        fontSize: _deviceHeight * 0.02,
+                        fontSize: 15.0,
                         color: Colors.black,
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.w400,
@@ -356,8 +399,10 @@ class _PostBarState extends State<PostBar> {
         constraints: BoxConstraints(
           minHeight: _deviceHeight * 0.05,
           maxHeight: _deviceHeight * 0.05,
-          minWidth: _deviceWidth * 0.20,
-          maxWidth: _deviceWidth * 0.20,
+          minWidth: _deviceWidth * 1 / 6 - 16,
+          maxWidth: (!widget.isInFeed)
+              ? _deviceWidth * 1 / 4
+              : _deviceWidth * 1 / 3 - 16,
         ),
         child: TextButton(
           onPressed: (widget.isInFeed)
@@ -365,12 +410,13 @@ class _PostBarState extends State<PostBar> {
               : widget.shareButtonHandler,
           style: ButtonStyle(
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            splashFactory: NoSplash.splashFactory,
             padding: MaterialStateProperty.all<EdgeInsetsGeometry?>(
-              const EdgeInsets.all(0.0),
+              const EdgeInsets.only(left: 10.0, right: 5.0),
             ),
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
@@ -392,7 +438,7 @@ class _PostBarState extends State<PostBar> {
         color: _primarySwatch,
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
           _upvoteButton,
           _commentsButton,

@@ -1,5 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:link_speak/providers/myProfileProvider.dart';
 import 'package:provider/provider.dart';
 import '../widgets/newLikes.dart';
@@ -158,9 +158,11 @@ class _PostLikeNotifScreenState extends State<PostLikeNotifScreen> {
                               }
                             } else {
                               return NewLikes(
-                                userName: source[index].data()['user'].toString(),
+                                userName:
+                                    source[index].data()['user'].toString(),
                                 postUrl:
                                     source[index].data()['post'].toString(),
+                                date: source[index].data()['date'].toDate(),
                               );
                             }
                             return emptyBox;

@@ -12,7 +12,8 @@ import 'registrationDialog.dart';
 class AddReply extends StatefulWidget {
   final String postID;
   final String commentID;
-  const AddReply({required this.postID, required this.commentID});
+  final String commenterUsername;
+  const AddReply({required this.postID, required this.commentID, required this.commenterUsername});
   @override
   _AddReplyState createState() => _AddReplyState();
 }
@@ -59,7 +60,8 @@ class _AddReplyState extends State<AddReply> {
         .collection('comments')
         .doc(widget.commentID)
         .collection('replies');
-
+    final myUserReplies =
+        firestore.collection('Users').doc(_username).collection('My Replies');
     final myMiniProfile = MiniProfile(username: _username, imgUrl: myUserImg);
     final DateTime rightNow = DateTime.now();
     String _generateCommentId() {
@@ -116,6 +118,13 @@ class _AddReplyState extends State<AddReply> {
         'likeCount': 0,
         'replier': _username,
       });
+      batch.set(myUserReplies.doc(replyID), {
+        'post ID': widget.postID,
+        'comment ID': widget.commentID,
+        'replier': _username,
+        'description': description,
+        'date': rightNow,
+      });
       batch.update(targetComment, {'replyCount': FieldValue.increment(1)});
       return batch.commit().then((value) async {
         var secondBatch = firestore.batch();
@@ -132,6 +141,7 @@ class _AddReplyState extends State<AddReply> {
                 'comment': widget.commentID,
                 'user': _username,
                 'token': token,
+                'date': rightNow,
               });
               secondBatch.update(firestore.collection('Users').doc(commenter),
                   {'numOfCommentRepliesNotifs': FieldValue.increment(1)});
@@ -152,6 +162,7 @@ class _AddReplyState extends State<AddReply> {
               'comment': widget.commentID,
               'user': _username,
               'token': token,
+              'date': rightNow,
             });
             secondBatch.update(firestore.collection('Users').doc(commenter),
                 {'numOfCommentRepliesNotifs': FieldValue.increment(1)});
@@ -202,8 +213,7 @@ class _AddReplyState extends State<AddReply> {
     final String myUserImg = _myProfile.getProfileImage;
     final void Function(Reply) _replyComment =
         Provider.of<FullCommentHelper>(context, listen: false).replyComment;
-    final String _commenter =
-        Provider.of<FullCommentHelper>(context, listen: false).username;
+
     final ProfileImage _userImage = ProfileImage(
       username: _username,
       url: _image,
@@ -237,7 +247,7 @@ class _AddReplyState extends State<AddReply> {
           if (isLoading) {
           } else {
             if (_key.currentState!.validate()) {
-              addReply(_commenter, _username, myUserImg, _controller.value.text,
+              addReply(widget.commenterUsername, _username, myUserImg, _controller.value.text,
                   _replyComment);
             } else {}
           }
@@ -266,7 +276,7 @@ class _AddReplyState extends State<AddReply> {
             if (isLoading) {
             } else {
               if (_key.currentState!.validate()) {
-                addReply(_commenter, _username, myUserImg,
+                addReply(widget.commenterUsername, _username, myUserImg,
                     _controller.value.text, _replyComment);
               } else {}
             }

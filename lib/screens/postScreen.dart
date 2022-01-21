@@ -10,6 +10,7 @@ import '../models/post.dart';
 import '../models/posterProfile.dart';
 import '../providers/myProfileProvider.dart';
 import '../providers/fullPostHelper.dart';
+import '../providers/themeModel.dart';
 import '../widgets/adaptiveText.dart';
 import '../widgets/title.dart';
 import '../widgets/fullPost.dart';
@@ -61,6 +62,16 @@ class _PostScreenState extends State<PostScreen> {
     if (post.exists) {
       dynamic getter(String field) => post.get(field);
       final postID = post.id;
+      dynamic location = '';
+      String locationName = '';
+      if (post.data()!.containsKey('location')) {
+        final actualLocation = getter('location');
+        location = actualLocation;
+      }
+      if (post.data()!.containsKey('locationName')) {
+        final actualLocationName = getter('locationName');
+        locationName = actualLocationName;
+      }
       final String poster = getter('poster');
       final posterUser = await usersCollection.doc(poster).get();
       final posterVisibility = posterUser.get('Visibility');
@@ -105,6 +116,8 @@ class _PostScreenState extends State<PostScreen> {
         postedDate: serverpostedDate,
         topics: postTopics,
         imgUrls: imgUrls,
+        location: location,
+        locationName: locationName,
       );
       _post.setter();
       notifPost = _post;
@@ -326,6 +339,7 @@ class _PostScreenState extends State<PostScreen> {
   Widget build(BuildContext context) {
     final double _deviceHeight = MediaQuery.of(context).size.height;
     final double _deviceWidth = MediaQuery.of(context).size.width;
+    final bool selectedAnchorMode = Provider.of<ThemeModel>(context).anchorMode;
     return FutureBuilder(
         future: (widget.isNotif) ? getPost : null,
         builder: (_, snapshot) {
@@ -476,8 +490,10 @@ class _PostScreenState extends State<PostScreen> {
                   return Scaffold(
                     floatingActionButtonLocation:
                         FloatingActionButtonLocation.centerFloat,
-                    floatingActionButton: (widget.viewMode != ViewMode.post)
-                        ? MyFab(scrollController)
+                    floatingActionButton: (selectedAnchorMode)
+                        ? (widget.viewMode != ViewMode.post)
+                            ? MyFab(scrollController)
+                            : null
                         : null,
                     extendBody: true,
                     extendBodyBehindAppBar: true,

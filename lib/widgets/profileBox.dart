@@ -1,19 +1,29 @@
+import 'package:flip_card/flip_card_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:measured_size/measured_size.dart';
+import 'package:flip_card/flip_card.dart';
 import 'package:provider/provider.dart';
 import '../routes.dart';
 import '../screens/feedScreen.dart';
 import '../models/profile.dart';
 import '../models/screenArguments.dart';
 import '../providers/myProfileProvider.dart';
+import '../providers/otherProfileProvider.dart';
 import '../my_flutter_app_icons.dart' as customIcons;
 import 'profileImage.dart';
 import 'adaptiveText.dart';
 import 'linkButton.dart';
 import 'chatButton.dart';
 import 'qrCode.dart';
+import 'profileBackside.dart';
 
 class ProfileBox extends StatefulWidget {
+  final String additionalWebsite;
+  final String additionalEmail;
+  final String additionalNumber;
+  final dynamic additionalAddress;
+  final String additionalAddressName;
   final bool isInPreview;
   final bool showBio;
   final bool isMyProfile;
@@ -33,6 +43,11 @@ class ProfileBox extends StatefulWidget {
   final dynamic instance;
   final bool imBlocked;
   const ProfileBox({
+    required this.additionalWebsite,
+    required this.additionalEmail,
+    required this.additionalNumber,
+    required this.additionalAddress,
+    required this.additionalAddressName,
     required this.isInPreview,
     required this.showBio,
     required this.isMyProfile,
@@ -58,6 +73,8 @@ class ProfileBox extends StatefulWidget {
 }
 
 class _ProfileBoxState extends State<ProfileBox> {
+  double occupiedHeight = 0.0;
+  final _flipController = FlipCardController();
   _showDialog(BuildContext context) {
     showDialog(
         context: context,
@@ -151,11 +168,22 @@ class _ProfileBoxState extends State<ProfileBox> {
     final Size _querySize = MediaQuery.of(context).size;
     final double _deviceHeight = _querySize.height;
     final double _deviceWidth = _querySize.width;
-    final Color _primarySwatch = Theme.of(context).primaryColor;
+    Color _primarySwatch = Theme.of(context).primaryColor;
+    Color _accentColor = Theme.of(context).accentColor;
     const SizedBox _heightbox1 = SizedBox(height: 25.0);
     const SizedBox _heightBox = SizedBox(height: 50.0);
     final String myUsername =
         Provider.of<MyProfile>(context, listen: false).getUsername;
+    bool hasSpotlight =
+        Provider.of<MyProfile>(context, listen: false).getHasSpotlight;
+    if (!widget.isMyProfile && !widget.isInPreview) {
+      _primarySwatch =
+          Provider.of<OtherProfile>(context, listen: false).getPrimaryColor;
+      _accentColor =
+          Provider.of<OtherProfile>(context, listen: false).getAccentColor;
+      hasSpotlight =
+          Provider.of<OtherProfile>(context, listen: false).getHasSpotlight;
+    }
     final List<Widget> _stuff = [
       Row(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -407,107 +435,175 @@ class _ProfileBoxState extends State<ProfileBox> {
       if (widget.showBio) _heightBox,
       if (!widget.showBio) const Spacer(),
     ];
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.only(
-          topLeft: const Radius.circular(
-            30.50,
-          ),
-          topRight: const Radius.circular(
-            30.50,
-          ),
-        ),
-        border: (widget.isInPreview)
-            ? Border.all(
-                width: 0.50,
-              )
-            : null,
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: const Radius.circular(
-            30.0,
-          ),
-          topRight: const Radius.circular(
-            30.0,
-          ),
-        ),
+    return FlipCard(
+      flipOnTouch: (widget.isInPreview)
+          ? false
+          : (widget.isMyProfile)
+              ? (widget.additionalWebsite != '' ||
+                      widget.additionalEmail != '' ||
+                      widget.additionalNumber != '' ||
+                      widget.additionalAddress != '')
+                  ? true
+                  : false
+              : (widget.imBlocked)
+                  ? (myUsername.startsWith('Linkspeak'))
+                      ? true
+                      : false
+                  : (!widget.publicProfile! && !widget.imLinkedToThem!)
+                      ? (myUsername.startsWith('Linkspeak'))
+                          ? true
+                          : false
+                      : (widget.additionalWebsite != '' ||
+                              widget.additionalEmail != '' ||
+                              widget.additionalNumber != '' ||
+                              widget.additionalAddress != '')
+                          ? true
+                          : false,
+      controller: _flipController,
+      front: MeasuredSize(
+        onChange: (size) {
+          setState(() {
+            occupiedHeight = size.height;
+          });
+        },
         child: Container(
-          color: widget.boxColor,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: _deviceHeight * 0.35,
-              maxHeight: _deviceHeight * 1.2,
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.only(
+              topLeft: const Radius.circular(
+                30.50,
+              ),
+              topRight: const Radius.circular(
+                30.50,
+              ),
             ),
-            child: LimitedBox(
-              maxHeight: widget.isInPreview ? _deviceHeight * 0.4 : 0,
-              maxWidth: double.infinity,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Container(
-                    color: _primarySwatch,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        IconButton(
-                          tooltip: 'back',
-                          icon: const Icon(
-                            customIcons.MyFlutterApp.curve_arrow,
-                          ),
-                          onPressed: () {
-                            if (widget.isInPreview)
-                              FeedScreen.sheetOpen = false;
-                            Navigator.pop(context);
-                          },
-                          color: Colors.white,
+            border: (widget.isInPreview)
+                ? Border.all(
+                    width: 0.50,
+                  )
+                : null,
+          ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: const Radius.circular(
+                30.0,
+              ),
+              topRight: const Radius.circular(
+                30.0,
+              ),
+            ),
+            child: Container(
+              color: widget.boxColor,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: _deviceHeight * 0.35,
+                  maxHeight: _deviceHeight * 1.2,
+                ),
+                child: LimitedBox(
+                  maxHeight: widget.isInPreview ? _deviceHeight * 0.4 : 0,
+                  maxWidth: double.infinity,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Container(
+                        color: _primarySwatch,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            IconButton(
+                              tooltip: 'back',
+                              icon: const Icon(
+                                customIcons.MyFlutterApp.curve_arrow,
+                              ),
+                              onPressed: () {
+                                if (widget.isInPreview)
+                                  FeedScreen.sheetOpen = false;
+                                Navigator.pop(context);
+                              },
+                              color: Colors.white,
+                            ),
+                            if (!widget.imBlocked ||
+                                myUsername.startsWith('Linkspeak'))
+                              visIcon(widget.myVisibility)!,
+                            (widget.isMyProfile)
+                                ? IconButton(
+                                    tooltip: 'More',
+                                    icon: const Icon(
+                                      Icons.menu_rounded,
+                                      size: 31.0,
+                                    ),
+                                    color: Colors.white,
+                                    onPressed: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        RouteGenerator.settingsScreen,
+                                      );
+                                    },
+                                  )
+                                : GestureDetector(
+                                    onTap: widget.handler,
+                                    child: widget.rightButton),
+                          ],
                         ),
-                        if (!widget.imBlocked ||
-                            myUsername.startsWith('Linkspeak'))
-                          visIcon(widget.myVisibility)!,
-                        (widget.isMyProfile)
-                            ? IconButton(
-                                tooltip: 'More',
-                                icon: const Icon(
-                                  Icons.menu_rounded,
-                                  size: 31.0,
+                      ),
+                      if (!widget.isInPreview)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Container(
+                              decoration: BoxDecoration(
+                                color: _primarySwatch,
+                                borderRadius: BorderRadius.only(
+                                  bottomLeft: const Radius.circular(10.0),
+                                  bottomRight: const Radius.circular(10.0),
                                 ),
-                                color: Colors.white,
-                                onPressed: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    RouteGenerator.settingsScreen,
-                                  );
-                                },
-                              )
-                            : GestureDetector(
-                                onTap: widget.handler,
-                                child: widget.rightButton),
-                      ],
-                    ),
+                              ),
+                              child: IconButton(
+                                icon: Icon(
+                                  customIcons.MyFlutterApp.spotlight,
+                                  color: _accentColor,
+                                ),
+                                onPressed: () {},
+                              ),
+                            ),
+                          ],
+                        ),
+                      if (widget.showBio) _heightbox1,
+                      if (!widget.showBio) const Spacer(),
+                      if (!widget.isInPreview)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7.0,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[..._stuff],
+                          ),
+                        ),
+                      if (widget.isInPreview) ..._stuff,
+                    ],
                   ),
-                  if (widget.showBio) _heightbox1,
-                  if (!widget.showBio) const Spacer(),
-                  if (!widget.isInPreview)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7.0,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[..._stuff],
-                      ),
-                    ),
-                  if (widget.isInPreview) ..._stuff,
-                ],
+                ),
               ),
             ),
           ),
         ),
       ),
+      back: (widget.isInPreview)
+          ? Container()
+          : BackSide(
+              givenHeight: occupiedHeight,
+              additionalWebsite: widget.additionalWebsite,
+              additionalEmail: widget.additionalEmail,
+              additionalNumber: widget.additionalNumber,
+              additionalAddress: widget.additionalAddress,
+              additionalAddressName: widget.additionalAddressName,
+              controller: widget.controller!,
+              isMyProfile: widget.isMyProfile,
+            ),
     );
   }
 }

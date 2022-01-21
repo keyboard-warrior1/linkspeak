@@ -1,7 +1,7 @@
 name: link_speak
 description: A new Flutter project.
 publish_to: 'none'
-version: 5.1.0+25
+version: 10.1.0+30
 environment:
   sdk: ">=2.12.0-259.12.beta"
 dependencies:
@@ -13,10 +13,10 @@ dependencies:
   firebase_storage: ^8.1.1
   firebase_messaging: ^10.0.1
   cloud_functions: ^3.0.3
-  provider: ^5.0.0-nullsafety.3
+  provider: ^6.0.2
   intl: ^0.17.0-nullsafety.2
   flutter_svg: ^0.22.0
-  wechat_assets_picker: ^5.5.3+1
+  wechat_assets_picker: ^6.3.1
   path: ^1.8.0
   path_provider: ^2.0.1
   auto_size_text: ^3.0.0-nullsafety.0
@@ -50,6 +50,17 @@ dependencies:
   flutter_nsfw: ^0.0.4
   flutter_video_info: ^1.2.0
   sign_in_with_apple: ^3.3.0
+  google_maps_flutter: ^2.1.1
+  shake: ^2.0.0
+  location: ^4.3.0
+  google_place: ^0.4.3
+  geocoding: ^2.0.1
+  flutter_inappwebview: ^5.3.2
+  flutter_linkify: ^5.0.2
+  measured_size: ^1.0.0
+  validators: ^3.0.0
+  flip_card: ^0.6.0
+  # intl_phone_number_input: ^0.7.0+2
   # social_share: ^2.1.1
   # stamp_image: ^0.0.2
   # font_awesome_flutter: ^9.2.0
@@ -63,6 +74,7 @@ flutter:
     - assets/nsfw.tflite
     - assets/images/splash.png
     - assets/images/noposts.svg
+    - assets/images/powered_by_google.png
   fonts:
     - family: RobotoCondensed
       fonts:

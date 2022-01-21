@@ -10,12 +10,14 @@ import '../models/profile.dart';
 import '../models/post.dart';
 import '../providers/myProfileProvider.dart';
 import '../providers/fullPostHelper.dart';
+import '../providers/themeModel.dart';
 import '../widgets/settingsBar.dart';
 import '../widgets/adaptiveText.dart';
 import '../widgets/postWidget.dart';
 import '../widgets/myFab.dart';
 import '../widgets/shareWidget.dart';
 import '../widgets/ads.dart';
+
 class LikedPostScreen extends StatefulWidget {
   const LikedPostScreen();
   static ScrollController scrollController = ScrollController();
@@ -188,6 +190,16 @@ class _LikedPostScreenState extends State<LikedPostScreen> {
                     poster != myUsername)) {
               noShow.add(postID);
             } else {
+              dynamic location = '';
+              String locationName = '';
+              if (post.data()!.containsKey('location')) {
+                final actualLocation = getter('location');
+                location = actualLocation;
+              }
+              if (post.data()!.containsKey('locationName')) {
+                final actualLocationName = getter('locationName');
+                locationName = actualLocationName;
+              }
               final String description = getter('description');
               final serverpostedDate = getter('date').toDate();
               final int numOfLikes = getter('likes');
@@ -224,6 +236,8 @@ class _LikedPostScreenState extends State<LikedPostScreen> {
                 postedDate: serverpostedDate,
                 topics: postTopics,
                 imgUrls: imgUrls,
+                location: location,
+                locationName: locationName,
               );
               _post.setter();
               tempPosts.add(_post);
@@ -239,13 +253,9 @@ class _LikedPostScreenState extends State<LikedPostScreen> {
         isLastPage = true;
       }
       setState(() {});
-      print('total = $total');
     } while (sub.length > tempPosts.length && !isLastPage);
     likedPosts.addAll([...tempPosts]);
     setLikedPosts(likedPosts);
-    print('IDs = $length');
-    print('hidden = ${noShow.length}');
-    print('posts = ${likedPosts.length}');
     final int total = noShow.length + likedPosts.length;
     final int remainder = length - total;
     if (remainder <= 0) {
@@ -333,6 +343,16 @@ class _LikedPostScreenState extends State<LikedPostScreen> {
                       poster != myUsername)) {
                 noShow.add(post.id);
               } else {
+                dynamic location = '';
+                String locationName = '';
+                if (post.data()!.containsKey('location')) {
+                  final actualLocation = getter('location');
+                  location = actualLocation;
+                }
+                if (post.data()!.containsKey('locationName')) {
+                  final actualLocationName = getter('locationName');
+                  locationName = actualLocationName;
+                }
                 final String description = getter('description');
                 final serverpostedDate = getter('date').toDate();
                 final int numOfLikes = getter('likes');
@@ -370,6 +390,8 @@ class _LikedPostScreenState extends State<LikedPostScreen> {
                   postedDate: serverpostedDate,
                   topics: postTopics,
                   imgUrls: imgUrls,
+                  location: location,
+                  locationName: locationName,
                 );
                 _post.setter();
                 tempPosts.add(_post);
@@ -385,7 +407,6 @@ class _LikedPostScreenState extends State<LikedPostScreen> {
           isLastPage = true;
         }
         setState(() {});
-        print('total = $total');
       } while (sub.length > tempPosts.length && !isLastPage);
       likedPosts.addAll([...tempPosts]);
       isLoading = false;
@@ -396,9 +417,6 @@ class _LikedPostScreenState extends State<LikedPostScreen> {
         isLastPage = true;
       }
       setState(() {});
-      print('IDs = $length');
-      print('hidden = ${noShow.length}');
-      print('posts = ${likedPosts.length}');
     }
   }
 
@@ -441,6 +459,7 @@ class _LikedPostScreenState extends State<LikedPostScreen> {
     final likedPostIDs = Provider.of<MyProfile>(context).getLikedPostIDs;
     final setLikedPosts =
         Provider.of<MyProfile>(context, listen: false).setLikedPostas;
+    final bool selectedAnchorMode = Provider.of<ThemeModel>(context).anchorMode;
     final myUsername =
         Provider.of<MyProfile>(context, listen: false).getUsername;
     const Widget emptyBox = const SizedBox(
@@ -449,7 +468,8 @@ class _LikedPostScreenState extends State<LikedPostScreen> {
     );
     return Scaffold(
       backgroundColor: Colors.white10,
-      floatingActionButton: MyFab(_scrollController),
+      floatingActionButton:
+          (selectedAnchorMode) ? MyFab(_scrollController) : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: FutureBuilder(
         future: _getLikedPosts,
@@ -473,7 +493,6 @@ class _LikedPostScreenState extends State<LikedPostScreen> {
             );
           }
           if (snapshot.hasError) {
-            print(snapshot.error);
             return SafeArea(
               child: SizedBox(
                 height: _deviceHeight,

@@ -1,9 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:link_speak/providers/myProfileProvider.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../providers/myProfileProvider.dart';
 import '../widgets/newReplies.dart';
-
 import '../widgets/settingsBar.dart';
 
 class CommentRepliesNotifscreen extends StatefulWidget {
@@ -168,6 +167,7 @@ class _CommentRepliesNotifscreenState extends State<CommentRepliesNotifscreen> {
                                     source[index].data()['post'].toString(),
                                 commentID:
                                     source[index].data()['comment'].toString(),
+                                    date: source[index].data()['date'].toDate(),
                               );
                             }
                             return emptyBox;

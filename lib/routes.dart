@@ -1,4 +1,3 @@
-import 'dart:io' show Platform;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
@@ -18,6 +17,7 @@ import 'screens/linksScreen.dart';
 import 'screens/linkedToScreen.dart';
 import 'screens/favoritePostsScreen.dart';
 import 'screens/editProfile.dart';
+import 'screens/additionalDetails.dart';
 import 'screens/likedPostScreen.dart';
 import 'screens/notificationSettingsScreen.dart';
 import 'screens/termScreen.dart';
@@ -38,6 +38,11 @@ import 'screens/splashScreen.dart';
 import 'screens/pickUsernameScreen.dart';
 import 'screens/commentLikesScreen.dart';
 import 'screens/findPostScreen.dart';
+import 'screens/fullMapScreen.dart';
+import 'screens/pickAddressScreen.dart';
+import 'screens/inAppBrowser.dart';
+import 'screens/linkModeScreen.dart';
+import 'screens/customIconScreen.dart';
 
 class RouteGenerator {
   static const loginScreen = '/login';
@@ -54,6 +59,7 @@ class RouteGenerator {
   static const linkedToScreen = '/linkedTo';
   static const favPostScreen = '/favPosts';
   static const editProfileScreen = '/editProfile';
+  static const additionalInfoScreen = '/additionalInfo';
   static const notificationSettingScreen = '/notificationSettings';
   static const likedPostScreen = '/likedPosts';
   static const termScreen = '/terms';
@@ -76,6 +82,11 @@ class RouteGenerator {
   static const themeScreen = '/themes';
   static const pickUsernameScreen = '/pickUsername';
   static const findPostScreen = '/findPost';
+  static const fullMapScreen = '/fullMap';
+  static const profilePickAddress = '/profilePickAddress';
+  static const browser = '/browser';
+  static const linkMode = '/linkMode';
+  static const customIcon = '/customIcon';
   RouteGenerator._();
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -110,10 +121,52 @@ class RouteGenerator {
           type: PageTransitionType.leftToRight,
           child: const HelpScreen(),
         );
+      case fullMapScreen:
+        final ScreenArguments args = settings.arguments as ScreenArguments;
+        final MapScreenArgs mapScreenArgs = args as MapScreenArgs;
+        return PageTransition(
+          type: PageTransitionType.rightToLeft,
+          child: FullScreenMap(
+            address: mapScreenArgs.address,
+            addressName: mapScreenArgs.addressName,
+          ),
+        );
+      case browser:
+        final ScreenArguments args = settings.arguments as ScreenArguments;
+        final BrowserScreenArgs mapScreenArgs = args as BrowserScreenArgs;
+        return PageTransition(
+          type: PageTransitionType.bottomToTop,
+          child: InAppBrowser(mapScreenArgs.url),
+        );
+      case profilePickAddress:
+        final ScreenArguments args = settings.arguments as ScreenArguments;
+        final ProfilePickAddressScreenArgs pickScreenArgs =
+            args as ProfilePickAddressScreenArgs;
+        return PageTransition(
+          type: PageTransitionType.rightToLeft,
+          child: PickAddressScreen(
+            isInPost: pickScreenArgs.isInPost,
+            somethingChanged: pickScreenArgs.somethingChanged,
+            changeAddress: pickScreenArgs.changeAddress,
+            changeAddressName: pickScreenArgs.changeAddressName,
+            changeStateAddressName: pickScreenArgs.changeStateAddressName,
+            changePoint: pickScreenArgs.changePoint,
+          ),
+        );
       case scannerScreen:
         return PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 0),
           pageBuilder: (ctx, dbl, _) => const Scanner(),
+        );
+      case customIcon:
+        return PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 0),
+          pageBuilder: (ctx, dbl, _) => const CustomIconScreen(),
+        );
+      case linkMode:
+        return PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 0),
+          pageBuilder: (ctx, dbl, _) => const LinkModeScreen(),
         );
       case findPostScreen:
         return PageRouteBuilder(
@@ -164,6 +217,7 @@ class RouteGenerator {
             commentID: commentRepliesScreenArguments.commentID,
             instance: commentRepliesScreenArguments.instance,
             isNotif: commentRepliesScreenArguments.isNotif,
+            commenterName: commentRepliesScreenArguments.commenterName,
           ),
         );
       case commentLikesScreen:
@@ -325,6 +379,13 @@ class RouteGenerator {
             seconds: 0,
           ),
           pageBuilder: (_, __, ___) => const EditProfileScreen(),
+        );
+      case additionalInfoScreen:
+        return PageTransition(
+          type: PageTransitionType.rightToLeftJoined,
+          curve: Curves.fastOutSlowIn,
+          childCurrent: const EditProfileScreen(),
+          child: const AdditionalInfoScreen(),
         );
       case blockedUserScreen:
         return PageRouteBuilder(

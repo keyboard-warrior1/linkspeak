@@ -48,6 +48,8 @@
         <true/>
         <key>NSCameraUsageDescription</key>
         <string>Linkspeak needs camera access to scan QR codes.</string>
+        <key>NSLocationWhenInUsageDescription</key>
+        <string>Linkspeak needs permission to access device location.</string>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleExecutable</key>

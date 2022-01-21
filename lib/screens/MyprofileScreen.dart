@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import '../providers/themeModel.dart';
 import '../providers/myProfileProvider.dart';
 import '../widgets/title.dart';
 import '../widgets/profile.dart';
 import '../widgets/myFab.dart';
+import '../widgets/myProfileBanner.dart';
 
 class MyProfileScreen extends StatefulWidget {
   const MyProfileScreen();
@@ -29,10 +30,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool selectedAnchorMode = Provider.of<ThemeModel>(context).anchorMode;
     final double _deviceHeight = MediaQuery.of(context).size.height;
-    final Widget _heightBox = SizedBox(
-      height: _deviceHeight * 0.07,
-    );
+    const Widget _myBanner = const MyProfileBanner(false);
     final Widget _title = Align(
       alignment: Alignment.topLeft,
       child: PreferredSize(
@@ -54,10 +54,16 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       child: ListView(
         controller: scrollController,
         children: <Widget>[
-          _heightBox,
+          SizedBox(height: _deviceHeight * 0.12),
           Consumer<MyProfile>(
             builder: (ctx, profile, __) {
               final _visibility = profile.getVisibility;
+              final String _additionalWebsite = profile.getAdditionalWebsite;
+              final String _additionalEmail = profile.getAdditionalEmail;
+              final String _additionalNumber = profile.getAdditionalNumber;
+              final dynamic _additionalAddress = profile.getAdditionalAddress;
+              final String _additionalAddressName =
+                  profile.getAdditionalAddressName;
               final String _imageUrl = profile.getProfileImage;
               final String _username = profile.getUsername;
               final String _bio = profile.getBio;
@@ -68,6 +74,11 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
               final List<String> _topicNames = profile.getTopics;
               final void Function(int) _removeTopic = profile.removeTopic;
               final Widget _profile = Profile(
+                additionalWebsite: _additionalWebsite,
+                additionalEmail: _additionalEmail,
+                additionalNumber: _additionalNumber,
+                additionalAddress: _additionalAddress,
+                additionalAddressName: _additionalAddressName,
                 isMyProfile: true,
                 imLinkedToThem: false,
                 visibility: _visibility,
@@ -94,7 +105,8 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     );
     return Scaffold(
       backgroundColor: Colors.white10,
-      floatingActionButton: MyFab(scrollController),
+      floatingActionButton:
+          (selectedAnchorMode) ? MyFab(scrollController) : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       extendBodyBehindAppBar: true,
       extendBody: true,
@@ -102,6 +114,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       body: SafeArea(
         child: Stack(
           children: <Widget>[
+            _myBanner,
             _title,
             _myProfile,
           ],

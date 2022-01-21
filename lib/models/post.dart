@@ -15,6 +15,8 @@ class Post {
   final int numOfTopics;
   final DateTime postedDate;
   final bool sensitiveContent;
+  final dynamic location;
+  final String locationName;
   Post({
     required this.key,
     required this.instance,
@@ -28,6 +30,8 @@ class Post {
     required this.numOfTopics,
     required this.numOfLikes,
     required this.numOfComments,
+    required this.location,
+    required this.locationName,
   });
   void setter() {
     instance.setUserImgUrl(poster.getProfileImage);
@@ -46,6 +50,8 @@ class Post {
     instance.setPostedDate(postedDate);
     instance.setPostID(postID);
     instance.setPosterID(poster.getUsername);
+    instance.setLocation(location);
+    instance.setLocationName(locationName);
     // instance.setInstance(instance);
   }
 }

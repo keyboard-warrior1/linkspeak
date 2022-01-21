@@ -6,11 +6,14 @@ import '../models/profile.dart';
 import '../models/profiler.dart';
 import '../providers/otherProfileProvider.dart';
 import '../providers/myProfileProvider.dart';
+import '../providers/themeModel.dart';
 import '../widgets/adaptiveText.dart';
 import '../widgets/title.dart';
 import '../widgets/profile.dart' as profWidget;
 import '../widgets/popUpMenuButton.dart';
 import '../widgets/myFab.dart';
+import '../widgets/otherProfileBanner.dart';
+import '../widgets/profileSensitiveBanner.dart';
 import '../my_flutter_app_icons.dart' as customIcon;
 
 class OtherProfileScreen extends StatefulWidget {
@@ -50,10 +53,31 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
   Future<void> getProfile(
     String _myUsername,
     List<String> myBlockedIDs,
+    Color themePrimaryColor,
+    Color themeAccentColor,
   ) async {
+    final _rightNow = DateTime.now();
+    final myViewedProfiles = firestore
+        .collection('Users')
+        .doc(_myUsername)
+        .collection('Viewed Profiles');
+    final profileViewers =
+        firestore.collection('Users').doc(widget.userID).collection('Viewers');
+    var batch = firestore.batch();
+    batch.set(myViewedProfiles.doc(), {
+      'ID': widget.userID,
+      'date': _rightNow,
+    });
+    batch.set(profileViewers.doc(), {
+      'ID': _myUsername,
+      'date': _rightNow,
+    });
+    await batch.commit();
     final _theUser = firestore.collection('Users').doc(widget.userID);
     final _thisUser = await _theUser.get();
     final userLinks = await _theUser.collection('Links').doc(_myUsername).get();
+    final userSpotlight = await _theUser.collection('My Spotlight').get();
+    final spotlightDocs = userSpotlight.docs;
     final userBlocks =
         await _theUser.collection('Blocked').doc(_myUsername).get();
     final userRequests =
@@ -75,6 +99,56 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     final TheVisibility vis = generateVis(serverVis);
     final String username = getter('Username');
     final String imgUrl = getter('Avatar');
+    String bannerUrl = 'None';
+    bool bannerNSFW = false;
+    bool showColors = true;
+    String additionalWebsite = '';
+    String additionalEmail = '';
+    String additionalNumber = '';
+    dynamic additionalAddress = '';
+    String additionalAddressName = '';
+    Color otherPrimaryColor = themePrimaryColor;
+    Color otherAccentColor = themeAccentColor;
+    if (_thisUser.data()!.containsKey('Banner')) {
+      final actualBanner = getter('Banner');
+      bannerUrl = actualBanner;
+    }
+    if (_thisUser.data()!.containsKey('bannerNSFW')) {
+      final actualNSFW = getter('bannerNSFW');
+      bannerNSFW = actualNSFW;
+    }
+    if (_thisUser.data()!.containsKey('additionalWebsite')) {
+      final actualWebsite = getter('additionalWebsite');
+      additionalWebsite = actualWebsite;
+    }
+    if (_thisUser.data()!.containsKey('additionalEmail')) {
+      final actualEmail = getter('additionalEmail');
+      additionalEmail = actualEmail;
+    }
+    if (_thisUser.data()!.containsKey('additionalNumber')) {
+      final actualNumber = getter('additionalNumber');
+      additionalNumber = actualNumber;
+    }
+    if (_thisUser.data()!.containsKey('additionalAddress')) {
+      final actualAddress = getter('additionalAddress');
+      additionalAddress = actualAddress;
+    }
+    if (_thisUser.data()!.containsKey('additionalAddressName')) {
+      final actualAddressName = getter('additionalAddressName');
+      additionalAddressName = actualAddressName;
+    }
+    if (_thisUser.data()!.containsKey('showColors')) {
+      final actualPreference = getter('showColors');
+      showColors = actualPreference;
+    }
+    if (_thisUser.data()!.containsKey('PrimaryColor')) {
+      final actualPrimary = getter('PrimaryColor');
+      if (showColors) otherPrimaryColor = Color(actualPrimary);
+    }
+    if (_thisUser.data()!.containsKey('AccentColor')) {
+      final actualAccent = getter('AccentColor');
+      if (showColors) otherAccentColor = Color(actualAccent);
+    }
     final String bio = getter('Bio');
     final int numOfLinks = getter('numOfLinks');
     final int numOfLinkedTo = getter('numOfLinked');
@@ -92,7 +166,15 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
       otherProfileProvider: instance,
       visibility: vis,
       username: username,
+      additionalWebsite: additionalWebsite,
+      additionalEmail: additionalEmail,
+      additionalNumber: additionalNumber,
+      additionalAddress: additionalAddress,
+      additionalAddressName: additionalAddressName,
       imgUrl: imgUrl,
+      bannerUrl: bannerUrl,
+      bannerNSFW: bannerNSFW,
+      hasSpotlight: spotlightDocs.isNotEmpty,
       bio: bio,
       numOfLinks: numOfLinks,
       numOfLinkedTo: numOfLinkedTo,
@@ -100,6 +182,8 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
       topics: topics,
       posts: [],
       activityStatus: activity,
+      primaryColor: otherPrimaryColor,
+      accentColor: otherAccentColor,
     );
   }
 
@@ -112,11 +196,14 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
         Provider.of<MyProfile>(context, listen: false).getUsername;
     final List<String> myBlockedIDs =
         Provider.of<MyProfile>(context, listen: false).getBlockedIDs;
-    Future<void> _getProfile = getProfile(_myUsername, myBlockedIDs);
+    final bool selectedAnchorMode = Provider.of<ThemeModel>(context).anchorMode;
+    Future<void> _getProfile =
+        getProfile(_myUsername, myBlockedIDs, _primarySwatch, _accentColor);
 
     return Scaffold(
       backgroundColor: Colors.white10,
-      floatingActionButton: MyFab(scrollController),
+      floatingActionButton:
+          (selectedAnchorMode) ? MyFab(scrollController) : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       extendBodyBehindAppBar: true,
       body: FutureBuilder(
@@ -278,9 +365,6 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
               );
             }
 
-            final Widget _heightBox = SizedBox(
-              height: _deviceHeight * 0.07,
-            );
             final Widget _title = Align(
               alignment: Alignment.topLeft,
               child: PreferredSize(
@@ -302,6 +386,12 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                     final OtherProfile profileNo =
                         Provider.of<OtherProfile>(context, listen: false);
                     profileNo.setter(
+                      additionalWebsite: profile.additionalWebsite,
+                      additionalEmail: profile.additionalEmail,
+                      additionalNumber: profile.additionalNumber,
+                      additionalAddress: profile.additionalAddress,
+                      additionalAddressName: profile.additionalAddressName,
+                      hasSpotlight: profile.hasSpotlight,
                       linkedToThem: profile.imLinkedtoThem,
                       linkedTOMe: profile.linkedToMe,
                       imBlocked: profile.imBlocked,
@@ -309,6 +399,8 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                       requestSent: profile.linkRequestSent,
                       vis: profile.visibility,
                       imgUrl: profile.imgUrl,
+                      bannerUrl: profile.bannerUrl,
+                      bannerNSFW: profile.bannerNSFW,
                       username: profile.username,
                       bio: profile.bio,
                       numOfLinks: profile.numOfLinks,
@@ -317,6 +409,8 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                       numOfPosts: profile.numOfPosts,
                       postIDs: profile.posts,
                       activity: profile.activityStatus,
+                      primaryColor: profile.primaryColor,
+                      accentColor: profile.accentColor,
                     );
                     return Builder(
                       builder: (context) {
@@ -324,6 +418,14 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                             Provider.of<OtherProfile>(context);
                         final OtherProfile _profileNoListen =
                             Provider.of<OtherProfile>(context, listen: false);
+                        final _additionalWebsite =
+                            _profile.getAdditionalWebsite;
+                        final _additionalEmail = _profile.getAdditionalEmail;
+                        final _additionalNumber = _profile.getAdditionalNumber;
+                        final _additionalAddress =
+                            _profile.getAdditionalAddress;
+                        final _additionalAddressName =
+                            _profile.getAdditionalAddressName;
                         final block = _profileNoListen.block;
                         final unblock = _profileNoListen.unblock;
                         final remove = _profileNoListen.removeThem;
@@ -338,6 +440,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                         final imLinkedToThem = profile.imLinkedtoThem;
                         final isBlocked = _profile.isBlocked;
                         final isLinkedToMe = _profile.linkedToMe;
+                        const Widget _otherBanner = const OtherProfileBanner();
                         final dynamic _rightButton = Padding(
                           padding: const EdgeInsets.only(right: 15.0),
                           child: Transform.rotate(
@@ -373,7 +476,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                                     hidePost: () {},
                                     deletePost: () {},
                                     unhidePost: () {},
-                                    previewSetstate: (){},
+                                    previewSetstate: () {},
                                   ),
                                 ),
                               ],
@@ -382,6 +485,11 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                         );
                         final Widget theprofile = profWidget.Profile(
                           isMyProfile: false,
+                          additionalWebsite: _additionalWebsite,
+                          additionalEmail: _additionalEmail,
+                          additionalNumber: _additionalNumber,
+                          additionalAddress: _additionalAddress,
+                          additionalAddressName: _additionalAddressName,
                           imLinkedToThem: imLinkedToThem,
                           visibility: visibility,
                           imageUrl: img,
@@ -399,6 +507,8 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                           instance: profile.otherProfileProvider,
                           imBlocked: profile.imBlocked,
                         );
+                        final bool bannerNSFW = _profile.getBannerNSFW;
+                        final bool showBanner = _profile.getShowBanner;
                         final Widget _otherProfile = NotificationListener<
                             OverscrollIndicatorNotification>(
                           onNotification: (overscroll) {
@@ -408,13 +518,18 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                           child: ListView(
                             controller: scrollController,
                             children: <Widget>[
-                              _heightBox,
+                              SizedBox(
+                                  height: _deviceHeight * 0.12,
+                                  child: (bannerNSFW && !showBanner)
+                                      ? const ProfileSensitiveBanner()
+                                      : null),
                               theprofile,
                             ],
                           ),
                         );
                         return Stack(
                           children: <Widget>[
+                            _otherBanner,
                             _title,
                             _otherProfile,
                           ],

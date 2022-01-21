@@ -45,6 +45,11 @@ class Preview extends StatelessWidget {
       ),
     );
     final Widget _profile = ProfileBox(
+      additionalWebsite: '',
+      additionalEmail: '',
+      additionalNumber: '',
+      additionalAddress: '',
+      additionalAddressName: '',
       isInPreview: true,
       showBio: false,
       isMyProfile: _isMyProfile,
@@ -75,7 +80,10 @@ class Preview extends StatelessWidget {
           right: 9.0,
           left: 9.0,
         ),
-        child: _profile,
+        child: GestureDetector(
+          onTap: (_isMyProfile) ? () {} : handler,
+          child: _profile,
+        ),
       ),
     );
     controller.closed.then((value) {

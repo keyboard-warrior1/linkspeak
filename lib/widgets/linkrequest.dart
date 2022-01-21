@@ -27,6 +27,7 @@ class _NewLinkRequestState extends State<NewLinkRequest> {
       setState(() {
         _isLoading = true;
       });
+      final DateTime _rightNow = DateTime.now();
       final _myProfile = context.read<MyProfile>();
       final void Function() decreaseNotifs =
           Provider.of<MyProfile>(context, listen: false).decreaseLinkRequests;
@@ -43,8 +44,8 @@ class _NewLinkRequestState extends State<NewLinkRequest> {
           firestore.collection('Users').doc(_myProfile.getUsername.toString());
 
       /// Add New Link to My Links
-      batch.set(
-          _myLinksCollection.doc(widget.requestProfile.toString()), {'0': 1});
+      batch.set(_myLinksCollection.doc(widget.requestProfile.toString()),
+          {'date': _rightNow});
 
       /// Increment Number Of My Links
       batch.update(_myProfileDocument, {'numOfLinks': FieldValue.increment(1)});
@@ -69,7 +70,7 @@ class _NewLinkRequestState extends State<NewLinkRequest> {
       /// Add New Linked to Other Profile Linked
       batch.set(
           _otherProfileLinkedCollection.doc(_myProfile.getUsername.toString()),
-          {'0': 1});
+          {'date': _rightNow});
 
       /// Increment Number Of Other Profile Linked
       batch.update(
@@ -89,6 +90,7 @@ class _NewLinkRequestState extends State<NewLinkRequest> {
           batch.set(_newlinkedCollection, {
             'user': _myProfile.getUsername.toString(),
             'token': token,
+            'date': _rightNow,
           });
         }
       } else {
@@ -97,6 +99,7 @@ class _NewLinkRequestState extends State<NewLinkRequest> {
         batch.set(_newlinkedCollection, {
           'user': _myProfile.getUsername.toString(),
           'token': token,
+          'date': _rightNow,
         });
       }
       batch.commit().then((value) {

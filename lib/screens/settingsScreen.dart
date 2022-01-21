@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,9 +12,9 @@ import '../providers/myProfileProvider.dart';
 import '../routes.dart';
 import '../providers/appBarProvider.dart';
 import '../providers/addPostScreenState.dart';
+import '../providers/themeModel.dart';
 import '../widgets/settingsBar.dart';
 import '../widgets/switchSheet.dart';
-import '../my_flutter_app_icons.dart' as customIcons;
 
 class Settings extends StatefulWidget {
   const Settings();
@@ -39,10 +40,18 @@ class _SettingsState extends State<Settings> {
     return ListTile(
       horizontalTitleGap: 5.0,
       onTap: handler,
-      leading: Icon(
-        icon,
-        color: Colors.black,
-      ),
+      leading: (title == 'Link Mode')
+          ? Padding(
+              padding: const EdgeInsets.only(left: 3.50),
+              child: Icon(
+                icon,
+                color: Colors.black,
+              ),
+            )
+          : Icon(
+              icon,
+              color: Colors.black,
+            ),
       title: Text(
         title,
         style: const TextStyle(color: Colors.black),
@@ -198,14 +207,12 @@ class _SettingsState extends State<Settings> {
                                   RouteGenerator.splashScreen,
                                 );
                               }).catchError((onError) {
-                                print(onError);
                                 EasyLoading.showError('Failed',
                                     duration: const Duration(seconds: 5),
                                     dismissOnTap: true);
                               });
                             }
                           }).catchError((onError) {
-                            print(onError);
                             EasyLoading.showError('Failed',
                                 duration: const Duration(seconds: 5),
                                 dismissOnTap: true);
@@ -243,6 +250,10 @@ class _SettingsState extends State<Settings> {
   @override
   Widget build(BuildContext context) {
     final username = Provider.of<MyProfile>(context).getUsername;
+    final themeIconHelper = Provider.of<ThemeModel>(context);
+    final String currentIconName = themeIconHelper.selectedIconName;
+    final IconData currentIcon = themeIconHelper.themeIcon;
+    final String activeIconPath = themeIconHelper.themeIconPathActive;
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -250,13 +261,18 @@ class _SettingsState extends State<Settings> {
             const SettingsBar('Settings'),
             buildListTile(
                 () => Navigator.pushNamed(context, RouteGenerator.themeScreen),
-                Icons.format_paint_outlined,
+                // Icons.format_paint_outlined,
+                Icons.palette_outlined,
                 'Theme'),
             buildListTile(
                 () =>
                     Navigator.pushNamed(context, RouteGenerator.favPostScreen),
                 Icons.star_border,
                 'Favorites'),
+            buildListTile(
+                () => Navigator.pushNamed(context, RouteGenerator.linkMode),
+                Icons.phonelink_ring_outlined,
+                'Link Mode'),
             buildListTile(
                 () => Navigator.pushNamed(
                     context, RouteGenerator.notificationSettingScreen),
@@ -267,12 +283,29 @@ class _SettingsState extends State<Settings> {
                     context, RouteGenerator.editProfileScreen),
                 Icons.edit_outlined,
                 'Manage profile'),
-            buildListTile(
-              () =>
-                  Navigator.pushNamed(context, RouteGenerator.likedPostScreen),
-              customIcons.MyFlutterApp.upvote,
-              "Posts you've liked",
-            ),
+            if (currentIconName != 'Custom')
+              buildListTile(
+                () => Navigator.pushNamed(
+                    context, RouteGenerator.likedPostScreen),
+                currentIcon,
+                "Posts you've liked",
+              ),
+            if (currentIconName == 'Custom')
+              ListTile(
+                horizontalTitleGap: 5.0,
+                onTap: () => Navigator.pushNamed(
+                    context, RouteGenerator.likedPostScreen),
+                leading: ImageIcon(
+                  FileImage(
+                    File(activeIconPath),
+                  ),
+                  size: 35.0,
+                ),
+                title: Text(
+                  "Posts you've liked",
+                  style: const TextStyle(color: Colors.black),
+                ),
+              ),
             buildListTile(
               () => Navigator.pushNamed(context, RouteGenerator.termScreen),
               Icons.rule,

@@ -1,7 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:link_speak/providers/myProfileProvider.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../providers/myProfileProvider.dart';
 import '../widgets/newLinkedWith.dart';
 import '../widgets/settingsBar.dart';
 
@@ -16,10 +16,10 @@ class _NewLinkedScreenState extends State<NewLinkedScreen> {
   final _scrollController = ScrollController();
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   late Future<void> _newLinkedFuture;
-
   bool isLoading = false;
   bool isLastPage = false;
   List<QueryDocumentSnapshot<Map<String, dynamic>>> source = [];
+
   Future<void> getNewLinked() async {
     MyProfile _myProfile = Provider.of<MyProfile>(context, listen: false);
     final _linkedCollection = await firestore
@@ -160,6 +160,7 @@ class _NewLinkedScreenState extends State<NewLinkedScreen> {
                             } else {
                               return NewLinkedWith(
                                 userName: source[index].id,
+                                date: source[index].data()['date'].toDate(),
                               );
                             }
                             return emptyBox;

@@ -1,10 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../models/miniProfile.dart';
 import '../providers/fullPostHelper.dart';
 import '../providers/myProfileProvider.dart';
-import '../my_flutter_app_icons.dart' as customIcon;
+import '../providers/themeModel.dart';
 import 'profileImage.dart';
 
 class LikesView extends StatefulWidget {
@@ -152,6 +153,10 @@ class _LikesViewState extends State<LikesView> {
     final Color _accentColor = Theme.of(context).accentColor;
     final double deviceHeight = MediaQuery.of(context).size.height;
     final double deviceWidth = MediaQuery.of(context).size.width;
+    final themeIconHelper = Provider.of<ThemeModel>(context, listen: false);
+    final String currentIconName = themeIconHelper.selectedIconName;
+    final IconData currentIcon = themeIconHelper.themeIcon;
+    final String inactiveIconPath = themeIconHelper.themeIconPathInactive;
     final int numOfUppers = Provider.of<FullHelper>(context).getNumOfLikes;
     final String myUsername =
         Provider.of<MyProfile>(context, listen: false).getUsername;
@@ -229,8 +234,19 @@ class _LikesViewState extends State<LikesView> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(customIcon.MyFlutterApp.upvote,
-                        color: Colors.grey.shade400, size: 75.0),
+                    if (currentIconName != 'Custom')
+                      Icon(
+                        currentIcon,
+                        color: Colors.grey.shade400,
+                        size: 75.0,
+                      ),
+                    if (currentIconName == 'Custom')
+                      ImageIcon(
+                        FileImage(
+                          File(inactiveIconPath),
+                        ),
+                        size: 75.0,
+                      ),
                     const SizedBox(
                       height: 10.0,
                     ),

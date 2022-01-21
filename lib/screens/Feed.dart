@@ -117,6 +117,16 @@ class _FeedState extends State<Feed> with AutomaticKeepAliveClientMixin {
           if (!feedPosts.any((post) => post.postID == postID)) {
             if (!tempPosts.any((post) => post.postID == postID)) {
               if (!imBlocked && !myBlockedIDs.contains(poster)) {
+                dynamic location = '';
+                String locationName = '';
+                if (post.data()!.containsKey('location')) {
+                  final actualLocation = getter('location');
+                  location = actualLocation;
+                }
+                if (post.data()!.containsKey('locationName')) {
+                  final actualLocationName = getter('locationName');
+                  locationName = actualLocationName;
+                }
                 final String description = getter('description');
                 final serverpostedDate = getter('date').toDate();
                 final int numOfLikes = getter('likes');
@@ -156,6 +166,8 @@ class _FeedState extends State<Feed> with AutomaticKeepAliveClientMixin {
                   postedDate: serverpostedDate,
                   topics: postTopics,
                   imgUrls: imgUrls,
+                  location: location,
+                  locationName: locationName,
                 );
                 _post.setter();
                 tempPosts.add(_post);
@@ -188,6 +200,16 @@ class _FeedState extends State<Feed> with AutomaticKeepAliveClientMixin {
               myUsername.startsWith('Linkspeak')) {
             if (!feedPosts.any((post) => post.postID == postID)) {
               if (!tempPosts.any((post) => post.postID == postID)) {
+                dynamic location = '';
+                String locationName = '';
+                if (post.data()!.containsKey('location')) {
+                  final actualLocation = getter('location');
+                  location = actualLocation;
+                }
+                if (post.data()!.containsKey('locationName')) {
+                  final actualLocationName = getter('locationName');
+                  locationName = actualLocationName;
+                }
                 final String description = getter('description');
                 final serverpostedDate = getter('date').toDate();
                 final int numOfLikes = getter('likes');
@@ -228,6 +250,8 @@ class _FeedState extends State<Feed> with AutomaticKeepAliveClientMixin {
                   postedDate: serverpostedDate,
                   topics: postTopics,
                   imgUrls: imgUrls,
+                  location: location,
+                  locationName: locationName,
                 );
                 _post.setter();
                 tempPosts.add(_post);
@@ -272,6 +296,16 @@ class _FeedState extends State<Feed> with AutomaticKeepAliveClientMixin {
               myUsername.startsWith('Linkspeak')) {
             if (!feedPosts.any((post) => post.postID == postID)) {
               if (!tempPosts.any((post) => post.postID == postID)) {
+                dynamic location = '';
+                String locationName = '';
+                if (post.data().containsKey('location')) {
+                  final actualLocation = getter('location');
+                  location = actualLocation;
+                }
+                if (post.data().containsKey('locationName')) {
+                  final actualLocationName = getter('locationName');
+                  locationName = actualLocationName;
+                }
                 final String description = getter('description');
                 final serverpostedDate = getter('date').toDate();
                 final int numOfLikes = getter('likes');
@@ -311,6 +345,8 @@ class _FeedState extends State<Feed> with AutomaticKeepAliveClientMixin {
                   postedDate: serverpostedDate,
                   topics: postTopics,
                   imgUrls: imgUrls,
+                  location: location,
+                  locationName: locationName,
                 );
                 _post.setter();
                 tempPosts.add(_post);
@@ -416,6 +452,16 @@ class _FeedState extends State<Feed> with AutomaticKeepAliveClientMixin {
                     post.postID == postID &&
                     !imBlocked &&
                     !myBlockedIDs.contains(poster))) {
+                  dynamic location = '';
+                  String locationName = '';
+                  if (post.data()!.containsKey('location')) {
+                    final actualLocation = getter('location');
+                    location = actualLocation;
+                  }
+                  if (post.data()!.containsKey('locationName')) {
+                    final actualLocationName = getter('locationName');
+                    locationName = actualLocationName;
+                  }
                   final String description = getter('description');
                   final serverpostedDate = getter('date').toDate();
                   final int numOfLikes = getter('likes');
@@ -455,6 +501,8 @@ class _FeedState extends State<Feed> with AutomaticKeepAliveClientMixin {
                     postedDate: serverpostedDate,
                     topics: postTopics,
                     imgUrls: imgUrls,
+                    location: location,
+                    locationName: locationName,
                   );
                   _post.setter();
                   tempPosts.add(_post);
@@ -487,6 +535,16 @@ class _FeedState extends State<Feed> with AutomaticKeepAliveClientMixin {
                 myUsername.startsWith('Linkspeak')) {
               if (!feedPosts.any((post) => post.postID == postID)) {
                 if (!tempPosts.any((post) => post.postID == postID)) {
+                  dynamic location = '';
+                  String locationName = '';
+                  if (post.data()!.containsKey('location')) {
+                    final actualLocation = getter('location');
+                    location = actualLocation;
+                  }
+                  if (post.data()!.containsKey('locationName')) {
+                    final actualLocationName = getter('locationName');
+                    locationName = actualLocationName;
+                  }
                   final String description = getter('description');
                   final serverpostedDate = getter('date').toDate();
                   final int numOfLikes = getter('likes');
@@ -527,6 +585,8 @@ class _FeedState extends State<Feed> with AutomaticKeepAliveClientMixin {
                     postedDate: serverpostedDate,
                     topics: postTopics,
                     imgUrls: imgUrls,
+                    location: location,
+                    locationName: locationName,
                   );
                   _post.setter();
                   tempPosts.add(_post);
@@ -577,6 +637,16 @@ class _FeedState extends State<Feed> with AutomaticKeepAliveClientMixin {
                   myUsername.startsWith('Linkspeak')) {
                 if (!feedPosts.any((post) => post.postID == postID)) {
                   if (!tempPosts.any((post) => post.postID == postID)) {
+                    dynamic location = '';
+                    String locationName = '';
+                    if (post.data().containsKey('location')) {
+                      final actualLocation = getter('location');
+                      location = actualLocation;
+                    }
+                    if (post.data().containsKey('locationName')) {
+                      final actualLocationName = getter('locationName');
+                      locationName = actualLocationName;
+                    }
                     final String description = getter('description');
                     final serverpostedDate = getter('date').toDate();
                     final int numOfLikes = getter('likes');
@@ -616,6 +686,8 @@ class _FeedState extends State<Feed> with AutomaticKeepAliveClientMixin {
                       postedDate: serverpostedDate,
                       topics: postTopics,
                       imgUrls: imgUrls,
+                      location: location,
+                      locationName: locationName,
                     );
                     _post.setter();
                     tempPosts.add(_post);
@@ -653,6 +725,16 @@ class _FeedState extends State<Feed> with AutomaticKeepAliveClientMixin {
                   myUsername.startsWith('Linkspeak')) {
                 if (!feedPosts.any((post) => post.postID == postID)) {
                   if (!tempPosts.any((post) => post.postID == postID)) {
+                    dynamic location = '';
+                    String locationName = '';
+                    if (post.data().containsKey('location')) {
+                      final actualLocation = getter('location');
+                      location = actualLocation;
+                    }
+                    if (post.data().containsKey('locationName')) {
+                      final actualLocationName = getter('locationName');
+                      locationName = actualLocationName;
+                    }
                     final String description = getter('description');
                     final serverpostedDate = getter('date').toDate();
                     final int numOfLikes = getter('likes');
@@ -692,6 +774,8 @@ class _FeedState extends State<Feed> with AutomaticKeepAliveClientMixin {
                       postedDate: serverpostedDate,
                       topics: postTopics,
                       imgUrls: imgUrls,
+                      location: location,
+                      locationName: locationName,
                     );
                     _post.setter();
                     tempPosts.add(_post);
@@ -792,7 +876,6 @@ class _FeedState extends State<Feed> with AutomaticKeepAliveClientMixin {
         }
 
         if (snapshot.hasError) {
-          print(snapshot.error);
           return SizedBox(
             height: _deviceHeight,
             width: _deviceWidth,

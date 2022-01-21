@@ -159,6 +159,8 @@ class _AddCommentState extends State<AddComment> {
     });
     final currentPostComments =
         firestore.collection('Posts').doc(postID).collection('comments');
+    final myUserComments =
+        firestore.collection('Users').doc(_username).collection('My Comments');
     var batch = firestore.batch();
     final DateTime _rightNow = DateTime.now();
     final DateTime _rightNowUTC = _rightNow.toUtc();
@@ -267,6 +269,15 @@ class _AddCommentState extends State<AddComment> {
               'downloadURL': downloadUrl,
               'hasNSFW': hasNSFW,
             });
+            batch.set(myUserComments.doc(commentID), {
+              'post ID': postID,
+              'commenter': _username,
+              'description': comment,
+              'date': _rightNow,
+              'containsMedia': true,
+              'downloadURL': downloadUrl,
+              'hasNSFW': hasNSFW,
+            });
             batch.update(thisPost, {'comments': FieldValue.increment(1)});
             return batch.commit().then((value) async {
               var secondBatch = firestore.batch();
@@ -284,6 +295,7 @@ class _AddCommentState extends State<AddComment> {
                       'comment': comment,
                       'user': _username,
                       'token': token,
+                      'date': _rightNow,
                     });
                     secondBatch.update(
                         firestore.collection('Users').doc(posterUsername),
@@ -298,6 +310,7 @@ class _AddCommentState extends State<AddComment> {
                     'comment': comment,
                     'user': _username,
                     'token': token,
+                    'date': _rightNow,
                   });
                   secondBatch.update(
                       firestore.collection('Users').doc(posterUsername),
@@ -341,6 +354,15 @@ class _AddCommentState extends State<AddComment> {
           'downloadURL': '',
           'hasNSFW': false,
         });
+        batch.set(myUserComments.doc(commentID), {
+          'post ID': postID,
+          'commenter': _username,
+          'description': comment,
+          'date': _rightNow,
+          'containsMedia': false,
+          'downloadURL': '',
+          'hasNSFW': false,
+        });
         batch.update(thisPost, {'comments': FieldValue.increment(1)});
         return batch.commit().then((value) async {
           var secondBatch = firestore.batch();
@@ -356,6 +378,7 @@ class _AddCommentState extends State<AddComment> {
                   'post': postID,
                   'user': _username,
                   'token': token,
+                  'date': _rightNow,
                 });
                 secondBatch.update(
                     firestore.collection('Users').doc(posterUsername),
@@ -369,6 +392,7 @@ class _AddCommentState extends State<AddComment> {
                 'post': postID,
                 'user': _username,
                 'token': token,
+                'date': _rightNow,
               });
               secondBatch.update(
                   firestore.collection('Users').doc(posterUsername),

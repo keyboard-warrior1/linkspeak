@@ -1,17 +1,15 @@
-import 'package:flutter/material.dart';
 import 'dart:io' show Platform;
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
-import 'Feed.dart';
-import 'addPostScreen.dart';
-import 'messagesTab.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:shake/shake.dart';
 import '../models/profile.dart';
 import '../providers/appBarProvider.dart';
 import '../providers/myProfileProvider.dart';
 import '../providers/addPostScreenState.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import '../widgets/bottomNavBar.dart';
 import '../widgets/preview.dart';
 import '../widgets/shareWidget.dart';
@@ -19,6 +17,12 @@ import '../widgets/titleButton.dart';
 import '../widgets/appBar.dart';
 import '../widgets/scrollBar.dart';
 import '../widgets/findPostFAB.dart';
+import 'Feed.dart';
+import 'spotlightsTab.dart';
+import 'addPostScreen.dart';
+import 'clubsTab.dart';
+import 'messagesTab.dart';
+import '../routes.dart';
 
 enum ScrollMode { downward, upward, paused }
 
@@ -27,6 +31,7 @@ class FeedScreen extends StatefulWidget {
   static bool shareSheetOpen = false;
   static PersistentBottomSheetController? _controller;
   static PersistentBottomSheetController? _shareController;
+  static late ShakeDetector detector;
   static final ScrollController scrollController =
       ScrollController(keepScrollOffset: true);
   static void sharePost(BuildContext context, String postID) {
@@ -88,6 +93,7 @@ class FeedScreen extends StatefulWidget {
 class _FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
   bool showBar = true;
   bool isScrollingDown = false;
+
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final FirebaseMessaging fcm = FirebaseMessaging.instance;
   final PageController pageController = PageController();
@@ -340,6 +346,10 @@ class _FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
         }
       }
     });
+    FeedScreen.detector = ShakeDetector.waitForStart(onPhoneShake: () {
+      Navigator.pushNamed(context, RouteGenerator.linkMode);
+    });
+    FeedScreen.detector.startListening();
   }
 
   @override
@@ -347,6 +357,7 @@ class _FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
     super.dispose();
     pageController.dispose();
     // FeedScreen.scrollController.removeListener(() {});
+    FeedScreen.detector.stopListening();
     WidgetsBinding.instance!.removeObserver(this);
   }
 
@@ -404,8 +415,10 @@ class _FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
                 child: PageView(
                   children: const [
                     const Feed(),
+                    const SpotlightsTab(),
                     const NewPost(),
-                    const MessagesTab()
+                    const ClubsTab(),
+                    const MessagesTab(),
                   ],
                   controller: pageController,
                   onPageChanged: (index) => pageHandler(

@@ -27,6 +27,7 @@ class TopicResult extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextButton(
       onPressed: () {
+        FocusScope.of(context).unfocus();
         final screenArgs = TopicScreenArgs(name);
         Navigator.of(context)
             .pushNamed(RouteGenerator.topicPostsScreen, arguments: screenArgs);

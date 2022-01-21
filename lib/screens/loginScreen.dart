@@ -35,6 +35,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final FirebaseMessaging fcm = FirebaseMessaging.instance;
+  final TapGestureRecognizer _termsRecognizer = TapGestureRecognizer();
+  final TapGestureRecognizer _policyRecognizer = TapGestureRecognizer();
+
   String? facebookID = null;
   Future<UserCredential> signInWithGoogle() async {
     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
@@ -71,6 +74,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _termsRecognizer.dispose();
+    _policyRecognizer.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final Future<FirebaseApp> _initialization = Firebase.initializeApp();
     final Size _sizeQUery = MediaQuery.of(context).size;
@@ -83,6 +93,15 @@ class _LoginScreenState extends State<LoginScreen> {
         Provider.of<ThemeModel>(context, listen: false).setPrimaryColor;
     final setAccent =
         Provider.of<ThemeModel>(context, listen: false).setAccentColor;
+    var initialPrimaryPalette = primaryColorsPalette.take(19).toList();
+    var initialAccentPalette = accentColorsPalette.take(16).toList();
+    var _allColors = [...initialPrimaryPalette, ...initialAccentPalette];
+    _termsRecognizer
+      ..onTap =
+          () => Navigator.of(context).pushNamed(RouteGenerator.termScreen);
+    _policyRecognizer
+      ..onTap = () =>
+          Navigator.of(context).pushNamed(RouteGenerator.privacyPolicyScreen);
     final consent = Container(
       padding: const EdgeInsets.symmetric(horizontal: 25.0),
       child: RichText(
@@ -95,9 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
               style: TextStyle(color: Colors.white),
             ),
             TextSpan(
-              recognizer: TapGestureRecognizer()
-                ..onTap = () =>
-                    Navigator.of(context).pushNamed(RouteGenerator.termScreen),
+              recognizer: _termsRecognizer,
               text: 'Terms & Guidelines',
               style: TextStyle(
                 color: _accentColor,
@@ -110,9 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
               style: TextStyle(color: Colors.white),
             ),
             TextSpan(
-              recognizer: TapGestureRecognizer()
-                ..onTap = () => Navigator.of(context)
-                    .pushNamed(RouteGenerator.privacyPolicyScreen),
+              recognizer: _policyRecognizer,
               text: 'Privacy Policy',
               style: TextStyle(
                 color: _accentColor,
@@ -212,9 +227,53 @@ class _LoginScreenState extends State<LoginScreen> {
                         final thePostIDs =
                             myPostIDs2.map((post) => post.id).toList();
                         final reversedPostIDs = thePostIDs.reversed.toList();
+                        final mySpotlight =
+                            await myDoc.collection('My Spotlight').get();
+                        final spotlightDocs = mySpotlight.docs;
                         final MyProfile profile =
                             Provider.of<MyProfile>(context, listen: false);
                         final visbility = getter('Visibility');
+                        String bannerUrl = 'None';
+                        if (documentSnapshot.data()!.containsKey('Banner')) {
+                          final currentBanner = getter('Banner');
+                          bannerUrl = currentBanner;
+                        }
+                        String additionalWebsite = '';
+                        String additionalEmail = '';
+                        String additionalNumber = '';
+                        dynamic additionalAddress = '';
+                        String additionalAddressName = '';
+                        if (documentSnapshot
+                            .data()!
+                            .containsKey('additionalWebsite')) {
+                          final actualWebsite = getter('additionalWebsite');
+                          additionalWebsite = actualWebsite;
+                        }
+                        if (documentSnapshot
+                            .data()!
+                            .containsKey('additionalEmail')) {
+                          final actualEmail = getter('additionalEmail');
+                          additionalEmail = actualEmail;
+                        }
+                        if (documentSnapshot
+                            .data()!
+                            .containsKey('additionalNumber')) {
+                          final actualNumber = getter('additionalNumber');
+                          additionalNumber = actualNumber;
+                        }
+                        if (documentSnapshot
+                            .data()!
+                            .containsKey('additionalAddress')) {
+                          final actualAddress = getter('additionalAddress');
+                          additionalAddress = actualAddress;
+                        }
+                        if (documentSnapshot
+                            .data()!
+                            .containsKey('additionalAddressName')) {
+                          final actualAddressName =
+                              getter('additionalAddressName');
+                          additionalAddressName = actualAddressName;
+                        }
                         final imgUrl = getter('Avatar');
                         final bio = getter('Bio');
                         final serverTopics = getter('Topics') as List;
@@ -240,33 +299,38 @@ class _LoginScreenState extends State<LoginScreen> {
                         final List<String> myTopics = serverTopics
                             .map((topic) => topic as String)
                             .toList();
-                        profile.setMyVis(visbility);
-                        profile.setMyProfileImage(imgUrl);
-                        profile.setMyEmail(email);
-                        profile.setMyUsername(username);
-                        profile.changeBio(bio);
-                        profile.setMyTopics(myTopics);
-                        profile.setLikedIDs(reversedLiked);
-                        profile.setFavIDs(reversedFavs);
-                        profile.setHiddenIDs(theHiddenIDs);
-                        profile.setMyNumOfLinks(numOfLinks);
-                        profile.setMyNumOfLinked(numOfLinked);
-                        profile.setNumOfPosts(numOfPosts);
-                        profile.setNumOfNewLinksNotifs(numOfNewLinksNotifs);
-                        profile.setNumOfNewLinkedNotifs(numOfNewLinkedNotifs);
-                        profile
-                            .setNumOfLinkRequestNotifs(numOfLinkRequestsNotifs);
-                        profile.setNumOfPostLikesNotifs(numOfPostLikesNotifs);
-                        profile.setNumOfPostCommentsNotifs(
-                            numOfPostCommentsNotifs);
-                        profile.setNumOfCommentRepliesNotifs(
-                            numOfCommentRepliesNotifs);
-                        profile.setmyNumOfPostsRemovedNotifs(numOfPostsRemoved);
-                        profile.setNumOfCommentsRemovedNotifs(
-                            numOfCommentsRemoved);
-                        profile.setNumOfBlocked(numOfBlocked);
-                        profile.setBlockedUserIDs(theBlockedIDs);
-                        profile.setMyPostIDs(reversedPostIDs);
+                        profile.initializeMyProfile(
+                            visbility: visbility,
+                            additionalWebsite: additionalWebsite,
+                            additionalEmail: additionalEmail,
+                            additionalNumber: additionalNumber,
+                            additionalAddress: additionalAddress,
+                            additionalAddressName: additionalAddressName,
+                            imgUrl: imgUrl,
+                            bannerUrl: bannerUrl,
+                            hasSpotlight: spotlightDocs.isNotEmpty,
+                            email: email,
+                            username: username,
+                            bio: bio,
+                            myTopics: myTopics,
+                            reversedLiked: reversedLiked,
+                            reversedFavs: reversedFavs,
+                            theHiddenIDs: theHiddenIDs,
+                            numOfLinks: numOfLinks,
+                            numOfLinked: numOfLinked,
+                            numOfPosts: numOfPosts,
+                            numOfNewLinksNotifs: numOfNewLinksNotifs,
+                            numOfNewLinkedNotifs: numOfNewLinkedNotifs,
+                            numOfLinkRequestsNotifs: numOfLinkRequestsNotifs,
+                            numOfPostLikesNotifs: numOfPostLikesNotifs,
+                            numOfPostCommentsNotifs: numOfPostCommentsNotifs,
+                            numOfCommentRepliesNotifs:
+                                numOfCommentRepliesNotifs,
+                            numOfPostsRemoved: numOfPostsRemoved,
+                            numOfCommentsRemoved: numOfCommentsRemoved,
+                            numOfBlocked: numOfBlocked,
+                            theBlockedIDs: theBlockedIDs,
+                            reversedPostIDs: reversedPostIDs);
                         EasyLoading.dismiss();
                         Navigator.pushReplacementNamed(
                           context,
@@ -292,7 +356,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       arguments: args);
                 }
               }).catchError((_) {
-                print(_.toString());
                 EasyLoading.dismiss();
                 EasyLoading.showError(
                   'Failed',
@@ -395,9 +458,53 @@ class _LoginScreenState extends State<LoginScreen> {
                           final thePostIDs =
                               myPostIDs2.map((post) => post.id).toList();
                           final reversedPostIDs = thePostIDs.reversed.toList();
+                          final mySpotlight =
+                              await myDoc.collection('My Spotlight').get();
+                          final spotlightDocs = mySpotlight.docs;
                           final MyProfile profile =
                               Provider.of<MyProfile>(context, listen: false);
                           final visbility = getter('Visibility');
+                          String bannerUrl = 'None';
+                          if (documentSnapshot.data()!.containsKey('Banner')) {
+                            final currentBanner = getter('Banner');
+                            bannerUrl = currentBanner;
+                          }
+                          String additionalWebsite = '';
+                          String additionalEmail = '';
+                          String additionalNumber = '';
+                          dynamic additionalAddress = '';
+                          String additionalAddressName = '';
+                          if (documentSnapshot
+                              .data()!
+                              .containsKey('additionalWebsite')) {
+                            final actualWebsite = getter('additionalWebsite');
+                            additionalWebsite = actualWebsite;
+                          }
+                          if (documentSnapshot
+                              .data()!
+                              .containsKey('additionalEmail')) {
+                            final actualEmail = getter('additionalEmail');
+                            additionalEmail = actualEmail;
+                          }
+                          if (documentSnapshot
+                              .data()!
+                              .containsKey('additionalNumber')) {
+                            final actualNumber = getter('additionalNumber');
+                            additionalNumber = actualNumber;
+                          }
+                          if (documentSnapshot
+                              .data()!
+                              .containsKey('additionalAddress')) {
+                            final actualAddress = getter('additionalAddress');
+                            additionalAddress = actualAddress;
+                          }
+                          if (documentSnapshot
+                              .data()!
+                              .containsKey('additionalAddressName')) {
+                            final actualAddressName =
+                                getter('additionalAddressName');
+                            additionalAddressName = actualAddressName;
+                          }
                           final imgUrl = getter('Avatar');
                           final bio = getter('Bio');
                           final serverTopics = getter('Topics') as List;
@@ -423,34 +530,38 @@ class _LoginScreenState extends State<LoginScreen> {
                           final List<String> myTopics = serverTopics
                               .map((topic) => topic as String)
                               .toList();
-                          profile.setMyVis(visbility);
-                          profile.setMyProfileImage(imgUrl);
-                          profile.setMyEmail(email);
-                          profile.setMyUsername(username);
-                          profile.changeBio(bio);
-                          profile.setMyTopics(myTopics);
-                          profile.setLikedIDs(reversedLiked);
-                          profile.setFavIDs(reversedFavs);
-                          profile.setHiddenIDs(theHiddenIDs);
-                          profile.setMyNumOfLinks(numOfLinks);
-                          profile.setMyNumOfLinked(numOfLinked);
-                          profile.setNumOfPosts(numOfPosts);
-                          profile.setNumOfNewLinksNotifs(numOfNewLinksNotifs);
-                          profile.setNumOfNewLinkedNotifs(numOfNewLinkedNotifs);
-                          profile.setNumOfLinkRequestNotifs(
-                              numOfLinkRequestsNotifs);
-                          profile.setNumOfPostLikesNotifs(numOfPostLikesNotifs);
-                          profile.setNumOfPostCommentsNotifs(
-                              numOfPostCommentsNotifs);
-                          profile.setNumOfCommentRepliesNotifs(
-                              numOfCommentRepliesNotifs);
-                          profile
-                              .setmyNumOfPostsRemovedNotifs(numOfPostsRemoved);
-                          profile.setNumOfCommentsRemovedNotifs(
-                              numOfCommentsRemoved);
-                          profile.setNumOfBlocked(numOfBlocked);
-                          profile.setBlockedUserIDs(theBlockedIDs);
-                          profile.setMyPostIDs(reversedPostIDs);
+                          profile.initializeMyProfile(
+                              visbility: visbility,
+                              additionalWebsite: additionalWebsite,
+                              additionalEmail: additionalEmail,
+                              additionalNumber: additionalNumber,
+                              additionalAddress: additionalAddress,
+                              additionalAddressName: additionalAddressName,
+                              hasSpotlight: spotlightDocs.isNotEmpty,
+                              imgUrl: imgUrl,
+                              bannerUrl: bannerUrl,
+                              email: email,
+                              username: username,
+                              bio: bio,
+                              myTopics: myTopics,
+                              reversedLiked: reversedLiked,
+                              reversedFavs: reversedFavs,
+                              theHiddenIDs: theHiddenIDs,
+                              numOfLinks: numOfLinks,
+                              numOfLinked: numOfLinked,
+                              numOfPosts: numOfPosts,
+                              numOfNewLinksNotifs: numOfNewLinksNotifs,
+                              numOfNewLinkedNotifs: numOfNewLinkedNotifs,
+                              numOfLinkRequestsNotifs: numOfLinkRequestsNotifs,
+                              numOfPostLikesNotifs: numOfPostLikesNotifs,
+                              numOfPostCommentsNotifs: numOfPostCommentsNotifs,
+                              numOfCommentRepliesNotifs:
+                                  numOfCommentRepliesNotifs,
+                              numOfPostsRemoved: numOfPostsRemoved,
+                              numOfCommentsRemoved: numOfCommentsRemoved,
+                              numOfBlocked: numOfBlocked,
+                              theBlockedIDs: theBlockedIDs,
+                              reversedPostIDs: reversedPostIDs);
                           EasyLoading.dismiss();
                           Navigator.pushReplacementNamed(
                             context,
@@ -569,10 +680,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                           children: <Widget>[
                                             OColorPicker(
                                               selectedColor: _primaryColor,
-                                              colors: primaryColorsPalette,
+                                              colors: _allColors,
                                               onColorChange: (color) {
                                                 if (color == Colors.black ||
-                                                    color == Colors.white) {
+                                                    color == Colors.white ||
+                                                    color == _accentColor) {
                                                 } else {
                                                   setPrimary(color);
                                                   Navigator.of(context).pop();
@@ -609,10 +721,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                           children: <Widget>[
                                             OColorPicker(
                                               selectedColor: _accentColor,
-                                              colors: accentColorsPalette,
+                                              colors: _allColors,
                                               onColorChange: (color) {
                                                 if (color == Colors.black ||
-                                                    color == Colors.white) {
+                                                    color == Colors.white ||
+                                                    color == _primaryColor) {
                                                 } else {
                                                   setAccent(color);
                                                   Navigator.of(context).pop();
@@ -639,6 +752,41 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
+                      // Row(
+                      //   mainAxisAlignment: MainAxisAlignment.center,
+                      //   crossAxisAlignment: CrossAxisAlignment.center,
+                      //   children: <Widget>[
+                      //     DropdownButton(
+                      //       dropdownColor: _primaryColor,
+                      //       borderRadius: BorderRadius.circular(15.0),
+                      //       onChanged: (_) => setState(() {}),
+                      //       underline: Container(color: Colors.transparent),
+                      //       icon: const Icon(
+                      //         Icons.arrow_drop_down,
+                      //         color: Colors.white,
+                      //       ),
+                      //       value: 'English',
+                      //       items: [
+                      //         DropdownMenuItem<String>(
+                      //           value: 'English',
+                      //           onTap: () {},
+                      //           child: Row(
+                      //             mainAxisSize: MainAxisSize.min,
+                      //             mainAxisAlignment: MainAxisAlignment.start,
+                      //             crossAxisAlignment: CrossAxisAlignment.center,
+                      //             children: <Widget>[
+                      //               const Text(
+                      //                 'EN',
+                      //                 style: TextStyle(
+                      //                     color: Colors.white, fontSize: 15.0),
+                      //               ),
+                      //             ],
+                      //           ),
+                      //         ),
+                      //       ],
+                      //     ),
+                      //   ],
+                      // ),
                       const Spacer(),
                       Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -646,20 +794,35 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: <Widget>[
                           Center(
                             child: OptimisedText(
-                              minWidth: _deviceWidth*0.95,
-                              maxWidth: _deviceWidth*0.95,
+                              minWidth: _deviceWidth * 0.95,
+                              maxWidth: _deviceWidth * 0.95,
                               minHeight: 10,
                               maxHeight: _deviceHeight * 0.2,
                               fit: BoxFit.scaleDown,
-                              child: const Text(
-                                'Linkspeak',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.w300,
-                                  fontSize: 80.0,
-                                ),
+                              child: Stack(
+                                children: <Widget>[
+                                  Text(
+                                    'Linkspeak',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 80.0,
+                                      fontFamily: 'JosefinSans',
+                                      foreground: Paint()
+                                        ..style = PaintingStyle.stroke
+                                        ..strokeWidth = 5.75
+                                        ..color = Colors.black,
+                                    ),
+                                  ),
+                                  const Text(
+                                    'Linkspeak',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 80.0,
+                                      fontFamily: 'JosefinSans',
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -772,7 +935,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Text(
                               (LoginScreen.authMode == AuthMode.login ||
                                       LoginScreen.authMode == AuthMode.none)
-                                  ? 'Sign up now!'
+                                  ? 'Sign up here'
                                   : 'Sign in instead',
                               style: TextStyle(
                                 fontSize: 35.0,

@@ -205,9 +205,53 @@ class _LogInAuthBoxState extends State<LogInAuthBox> {
                       final thePostIDs =
                           myPostIDs2.map((post) => post.id).toList();
                       final reversedPostIDs = thePostIDs.reversed.toList();
+                      final mySpotlight =
+                          await myDoc.collection('My Spotlight').get();
+                      final spotlightDocs = mySpotlight.docs;
                       final MyProfile profile =
                           Provider.of<MyProfile>(context, listen: false);
                       final visbility = getter('Visibility');
+                      String bannerUrl = 'None';
+                      if (documentSnapshot.data()!.containsKey('Banner')) {
+                        final currentBanner = getter('Banner');
+                        bannerUrl = currentBanner;
+                      }
+                      String additionalWebsite = '';
+                      String additionalEmail = '';
+                      String additionalNumber = '';
+                      dynamic additionalAddress = '';
+                      String additionalAddressName = '';
+                      if (documentSnapshot
+                          .data()!
+                          .containsKey('additionalWebsite')) {
+                        final actualWebsite = getter('additionalWebsite');
+                        additionalWebsite = actualWebsite;
+                      }
+                      if (documentSnapshot
+                          .data()!
+                          .containsKey('additionalEmail')) {
+                        final actualEmail = getter('additionalEmail');
+                        additionalEmail = actualEmail;
+                      }
+                      if (documentSnapshot
+                          .data()!
+                          .containsKey('additionalNumber')) {
+                        final actualNumber = getter('additionalNumber');
+                        additionalNumber = actualNumber;
+                      }
+                      if (documentSnapshot
+                          .data()!
+                          .containsKey('additionalAddress')) {
+                        final actualAddress = getter('additionalAddress');
+                        additionalAddress = actualAddress;
+                      }
+                      if (documentSnapshot
+                          .data()!
+                          .containsKey('additionalAddressName')) {
+                        final actualAddressName =
+                            getter('additionalAddressName');
+                        additionalAddressName = actualAddressName;
+                      }
                       final imgUrl = getter('Avatar');
                       final bio = getter('Bio');
                       final serverTopics = getter('Topics') as List;
@@ -232,40 +276,43 @@ class _LogInAuthBoxState extends State<LogInAuthBox> {
                       final int numOfBlocked = getter('numOfBlocked');
                       final List<String> myTopics =
                           serverTopics.map((topic) => topic as String).toList();
-                      profile.setMyVis(visbility);
-                      profile.setMyProfileImage(imgUrl);
-                      profile.setMyEmail(email);
-                      profile.setMyUsername(username);
-                      profile.changeBio(bio);
-                      profile.setMyTopics(myTopics);
-                      profile.setLikedIDs(reversedLiked);
-                      profile.setFavIDs(reversedFavs);
-                      profile.setHiddenIDs(theHiddenIDs);
-                      profile.setMyNumOfLinks(numOfLinks);
-                      profile.setMyNumOfLinked(numOfLinked);
-                      profile.setNumOfPosts(numOfPosts);
-                      profile.setNumOfNewLinksNotifs(numOfNewLinksNotifs);
-                      profile.setNumOfNewLinkedNotifs(numOfNewLinkedNotifs);
-                      profile
-                          .setNumOfLinkRequestNotifs(numOfLinkRequestsNotifs);
-                      profile.setNumOfPostLikesNotifs(numOfPostLikesNotifs);
-                      profile
-                          .setNumOfPostCommentsNotifs(numOfPostCommentsNotifs);
-                      profile.setNumOfCommentRepliesNotifs(
-                          numOfCommentRepliesNotifs);
-                      profile.setmyNumOfPostsRemovedNotifs(numOfPostsRemoved);
-                      profile
-                          .setNumOfCommentsRemovedNotifs(numOfCommentsRemoved);
-                      profile.setNumOfBlocked(numOfBlocked);
-                      profile.setBlockedUserIDs(theBlockedIDs);
-                      profile.setMyPostIDs(reversedPostIDs);
+                      profile.initializeMyProfile(
+                          visbility: visbility,
+                          additionalWebsite: additionalWebsite,
+                          additionalEmail: additionalEmail,
+                          additionalNumber: additionalNumber,
+                          additionalAddress: additionalAddress,
+                          additionalAddressName: additionalAddressName,
+                          hasSpotlight: spotlightDocs.isNotEmpty,
+                          imgUrl: imgUrl,
+                          bannerUrl: bannerUrl,
+                          email: email,
+                          username: username,
+                          bio: bio,
+                          myTopics: myTopics,
+                          reversedLiked: reversedLiked,
+                          reversedFavs: reversedFavs,
+                          theHiddenIDs: theHiddenIDs,
+                          numOfLinks: numOfLinks,
+                          numOfLinked: numOfLinked,
+                          numOfPosts: numOfPosts,
+                          numOfNewLinksNotifs: numOfNewLinksNotifs,
+                          numOfNewLinkedNotifs: numOfNewLinkedNotifs,
+                          numOfLinkRequestsNotifs: numOfLinkRequestsNotifs,
+                          numOfPostLikesNotifs: numOfPostLikesNotifs,
+                          numOfPostCommentsNotifs: numOfPostCommentsNotifs,
+                          numOfCommentRepliesNotifs: numOfCommentRepliesNotifs,
+                          numOfPostsRemoved: numOfPostsRemoved,
+                          numOfCommentsRemoved: numOfCommentsRemoved,
+                          numOfBlocked: numOfBlocked,
+                          theBlockedIDs: theBlockedIDs,
+                          reversedPostIDs: reversedPostIDs);
                       EasyLoading.dismiss();
                       Navigator.pushReplacementNamed(
                         context,
                         RouteGenerator.feedScreen,
                       );
                     }).catchError((onError) {
-                      print(onError);
                       EasyLoading.dismiss();
                       EasyLoading.showError(
                         'Failed',

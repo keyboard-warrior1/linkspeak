@@ -37,6 +37,18 @@ class _SearchTabBarState extends State<SearchTabBar> {
         ),
       ),
     );
+    final Widget _clubsTab = Container(
+      height: double.infinity,
+      child: const Center(
+        child: const Text(
+          'Clubs',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 19.0,
+          ),
+        ),
+      ),
+    );
     final TabBar _tabbar = TabBar(
       controller: widget.tabController,
       indicatorColor: _primarySwatch,
@@ -45,6 +57,7 @@ class _SearchTabBarState extends State<SearchTabBar> {
       tabs: [
         _peopleTab,
         _topicsTab,
+        _clubsTab,
       ],
     );
     final Widget bar = Container(

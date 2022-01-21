@@ -34,14 +34,39 @@ class _CommentsViewState extends State<CommentsView> {
   late Future<void> _getComments;
   bool isLoading = false;
   bool isLastPage = false;
-  Future<void> removeComment(
-      String commentID, void Function(String) removeComment) async {
+  Future<void> removeComment({
+    required String commentID,
+    required void Function(String) removeComment,
+    required String commenter,
+    required String description,
+    required int likeCount,
+    required int replyCount,
+    required bool containsMedia,
+    required bool hasNsfw,
+    required String downloadUrl,
+    required DateTime commentDate,
+  }) async {
     EasyLoading.show(status: 'Loading', dismissOnTap: false);
     var batch = firestore.batch();
     final _theseComments =
         firestore.collection('Posts').doc(widget.postId).collection('comments');
     final targetComment = _theseComments.doc(commentID);
+    final thisDeletedComment =
+        firestore.collection('Deleted Comments').doc(commentID);
     final currentpost = firestore.collection('Posts').doc(widget.postId);
+    batch.set(thisDeletedComment, {
+      'post': widget.postId,
+      'comment': commentID,
+      'commenter': commenter,
+      'description': description,
+      'likeCount': likeCount,
+      'replyCount': replyCount,
+      'containsMedia': containsMedia,
+      'downloadURL': downloadUrl,
+      'hasNSFW': hasNsfw,
+      'date': commentDate,
+      'date deleted': DateTime.now(),
+    });
     batch.delete(targetComment);
     batch.update(currentpost, {'comments': FieldValue.increment(-1)});
     batch.commit().then((value) {
@@ -648,8 +673,18 @@ class _CommentsViewState extends State<CommentsView> {
                                   postID: widget.postId,
                                   handler2: () {
                                     removeComment(
-                                      _commentID,
-                                      context.read<FullHelper>().removeComment,
+                                      commentID: _commentID,
+                                      removeComment: context
+                                          .read<FullHelper>()
+                                          .removeComment,
+                                      commenter: _commenterName,
+                                      description: _comment!,
+                                      likeCount: commentLikes,
+                                      replyCount: commentReplies,
+                                      containsMedia: containsMedia,
+                                      hasNsfw: hasNSFW,
+                                      downloadUrl: downloadURL,
+                                      commentDate: _commentDate,
                                     );
                                   },
                                   handler: () {

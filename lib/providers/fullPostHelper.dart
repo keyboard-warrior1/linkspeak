@@ -7,6 +7,8 @@ import '../widgets/videoPlayer.dart';
 
 class FullHelper with ChangeNotifier {
   String _posterId = '';
+  dynamic _location = '';
+  String _locationName = '';
   String _postId = '';
   DateTime _postedDate = DateTime.now();
   int _numOfTopics = 0;
@@ -23,12 +25,14 @@ class FullHelper with ChangeNotifier {
   bool _sensitiveContent = false;
   bool _isHidden = false;
   bool _isDeleted = false;
-
+  bool measuresGiven = false;
   List<String> _likers = [];
   int _numOfLikes = 0;
   int _numOfComments = 0;
   List<Comment> _comments = [];
   List<MiniProfile> _likes = [];
+  dynamic get getLocation => _location;
+  String get getLocationName => _locationName;
   String get posterId => _posterId;
   String get postId => _postId;
   DateTime get postedDate => _postedDate;
@@ -52,9 +56,16 @@ class FullHelper with ChangeNotifier {
   int get getNumOfLikes => _numOfLikes;
   int get getNumOfComments => _numOfComments;
   bool showPost = false;
+  void giveMeasure() {
+    measuresGiven = true;
+    notifyListeners();
+  }
 
-  void addVideos(MyVideoPlayer vid, int index,) {
-    _videos.insert(index,vid);
+  void addVideos(
+    MyVideoPlayer vid,
+    int index,
+  ) {
+    _videos.insert(index, vid);
   }
 
   void deletePost() {
@@ -75,6 +86,14 @@ class FullHelper with ChangeNotifier {
   void show() {
     showPost = true;
     notifyListeners();
+  }
+
+  void setLocation(dynamic location) {
+    _location = location;
+  }
+
+  void setLocationName(String locationName) {
+    _locationName = locationName;
   }
 
   void setPosterID(String posterID) {

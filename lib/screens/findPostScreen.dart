@@ -130,6 +130,9 @@ class _FindPostScreenState extends State<FindPostScreen> {
                   handler: null,
                   focusNode: null,
                 ),
+                Expanded(
+                  child: Container(),
+                ),
                 const Spacer(),
                 TextButton(
                   style: ButtonStyle(
@@ -147,8 +150,11 @@ class _FindPostScreenState extends State<FindPostScreen> {
                     ),
                   ),
                   onPressed: () {
-                    _goToPost(
-                        context, ViewMode.post, () {}, controller.value.text);
+                    if (controller.value.text.isEmpty) {
+                    } else {
+                      _goToPost(
+                          context, ViewMode.post, () {}, controller.value.text);
+                    }
                   },
                   child: OptimisedText(
                     minWidth: _deviceWidth * 0.5,

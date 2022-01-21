@@ -90,32 +90,82 @@ class ChatMenu extends StatelessWidget {
                                       onPressed: () async {
                                         Navigator.pop(context);
                                         _showIt();
-                                        var batch = firestore.batch();
                                         final myMsgsCollec = await firestore
                                             .collection(
                                                 'Users/$_myUsername/chats/$chatId/messages')
                                             .get();
                                         final docs = myMsgsCollec.docs;
-                                        batch.update(
-                                            firestore
-                                                .collection(
-                                                    'Users/$_myUsername/chats')
-                                                .doc('$chatId'),
-                                            {
-                                              '0': 1,
-                                              'displayMessage': '',
-                                              'isRead': true,
-                                              'lastMessageTime': DateTime.now()
-                                            });
-                                        for (var id in docs) {
-                                          final docID = id.id;
-                                          batch.delete(firestore
-                                              .collection(
-                                                  'Users/$_myUsername/chats/$chatId/messages')
-                                              .doc(docID));
+                                        if (docs.isEmpty) {
+                                          Navigator.pop(context);
+                                        } else {
+                                          var batch = firestore.batch();
+                                          batch.update(
+                                              firestore
+                                                  .collection(
+                                                      'Users/$_myUsername/chats')
+                                                  .doc('$chatId'),
+                                              {
+                                                '0': 1,
+                                                'displayMessage': '',
+                                                'isRead': true,
+                                                'lastMessageTime':
+                                                    DateTime.now()
+                                              });
+                                          final getDeleted = await firestore
+                                              .collection('Deleted Chats')
+                                              .doc('$_myUsername - $chatId')
+                                              .get();
+                                          firestore
+                                              .collection('Deleted Chats')
+                                              .doc('$_myUsername - $chatId')
+                                              .set(
+                                                  {
+                                                'date deleted': DateTime.now()
+                                              },
+                                                  SetOptions(
+                                                      merge: (getDeleted.exists)
+                                                          ? true
+                                                          : false)).then(
+                                                  (value) {
+                                            for (var theid in docs) {
+                                              final docID = theid.id;
+                                              final date =
+                                                  theid.get('date').toDate();
+                                              final description =
+                                                  theid.get('description');
+                                              final isRead =
+                                                  theid.get('isRead');
+                                              final isDeleted =
+                                                  theid.get('isDeleted');
+                                              final isPost =
+                                                  theid.get('isPost');
+                                              final isMedia =
+                                                  theid.get('isMedia');
+                                              final sender = theid.get('user');
+                                              final token = theid.get('token');
+                                              firestore
+                                                  .collection('Deleted Chats')
+                                                  .doc('$_myUsername - $chatId')
+                                                  .collection('messages')
+                                                  .add({
+                                                'date': date,
+                                                'description': description,
+                                                'isRead': isRead,
+                                                'isDeleted': isDeleted,
+                                                'isPost': isPost,
+                                                'isMedia': isMedia,
+                                                'user': sender,
+                                                'token': token,
+                                              });
+                                              batch.delete(firestore
+                                                  .collection(
+                                                      'Users/$_myUsername/chats/$chatId/messages')
+                                                  .doc(docID));
+                                            }
+                                            batch.commit().then((value) =>
+                                                Navigator.pop(context));
+                                          });
                                         }
-                                        batch.commit().then(
-                                            (value) => Navigator.pop(context));
                                       },
                                       child: const Text(
                                         'Yes',

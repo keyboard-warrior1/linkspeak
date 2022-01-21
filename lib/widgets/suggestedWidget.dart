@@ -179,13 +179,15 @@ class _SuggestedWidgetState extends State<SuggestedWidget> {
                 future: _getSuggested,
                 builder: (ctx, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: const CircularProgressIndicator(),
+                    return Center(
+                      // child: const CircularProgressIndicator(),
+                      child: Container(),
                     );
                   }
                   if (snapshot.hasError) {
-                    return const Center(
-                      child: const CircularProgressIndicator(),
+                    return Center(
+                      // child: const CircularProgressIndicator(),
+                      child: Container(),
                     );
                   }
                   return ListView.builder(

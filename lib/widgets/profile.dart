@@ -5,6 +5,11 @@ import 'postsAndTopicsTabs.dart';
 import '../models/profile.dart';
 
 class Profile extends StatefulWidget {
+  final String additionalWebsite;
+  final String additionalEmail;
+  final String additionalNumber;
+  final dynamic additionalAddress;
+  final String additionalAddressName;
   final bool isMyProfile;
   final TheVisibility visibility;
   final String imageUrl;
@@ -23,6 +28,11 @@ class Profile extends StatefulWidget {
   final ScrollController scrollController;
   final bool imBlocked;
   const Profile({
+    required this.additionalWebsite,
+    required this.additionalEmail,
+    required this.additionalNumber,
+    required this.additionalAddress,
+    required this.additionalAddressName,
     required this.isMyProfile,
     required this.imLinkedToThem,
     required this.visibility,
@@ -72,6 +82,11 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     final bool publicProfile = widget.visibility == TheVisibility.public;
     final ProfileBox _profileBox = ProfileBox(
+      additionalWebsite: widget.additionalWebsite,
+      additionalEmail: widget.additionalEmail,
+      additionalNumber: widget.additionalNumber,
+      additionalAddress: widget.additionalAddress,
+      additionalAddressName: widget.additionalAddressName,
       isInPreview: false,
       showBio: true,
       isMyProfile: widget.isMyProfile,
@@ -91,8 +106,12 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       instance: widget.instance,
       imBlocked: widget.imBlocked,
     );
-    final ProfileTabBar _tabbar =
-        ProfileTabBar(widget.numOfPosts, _controller!, widget.imBlocked);
+    final ProfileTabBar _tabbar = ProfileTabBar(
+      widget.numOfPosts,
+      _controller!,
+      widget.imBlocked,
+      widget.isMyProfile,
+    );
     final Widget _tabs = PostsAndTopics(
       publicProfile: publicProfile,
       imLinkedToThem: widget.imLinkedToThem,

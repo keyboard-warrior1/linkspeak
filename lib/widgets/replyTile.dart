@@ -43,13 +43,13 @@ class ReplyTile extends StatelessWidget {
     if (_withinMinute) {
       return 'a few seconds';
     } else if (_withinHour && _difference.inMinutes > 1) {
-      return '${_difference.inMinutes} minutes';
+      return '~ ${_difference.inMinutes} minutes';
     } else if (_withinHour && _difference.inMinutes == 1) {
-      return '${_difference.inMinutes} minute';
+      return '~ ${_difference.inMinutes} minute';
     } else if (_withinDay && _difference.inHours > 1) {
-      return '${_difference.inHours} hours';
+      return '~ ${_difference.inHours} hours';
     } else if (_withinDay && _difference.inHours == 1) {
-      return '${_difference.inHours} hour';
+      return '~ ${_difference.inHours} hour';
     } else if (!_withinMinute && !_withinHour && !_withinDay && _withinYear) {
       return '$_dateNoYear';
     } else {
@@ -60,6 +60,8 @@ class ReplyTile extends StatelessWidget {
   Future<void> removeReply(void Function(String) removeReply) {
     EasyLoading.show(status: 'Loading', dismissOnTap: false);
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    final thisDeletedReply =
+        firestore.collection('Deleted Replies').doc(replyID);
     var batch = firestore.batch();
     final currentReply = firestore
         .collection('Posts')
@@ -73,6 +75,15 @@ class ReplyTile extends StatelessWidget {
         .doc(postID)
         .collection('comments')
         .doc(commentID);
+    batch.set(thisDeletedReply, {
+      'post': postID,
+      'comment': commentID,
+      'description': reply,
+      'likeCount': 0,
+      'user': replierUsername,
+      'date': replyDate,
+      'date deleted': DateTime.now(),
+    });
     batch.delete(currentReply);
     batch.update(targetComment, {'replyCount': FieldValue.increment(-1)});
     return batch.commit().then((value) {

@@ -43,6 +43,16 @@ class _MiniPostState extends State<MiniPost> {
     final post = await firestore.collection('Posts').doc(widget.postID).get();
     final usersCollection = firestore.collection('Users');
     dynamic getter(String field) => post.get(field);
+    dynamic location = '';
+    String locationName = '';
+    if (post.data()!.containsKey('location')) {
+      final actualLocation = getter('location');
+      location = actualLocation;
+    }
+    if (post.data()!.containsKey('locationName')) {
+      final actualLocationName = getter('locationName');
+      locationName = actualLocationName;
+    }
     final String poster = getter('poster');
     final String description = getter('description');
     final serverpostedDate = getter('date').toDate();
@@ -91,6 +101,8 @@ class _MiniPostState extends State<MiniPost> {
       postedDate: serverpostedDate,
       topics: postTopics,
       imgUrls: imgUrls,
+      location: location,
+      locationName: locationName,
     );
     _post.setter();
   }

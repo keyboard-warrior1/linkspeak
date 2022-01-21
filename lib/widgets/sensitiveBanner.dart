@@ -4,7 +4,8 @@ import '../providers/myProfileProvider.dart';
 import '../providers/fullPostHelper.dart';
 
 class SensitiveBanner extends StatelessWidget {
-  const SensitiveBanner();
+  final void Function() previewSetState;
+  const SensitiveBanner(this.previewSetState);
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +60,10 @@ class SensitiveBanner extends StatelessWidget {
                         fontSize: 25.0,
                       ),
                     ),
-                    onPressed: showPost,
+                    onPressed: () {
+                      showPost();
+                      previewSetState();
+                    },
                   )
                 ],
               ),

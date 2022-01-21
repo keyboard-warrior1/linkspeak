@@ -46,6 +46,8 @@ class FeedProvider with ChangeNotifier {
     required String postId,
     required bool sensitiveContent,
     required PosterProfile myPosterProfile,
+    required dynamic location,
+    required String locationName,
   }) {
     final Post _newPost = Post(
       key: UniqueKey(),
@@ -60,6 +62,8 @@ class FeedProvider with ChangeNotifier {
       numOfLikes: 0,
       numOfComments: 0,
       numOfTopics: topics.length,
+      location: location,
+      locationName: locationName,
     );
     _newPost.setter();
     _posts.insert(

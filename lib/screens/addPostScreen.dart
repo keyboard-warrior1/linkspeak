@@ -20,6 +20,7 @@ import '../providers/myProfileProvider.dart';
 import '../widgets/addTopic.dart';
 import '../widgets/topicChip.dart';
 import '../widgets/registrationDialog.dart';
+import '../widgets/additionalAddressButton.dart';
 
 class NewPost extends StatefulWidget {
   const NewPost();
@@ -117,6 +118,7 @@ class _NewPostState extends State<NewPost> {
     final AssetEntity asset = assets.elementAt(index);
     return GestureDetector(
       onTap: () async {
+        FocusScope.of(context).unfocus();
         if (isLoading) {
         } else {
           final List<AssetEntity>? result =
@@ -255,6 +257,8 @@ class _NewPostState extends State<NewPost> {
     required void Function() empty,
     required dynamic addPost,
     required void Function(String) profileAddPost,
+    required dynamic location,
+    required String locationName,
   }) {
     final String postID = _generatePostId(username);
     final DateTime rightNow = DateTime.now();
@@ -285,6 +289,8 @@ class _NewPostState extends State<NewPost> {
         topics: [...formTopics],
         sensitiveContent:
             (assets.isNotEmpty) ? containsSensitiveContent : false,
+        location: location,
+        locationName: locationName,
       );
 
       profileAddPost(postID);
@@ -416,6 +422,8 @@ class _NewPostState extends State<NewPost> {
             'likes': 0,
             'comments': 0,
             'date': rightNow,
+            'location': location,
+            'locationName': locationName,
           });
           batch.update(myUserDoc, {'numOfPosts': FieldValue.increment(1)});
           batch.set(myPostDoc, {'date': rightNow});
@@ -498,6 +506,8 @@ class _NewPostState extends State<NewPost> {
     final _addPostState = Provider.of<NewPostHelper>(context);
     final _postStateNoListen = context.read<NewPostHelper>();
     final bool containsSensitiveContent = _addPostState.containsSensitive;
+    final dynamic helperLocation = _addPostState.getLocation;
+    final String helperLocationName = _addPostState.getLocationName;
     final List<String> _formTopics = _addPostState.formTopics;
     final void Function(String) _addTopic = _postStateNoListen.addTopic;
     final void Function(int) _removeTopic = _postStateNoListen.removeTopic;
@@ -603,208 +613,136 @@ class _NewPostState extends State<NewPost> {
         child: ListView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           children: [
-            if (assets.isEmpty)
-              GestureDetector(
-                onTap: () {
-                  if (isLoading) {
-                  } else {
-                    showModalBottomSheet(
-                        context: context,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            31.0,
-                          ),
-                        ),
-                        backgroundColor: Colors.white,
-                        builder: (_) {
-                          final ListTile _choosephotoGallery = ListTile(
-                            horizontalTitleGap: 5.0,
-                            leading: const Icon(
-                              Icons.perm_media,
-                              color: Colors.black,
+            Wrap(
+              children: <Widget>[
+                GestureDetector(
+                  onTap: () {
+                    FocusScope.of(context).unfocus();
+                    if (isLoading) {
+                    } else {
+                      showModalBottomSheet(
+                          context: context,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              31.0,
                             ),
-                            title: const Text(
-                              'Gallery',
-                              style: TextStyle(
+                          ),
+                          backgroundColor: Colors.white,
+                          builder: (_) {
+                            final ListTile _choosephotoGallery = ListTile(
+                              horizontalTitleGap: 5.0,
+                              leading: const Icon(
+                                Icons.perm_media,
                                 color: Colors.black,
                               ),
-                            ),
-                            onTap: () => _choose(_primarySwatch),
-                          );
+                              title: const Text(
+                                'Gallery',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                ),
+                              ),
+                              onTap: () => _choose(_primarySwatch),
+                            );
 
-                          final Column _choices = Column(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: <Widget>[
-                              _choosephotoGallery,
-                            ],
-                          );
+                            final Column _choices = Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: <Widget>[
+                                _choosephotoGallery,
+                              ],
+                            );
 
-                          final SizedBox _box = SizedBox(
-                            child: _choices,
-                          );
-                          return _box;
-                        });
-                  }
-                },
-                child: Container(
-                  height: 400.0,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.45),
-                  ),
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 10.0,
-                  ),
-                  child: Center(
-                    child: Container(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
-                          Icon(
-                            Icons.perm_media,
-                            color: Colors.white,
-                            size: 65.0,
-                          ),
-                          Text(
-                            'Upload media',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
+                            final SizedBox _box = SizedBox(
+                              child: _choices,
+                            );
+                            return _box;
+                          });
+                    }
+                  },
+                  child: Container(
+                    height: 100,
+                    width: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.45),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    margin: const EdgeInsets.all(5.0),
+                    padding: const EdgeInsets.all(8.0),
+                    child: Center(
+                      child: Container(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: <Widget>[
+                            Icon(
+                              Icons.add,
                               color: Colors.white,
-                              fontSize: 15.0,
-                              fontWeight: FontWeight.bold,
+                              size: 65.0,
                             ),
-                          ),
-                        ],
+                            Text(
+                              'Add media',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            if (assets.isNotEmpty)
-              Wrap(
-                children: <Widget>[
-                  GestureDetector(
-                    onTap: () {
-                      if (isLoading) {
-                      } else {
-                        showModalBottomSheet(
-                            context: context,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                31.0,
-                              ),
-                            ),
-                            backgroundColor: Colors.white,
-                            builder: (_) {
-                              final ListTile _choosephotoGallery = ListTile(
-                                horizontalTitleGap: 5.0,
-                                leading: const Icon(
-                                  Icons.perm_media,
-                                  color: Colors.black,
-                                ),
-                                title: const Text(
-                                  'Gallery',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                onTap: () => _choose(_primarySwatch),
-                              );
-
-                              final Column _choices = Column(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: <Widget>[
-                                  _choosephotoGallery,
-                                ],
-                              );
-
-                              final SizedBox _box = SizedBox(
-                                child: _choices,
-                              );
-                              return _box;
-                            });
-                      }
-                    },
-                    child: Container(
-                      height: 100,
-                      width: 100,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.45),
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      margin: const EdgeInsets.all(5.0),
-                      padding: const EdgeInsets.all(8.0),
-                      child: Center(
-                        child: Container(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: <Widget>[
-                              Icon(
-                                Icons.add,
-                                color: Colors.white,
-                                size: 65.0,
-                              ),
-                              Text(
-                                'Add media',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15.0,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+                ...assets.map((media) {
+                  final int _currentIndex = assets.indexOf(media);
+                  return Container(
+                    height: 100.0,
+                    width: 100.0,
+                    margin: const EdgeInsets.all(5.0),
+                    child: Stack(
+                      children: <Widget>[
+                        Container(
+                          key: UniqueKey(),
+                          width: 100.0,
+                          height: 100.0,
+                          child: _selectedAssetWidget(
+                            _currentIndex,
                           ),
                         ),
-                      ),
-                    ),
-                  ),
-                  ...assets.map((media) {
-                    final int _currentIndex = assets.indexOf(media);
-                    return Container(
-                      height: 100.0,
-                      width: 100.0,
-                      margin: const EdgeInsets.all(5.0),
-                      child: Stack(
-                        children: <Widget>[
-                          Container(
-                            key: UniqueKey(),
-                            width: 100.0,
-                            height: 100.0,
-                            child: _selectedAssetWidget(
-                              _currentIndex,
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: GestureDetector(
+                            onTap: () {
+                              FocusScope.of(context).unfocus();
+                              if (isLoading) {
+                              } else {
+                                _removeMedia(_currentIndex);
+                              }
+                            },
+                            child: Icon(
+                              Icons.cancel,
+                              color: Colors.redAccent.shade400,
                             ),
                           ),
-                          Align(
-                            alignment: Alignment.topRight,
-                            child: GestureDetector(
-                              onTap: () {
-                                if (isLoading) {
-                                } else {
-                                  _removeMedia(_currentIndex);
-                                }
-                              },
-                              child: Icon(
-                                Icons.cancel,
-                                color: Colors.redAccent.shade400,
-                              ),
-                            ),
-                          )
-                        ],
-                      ),
-                    );
-                  }).toList()
-                ],
-              ),
+                        )
+                      ],
+                    ),
+                  );
+                }).toList()
+              ],
+            ),
           ],
         ),
       ),
     );
+    final Widget _addressButton = AdditionalAddressButton(
+        isInPostScreen: false,
+        isInPost: true,
+        somethingChanged: () {},
+        changeAddress: (_) {},
+        changeAddressName: (_) {});
     final Container _topicsList = Container(
       decoration: BoxDecoration(
         color: Colors.grey.shade200,
@@ -824,6 +762,7 @@ class _NewPostState extends State<NewPost> {
           Container(
             child: GestureDetector(
               onTap: () {
+                FocusScope.of(context).unfocus();
                 if (isLoading) {
                 } else {
                   showModalBottomSheet(
@@ -869,6 +808,7 @@ class _NewPostState extends State<NewPost> {
             Container(
               child: GestureDetector(
                 onTap: () {
+                  FocusScope.of(context).unfocus();
                   if (isLoading) {
                   } else {
                     addMyTopics(_myTopics);
@@ -923,7 +863,10 @@ class _NewPostState extends State<NewPost> {
           shadowColor: MaterialStateProperty.all<Color?>(_primarySwatch),
         ),
         onPressed: () {
+          FocusScope.of(context).unfocus();
           _addPost(
+            location: helperLocation,
+            locationName: helperLocationName,
             username: _username,
             myImgUrl: _myImgUrl,
             myBio: _myBio,
@@ -957,6 +900,7 @@ class _NewPostState extends State<NewPost> {
         _description,
         _heightBox,
         _media,
+        _addressButton,
         if (assets.isNotEmpty) _containsSensitive,
         _heightBox,
         _topicsList,

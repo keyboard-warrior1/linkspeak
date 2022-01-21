@@ -323,16 +323,15 @@ class _MyPopUpMenuButtonState extends State<MyPopUpMenuButton> {
           ),
         );
         final FirebaseFirestore firestore = FirebaseFirestore.instance;
-        final storage = FirebaseStorage.instance;
+        // final storage = FirebaseStorage.instance;
 
-        Reference getMediaRef(String url) {
-          return storage.refFromURL(url);
-        }
+        // Reference getMediaRef(String url) {
+        //   return storage.refFromURL(url);
+        // }
 
-        List<Reference> getRefs(List<String> urls) {
-          return urls.map((url) => getMediaRef(url)).toList();
-        }
-
+        // List<Reference> getRefs(List<String> urls) {
+        //   return urls.map((url) => getMediaRef(url)).toList();
+        // }
         var batch = firestore.batch();
         Future<void> deleteTopic(String topic) async {
           final topicDoc = firestore.collection('Topics').doc(topic);
@@ -348,21 +347,61 @@ class _MyPopUpMenuButtonState extends State<MyPopUpMenuButton> {
         }
 
         final targetPost = firestore.collection('Posts').doc(widget.postID);
+        final targetDeletedPost =
+            firestore.collection('Deleted Posts').doc(widget.postID);
+        final getPost = await targetPost.get();
+        dynamic getter(String field) => getPost.get(field);
+        dynamic location = '';
+        String locationName = '';
+        if (getPost.data()!.containsKey('location')) {
+          final actualLocation = getter('location');
+          location = actualLocation;
+        }
+        if (getPost.data()!.containsKey('locationName')) {
+          final actualLocationName = getter('locationName');
+          locationName = actualLocationName;
+        }
+        final String description = getter('description');
+        final serverpostedDate = getter('date').toDate();
+        final int numOfLikes = getter('likes');
+        final int numOfComments = getter('comments');
+        final int numOfTopics = getter('topicCount');
+        final bool sensitiveContent = getter('sensitive');
+        final serverTopics = getter('topics') as List;
+        final List<String> postTopics =
+            serverTopics.map((topic) => topic as String).toList();
+        final serverimgUrls = getter('imgUrls') as List;
+        final List<String> imgUrls =
+            serverimgUrls.map((url) => url as String).toList();
         final targetMyPosts = firestore
             .collection('Users')
             .doc(myUsername)
             .collection('Posts')
             .doc(widget.postID);
+        batch.set(targetDeletedPost, {
+          'poster': myUsername,
+          'description': description,
+          'sensitive': sensitiveContent,
+          'topics': postTopics,
+          'topicCount': numOfTopics,
+          'imgUrls': imgUrls,
+          'likes': numOfLikes,
+          'comments': numOfComments,
+          'date': serverpostedDate,
+          'date deleted': DateTime.now(),
+          'location': location,
+          'locationName': locationName,
+        });
         batch.delete(targetPost);
         batch.delete(targetMyPosts);
         batch.update(firestore.collection('Users').doc(myUsername),
             {'numOfPosts': FieldValue.increment(-1)});
         if (widget.postMedia.isNotEmpty) {
           _showIt(context);
-          final references = getRefs(widget.postMedia);
+          // final references = getRefs(widget.postMedia);
           await deleteTopicPost(widget.postTopics);
           return batch.commit().then((value) {
-            references.forEach((reference) => reference.delete());
+            // references.forEach((reference) => reference.delete());
             Navigator.pop(context);
             Navigator.pop(context);
           }).catchError((_) {
@@ -385,7 +424,7 @@ class _MyPopUpMenuButtonState extends State<MyPopUpMenuButton> {
 
     void deleteIT(String postID) {
       profileDelete(postID);
-      feedDelete(postID);
+      // feedDelete(postID);
       widget.deletePost();
       widget.previewSetstate();
     }

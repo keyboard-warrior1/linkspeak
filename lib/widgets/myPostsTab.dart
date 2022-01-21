@@ -53,6 +53,16 @@ class _MyPostsTabState extends State<MyPostsTab>
         } else {
           final FullHelper _instance = FullHelper();
           dynamic getter(String field) => getPost.get(field);
+          dynamic location = '';
+          String locationName = '';
+          if (getPost.data()!.containsKey('location')) {
+            final actualLocation = getter('location');
+            location = actualLocation;
+          }
+          if (getPost.data()!.containsKey('locationName')) {
+            final actualLocationName = getter('locationName');
+            locationName = actualLocationName;
+          }
           final theID = getPost.id;
           final String poster = getter('poster');
           final String description = getter('description');
@@ -87,6 +97,8 @@ class _MyPostsTabState extends State<MyPostsTab>
             postedDate: serverpostedDate,
             topics: postTopics,
             imgUrls: imgUrls,
+            location: location,
+            locationName: locationName,
           );
           _post.setter();
           tempPosts.add(_post);
@@ -137,6 +149,16 @@ class _MyPostsTabState extends State<MyPostsTab>
           final FullHelper _instance = FullHelper();
           dynamic getter(String field) => getPost.get(field);
           final theID = getPost.id;
+          dynamic location = '';
+          String locationName = '';
+          if (getPost.data()!.containsKey('location')) {
+            final actualLocation = getter('location');
+            location = actualLocation;
+          }
+          if (getPost.data()!.containsKey('locationName')) {
+            final actualLocationName = getter('locationName');
+            locationName = actualLocationName;
+          }
           final String poster = getter('poster');
           final String description = getter('description');
           final serverpostedDate = getter('date').toDate();
@@ -170,6 +192,8 @@ class _MyPostsTabState extends State<MyPostsTab>
             postedDate: serverpostedDate,
             topics: postTopics,
             imgUrls: imgUrls,
+            location: location,
+            locationName: locationName,
           );
           _post.setter();
           tempPosts.add(_post);
@@ -247,166 +271,177 @@ class _MyPostsTabState extends State<MyPostsTab>
         future: _getMyPosts,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Column(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: const <Widget>[
-                const Center(
-                  child: const CircularProgressIndicator(),
-                ),
-              ],
+            return Container(
+              color: Colors.white,
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: const <Widget>[
+                  const Center(
+                    child: const CircularProgressIndicator(),
+                  ),
+                ],
+              ),
             );
           }
 
           if (snapshot.hasError) {
-            print(snapshot.error);
-            return Column(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      const Text(
-                        'An unknown error has occured',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                      const SizedBox(width: 15.0),
-                      TextButton(
-                        style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color?>(
-                            _primaryColor,
+            return Container(
+              color: Colors.white,
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        const Text(
+                          'An unknown error has occured',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(width: 15.0),
+                        TextButton(
+                          style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all<Color?>(
+                              _primaryColor,
+                            ),
+                            padding:
+                                MaterialStateProperty.all<EdgeInsetsGeometry?>(
+                              const EdgeInsets.all(0.0),
+                            ),
+                            shape: MaterialStateProperty.all<OutlinedBorder?>(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                            ),
                           ),
-                          padding:
-                              MaterialStateProperty.all<EdgeInsetsGeometry?>(
-                            const EdgeInsets.all(0.0),
-                          ),
-                          shape: MaterialStateProperty.all<OutlinedBorder?>(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.0),
+                          onPressed: () => setState(() {}),
+                          child: Center(
+                            child: Text(
+                              'Retry',
+                              style: TextStyle(
+                                color: _accentColor,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
-                        onPressed: () => setState(() {}),
-                        child: Center(
-                          child: Text(
-                            'Retry',
-                            style: TextStyle(
-                              color: _accentColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             );
           }
           return Builder(builder: (context) {
             final List<Post> _myPosts =
                 Provider.of<MyProfile>(context, listen: false).getPosts;
             return (_myPosts.isEmpty)
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: <Widget>[
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
-                          SvgPicture.asset(
-                            _logoAddress,
-                            height: _deviceHeight * 0.15,
-                            width: _deviceWidth * 0.15,
-                          ),
-                          OptimisedText(
-                            minWidth: _deviceWidth * 0.50,
-                            maxWidth: _deviceWidth * 0.50,
-                            minHeight: _deviceHeight * 0.05,
-                            maxHeight: _deviceHeight * 0.10,
-                            fit: BoxFit.scaleDown,
-                            child: const Text(
-                              'No posts yet',
-                              style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 35.0,
+                ? Container(
+                    color: Colors.white,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: <Widget>[
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: <Widget>[
+                            SvgPicture.asset(
+                              _logoAddress,
+                              height: _deviceHeight * 0.15,
+                              width: _deviceWidth * 0.15,
+                            ),
+                            OptimisedText(
+                              minWidth: _deviceWidth * 0.50,
+                              maxWidth: _deviceWidth * 0.50,
+                              minHeight: _deviceHeight * 0.05,
+                              maxHeight: _deviceHeight * 0.10,
+                              fit: BoxFit.scaleDown,
+                              child: const Text(
+                                'No posts yet',
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 35.0,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   )
-                : NotificationListener<OverscrollNotification>(
-                    onNotification: (OverscrollNotification value) {
-                      if (value.overscroll < 0 &&
-                          widget.scrollController.offset + value.overscroll <=
-                              0) {
-                        if (widget.scrollController.offset != 0)
-                          widget.scrollController.jumpTo(0);
+                : Container(
+                    color: Colors.white,
+                    child: NotificationListener<OverscrollNotification>(
+                      onNotification: (OverscrollNotification value) {
+                        if (value.overscroll < 0 &&
+                            widget.scrollController.offset + value.overscroll <=
+                                0) {
+                          if (widget.scrollController.offset != 0)
+                            widget.scrollController.jumpTo(0);
+                          return true;
+                        }
+                        if (widget.scrollController.offset + value.overscroll >=
+                            widget.scrollController.position.maxScrollExtent) {
+                          if (widget.scrollController.offset !=
+                              widget.scrollController.position.maxScrollExtent)
+                            widget.scrollController.jumpTo(widget
+                                .scrollController.position.maxScrollExtent);
+                          return true;
+                        }
+                        widget.scrollController.jumpTo(
+                            widget.scrollController.offset + value.overscroll);
                         return true;
-                      }
-                      if (widget.scrollController.offset + value.overscroll >=
-                          widget.scrollController.position.maxScrollExtent) {
-                        if (widget.scrollController.offset !=
-                            widget.scrollController.position.maxScrollExtent)
-                          widget.scrollController.jumpTo(
-                              widget.scrollController.position.maxScrollExtent);
-                        return true;
-                      }
-                      widget.scrollController.jumpTo(
-                          widget.scrollController.offset + value.overscroll);
-                      return true;
-                    },
-                    child: ListView.builder(
-                        padding: const EdgeInsets.only(bottom: 85.0),
-                        key: PageStorageKey<String>('storeMyPosts'),
-                        shrinkWrap: true,
-                        itemCount: _myPosts.length + 1,
-                        controller: PostsTab.scrollController,
-                        itemBuilder: (_, index) {
-                          if (index == _myPosts.length) {
-                            if (isLoading) {
-                              return Center(
-                                child: Container(
-                                  margin: const EdgeInsets.only(bottom: 10.0),
-                                  height: 35.0,
-                                  width: 35.0,
-                                  child: Center(
-                                    child: const CircularProgressIndicator(),
+                      },
+                      child: ListView.builder(
+                          padding: const EdgeInsets.only(bottom: 85.0),
+                          key: PageStorageKey<String>('storeMyPosts'),
+                          shrinkWrap: true,
+                          itemCount: _myPosts.length + 1,
+                          controller: PostsTab.scrollController,
+                          itemBuilder: (_, index) {
+                            if (index == _myPosts.length) {
+                              if (isLoading) {
+                                return Center(
+                                  child: Container(
+                                    margin: const EdgeInsets.only(bottom: 10.0),
+                                    height: 35.0,
+                                    width: 35.0,
+                                    child: Center(
+                                      child: const CircularProgressIndicator(),
+                                    ),
                                   ),
-                                ),
+                                );
+                              }
+                              if (isLastPage) {
+                                return emptyBox;
+                              }
+                            } else {
+                              final currentPost = _myPosts[index];
+                              final instance = currentPost.instance;
+                              const PostWidget _post = const PostWidget(
+                                isInFeed: false,
+                                isInLike: false,
+                                isInFav: false,
+                                isInTab: true,
+                                isInMyTab: true,
+                                isInOtherTab: false,
+                                isInTopics: false,
+                                otherController: null,
+                                topicScreenController: null,
+                              );
+                              return ChangeNotifierProvider<FullHelper>.value(
+                                value: instance,
+                                child: _post,
                               );
                             }
-                            if (isLastPage) {
-                              return emptyBox;
-                            }
-                          } else {
-                            final currentPost = _myPosts[index];
-                            final instance = currentPost.instance;
-                            const PostWidget _post = const PostWidget(
-                              isInFeed: false,
-                              isInLike: false,
-                              isInFav: false,
-                              isInTab: true,
-                              isInMyTab: true,
-                              isInOtherTab: false,
-                              isInTopics: false,
-                              otherController: null,
-                              topicScreenController: null,
-                            );
-                            return ChangeNotifierProvider<FullHelper>.value(
-                              value: instance,
-                              child: _post,
-                            );
-                          }
-                          return emptyBox;
-                        }),
+                            return emptyBox;
+                          }),
+                    ),
                   );
           });
         });

@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter_switch/flutter_switch.dart';
-
+import '../providers/myProfileProvider.dart';
+import '../providers/fullPostHelper.dart';
+import '../providers/postCarouselHelper.dart';
 import 'postBaseline.dart';
 import 'popUpMenuButton.dart';
 import 'fullPostCarousel.dart';
 import 'profileImage.dart';
 import 'adaptiveText.dart';
-import '../providers/myProfileProvider.dart';
-import '../providers/fullPostHelper.dart';
-import '../providers/postCarouselHelper.dart';
+import 'additionalAddressButton.dart';
 
-class FullPost extends StatelessWidget {
+class FullPost extends StatefulWidget {
   final ScrollController scrollController;
   final Widget? display;
   final bool upView;
@@ -43,6 +44,34 @@ class FullPost extends StatelessWidget {
     required this.shareButtonHandler,
     required this.previewSetstate,
   });
+
+  @override
+  State<FullPost> createState() => _FullPostState();
+}
+
+class _FullPostState extends State<FullPost> {
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  late Future<void> _viewPost;
+  Future<void> viewPost(String postID, String myUsername) {
+    final _rightNow = DateTime.now();
+    final myViewedPosts = firestore
+        .collection('Users')
+        .doc(myUsername)
+        .collection('Viewed Posts');
+    final postViewers =
+        firestore.collection('Posts').doc(postID).collection('Viewers');
+    var batch = firestore.batch();
+    batch.set(myViewedPosts.doc(), {
+      'ID': postID,
+      'date': _rightNow,
+    });
+    batch.set(postViewers.doc(), {
+      'ID': myUsername,
+      'date': _rightNow,
+    });
+    return batch.commit();
+  }
+
   String timeStamp(DateTime postedDate) {
     final String _datewithYear = DateFormat('MMMM d yyyy').format(postedDate);
     final String _dateNoYear = DateFormat('MMMM d').format(postedDate);
@@ -59,18 +88,28 @@ class FullPost extends StatelessWidget {
     if (_withinMinute) {
       return 'a few seconds ago';
     } else if (_withinHour && _difference.inMinutes > 1) {
-      return '${_difference.inMinutes} minutes ago';
+      return '~ ${_difference.inMinutes} minutes ago';
     } else if (_withinHour && _difference.inMinutes == 1) {
-      return '${_difference.inMinutes} minute ago';
+      return '~ ${_difference.inMinutes} minute ago';
     } else if (_withinDay && _difference.inHours > 1) {
-      return '${_difference.inHours} hours ago';
+      return '~ ${_difference.inHours} hours ago';
     } else if (_withinDay && _difference.inHours == 1) {
-      return '${_difference.inHours} hour ago';
+      return '~ ${_difference.inHours} hour ago';
     } else if (!_withinMinute && !_withinHour && !_withinDay && _withinYear) {
       return '$_dateNoYear';
     } else {
       return '$_datewithYear';
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final String myUsername =
+        Provider.of<MyProfile>(context, listen: false).getUsername;
+    final FullHelper helper = Provider.of<FullHelper>(context, listen: false);
+    final String postID = helper.postId;
+    _viewPost = viewPost(postID, myUsername);
   }
 
   @override
@@ -96,244 +135,268 @@ class FullPost extends StatelessWidget {
     final bool _withMedia = postImgUrls.isNotEmpty;
     final bool _noDescription = description.isEmpty;
     final bool _withDescription = description.isNotEmpty;
+    final dynamic _postLocation = helper.getLocation;
     const Widget _carousel = const FullPostCarousel();
-    return NotificationListener<OverscrollIndicatorNotification>(
-      onNotification: (overscroll) {
-        overscroll.disallowGlow();
-        return false;
-      },
-      child: ListView(
-        padding: const EdgeInsets.only(top: 50.0),
-        controller: scrollController,
-        children: <Widget>[
-          SizedBox(
-            height:
-                (_noMedia && _withDescription || _withMedia && _noDescription)
+    return FutureBuilder(
+      future: _viewPost,
+      builder: (ctx, snapshot) {
+        return NotificationListener<OverscrollIndicatorNotification>(
+          onNotification: (overscroll) {
+            overscroll.disallowGlow();
+            return false;
+          },
+          child: ListView(
+            padding: const EdgeInsets.only(top: 50.0),
+            controller: widget.scrollController,
+            children: <Widget>[
+              SizedBox(
+                height: (_noMedia && _withDescription ||
+                        _withMedia && _noDescription)
                     ? _deviceHeight * 0.9
                     : null,
-            child: ChangeNotifierProvider<CarouselPhysHelp>.value(
-              value: CarouselPhysHelp(),
-              child: Builder(
-                builder: (context) {
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: <Widget>[
-                            TextButton(
-                              onPressed: handler,
-                              child: ProfileImage(
-                                username: title,
-                                url: userImageUrl,
-                                factor: 0.10,
-                                inEdit: false,
-                                asset: null,
-                              ),
-                            ),
-                            OptimisedText(
-                              minWidth: _deviceWidth * 0.1,
-                              maxWidth: _deviceWidth * 0.5,
-                              minHeight: 50,
-                              maxHeight: 50,
-                              fit: BoxFit.scaleDown,
-                              child: TextButton(
-                                onPressed: handler,
-                                child: Text(
-                                  title,
-                                  textAlign: TextAlign.start,
-                                  style: const TextStyle(
-                                    color: Colors.black,
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: 22.0,
+                child: ChangeNotifierProvider<CarouselPhysHelp>.value(
+                  value: CarouselPhysHelp(),
+                  child: Builder(
+                    builder: (context) {
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 5.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: <Widget>[
+                                TextButton(
+                                  onPressed: widget.handler,
+                                  child: ProfileImage(
+                                    username: title,
+                                    url: userImageUrl,
+                                    factor: 0.10,
+                                    inEdit: false,
+                                    asset: null,
                                   ),
                                 ),
-                              ),
-                            ),
-                            const Spacer(),
-                            PopupMenuButton(
-                              tooltip: 'More',
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15.0),
-                              ),
-                              padding: const EdgeInsets.all(0.0),
-                              child: const Icon(
-                                Icons.more_vert,
-                                color: Colors.grey,
-                              ),
-                              itemBuilder: (_) => [
-                                PopupMenuItem(
-                                  padding: const EdgeInsets.all(0.0),
-                                  enabled: true,
-                                  child: GestureDetector(
-                                    child: MyPopUpMenuButton(
-                                      id: postId,
-                                      postID: postId,
-                                      isInProfile: false,
-                                      postedByMe: title ==
-                                          context.read<MyProfile>().getUsername,
-                                      postTopics: postTopics,
-                                      postMedia: postImgUrls,
-                                      postDate: postedDate,
-                                      isBlocked: false,
-                                      isLinkedToMe: false,
-                                      block: () {},
-                                      unblock: () {},
-                                      remove: () {},
-                                      hidePost: helperHide,
-                                      deletePost: helperDelete,
-                                      unhidePost: helperUnhide,
-                                      previewSetstate: previewSetstate,
+                                OptimisedText(
+                                  minWidth: _deviceWidth * 0.1,
+                                  maxWidth: _deviceWidth * 0.5,
+                                  minHeight: 50,
+                                  maxHeight: 50,
+                                  fit: BoxFit.scaleDown,
+                                  child: TextButton(
+                                    onPressed: widget.handler,
+                                    child: Text(
+                                      title,
+                                      textAlign: TextAlign.start,
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontFamily: 'Poppins',
+                                        fontWeight: FontWeight.w400,
+                                        fontSize: 22.0,
+                                      ),
                                     ),
+                                  ),
+                                ),
+                                const Spacer(),
+                                PopupMenuButton(
+                                  tooltip: 'More',
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15.0),
+                                  ),
+                                  padding: const EdgeInsets.all(0.0),
+                                  child: const Icon(
+                                    Icons.more_vert,
+                                    color: Colors.grey,
+                                  ),
+                                  itemBuilder: (_) => [
+                                    PopupMenuItem(
+                                      padding: const EdgeInsets.all(0.0),
+                                      enabled: true,
+                                      child: GestureDetector(
+                                        child: MyPopUpMenuButton(
+                                          id: postId,
+                                          postID: postId,
+                                          isInProfile: false,
+                                          postedByMe: title ==
+                                              context
+                                                  .read<MyProfile>()
+                                                  .getUsername,
+                                          postTopics: postTopics,
+                                          postMedia: postImgUrls,
+                                          postDate: postedDate,
+                                          isBlocked: false,
+                                          isLinkedToMe: false,
+                                          block: () {},
+                                          unblock: () {},
+                                          remove: () {},
+                                          hidePost: helperHide,
+                                          deletePost: helperDelete,
+                                          unhidePost: helperUnhide,
+                                          previewSetstate:
+                                              widget.previewSetstate,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 25.0,
+                          ),
+                          if (_withMedia && _withDescription)
+                            WithMediaTextContent(
+                              description: description,
+                              controller: widget.scrollController,
+                            ),
+                          if (_noMedia && _withDescription)
+                            NoMediaTextContent(
+                              description: description,
+                              controller: widget.scrollController,
+                            ),
+                          if (_withMedia && _noDescription) const Spacer(),
+                          if (_noMedia && _withDescription ||
+                              _withMedia && _noDescription)
+                            const Spacer(),
+                          if (_postLocation != '')
+                            AdditionalAddressButton(
+                              isInPostScreen: true,
+                              isInPost: false,
+                              somethingChanged: () {},
+                              changeAddress: (_) {},
+                              changeAddressName: (_) {},
+                            ),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                if (_noMedia ||
+                                    _withMedia && postImgUrls.length == 1)
+                                  const Spacer(),
+                                if (_withMedia && postImgUrls.length > 1)
+                                  FlutterSwitch(
+                                    showOnOff: true,
+                                    activeText: 'stop',
+                                    activeTextColor: Colors.white,
+                                    inactiveText: 'play',
+                                    value:
+                                        Provider.of<CarouselPhysHelp>(context)
+                                            .carouselPlay,
+                                    onToggle: (valu) {
+                                      Provider.of<CarouselPhysHelp>(context,
+                                              listen: false)
+                                          .playCarousel();
+                                    },
+                                    activeColor: _primaryColor,
+                                    activeIcon: Icon(
+                                      Icons.pause,
+                                    ),
+                                    activeToggleColor: _accentColor,
+                                    inactiveIcon: Icon(
+                                      Icons.play_arrow,
+                                    ),
+                                  ),
+                                if (_withMedia && postImgUrls.length > 1)
+                                  Flexible(
+                                    fit: FlexFit.loose,
+                                    child: Center(
+                                      child: Container(
+                                        height: 50.0,
+                                        width: 75,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 15.0),
+                                        child: ListView(
+                                          scrollDirection: Axis.horizontal,
+                                          children: postImgUrls.map((url) {
+                                            int index =
+                                                postImgUrls.indexOf(url);
+                                            return Container(
+                                              width: 8.0,
+                                              height: 8.0,
+                                              margin:
+                                                  const EdgeInsets.symmetric(
+                                                vertical: 10.0,
+                                                horizontal: 2.0,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                border:
+                                                    Provider.of<CarouselPhysHelp>(
+                                                                    context)
+                                                                .current ==
+                                                            index
+                                                        ? Border.all(
+                                                            color:
+                                                                _primaryColor)
+                                                        : null,
+                                                color:
+                                                    Provider.of<CarouselPhysHelp>(
+                                                                    context)
+                                                                .current ==
+                                                            index
+                                                        ? _accentColor
+                                                        : _primaryColor,
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                Text(
+                                  timeStamp(postedDate),
+                                  softWrap: false,
+                                  textAlign: TextAlign.end,
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 17.0,
                                   ),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 25.0,
-                      ),
-                      if (_withMedia && _withDescription)
-                        WithMediaTextContent(
-                          description: description,
-                          controller: scrollController,
-                        ),
-                      if (_noMedia && _withDescription)
-                        NoMediaTextContent(
-                          description: description,
-                          controller: scrollController,
-                        ),
-                      if (_withMedia && _noDescription) const Spacer(),
-                      if (_noMedia && _withDescription ||
-                          _withMedia && _noDescription)
-                        const Spacer(),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            if (_noMedia ||
-                                _withMedia && postImgUrls.length == 1)
-                              const Spacer(),
-                            if (_withMedia && postImgUrls.length > 1)
-                              FlutterSwitch(
-                                showOnOff: true,
-                                activeText: 'stop',
-                                activeTextColor: Colors.white,
-                                inactiveText: 'play',
-                                value: Provider.of<CarouselPhysHelp>(context)
-                                    .carouselPlay,
-                                onToggle: (valu) {
-                                  Provider.of<CarouselPhysHelp>(context,
-                                          listen: false)
-                                      .playCarousel();
-                                },
-                                activeColor: _primaryColor,
-                                activeIcon: Icon(
-                                  Icons.pause,
-                                ),
-                                activeToggleColor: _accentColor,
-                                inactiveIcon: Icon(
-                                  Icons.play_arrow,
-                                ),
-                              ),
-                            if (_withMedia && postImgUrls.length > 1)
-                              Flexible(
-                                fit: FlexFit.loose,
-                                child: Center(
-                                  child: Container(
-                                    height: 50.0,
-                                    width: 75,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 15.0),
-                                    child: ListView(
-                                      scrollDirection: Axis.horizontal,
-                                      children: postImgUrls.map((url) {
-                                        int index = postImgUrls.indexOf(url);
-                                        return Container(
-                                          width: 8.0,
-                                          height: 8.0,
-                                          margin: const EdgeInsets.symmetric(
-                                            vertical: 10.0,
-                                            horizontal: 2.0,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            border:
-                                                Provider.of<CarouselPhysHelp>(
-                                                                context)
-                                                            .current ==
-                                                        index
-                                                    ? Border.all(
-                                                        color: _primaryColor)
-                                                    : null,
-                                            color:
-                                                Provider.of<CarouselPhysHelp>(
-                                                                context)
-                                                            .current ==
-                                                        index
-                                                    ? _accentColor
-                                                    : _primaryColor,
-                                          ),
-                                        );
-                                      }).toList(),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            Text(
-                              timeStamp(postedDate),
-                              softWrap: false,
-                              textAlign: TextAlign.end,
-                              style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 17.0,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (_withMedia && _noDescription) _carousel,
-                      if (_withMedia && _withDescription) _carousel,
-                      if (_noMedia ||
-                          _withMedia &&
-                              _noDescription &&
-                              postImgUrls.length == 1)
-                        const Spacer(),
-                    ],
-                  );
-                },
+                          ),
+                          if (_withMedia && _noDescription) _carousel,
+                          if (_withMedia && _withDescription) _carousel,
+                          if (_noMedia ||
+                              _withMedia &&
+                                  _noDescription &&
+                                  postImgUrls.length == 1)
+                            const Spacer(),
+                        ],
+                      );
+                    },
+                  ),
+                ),
               ),
-            ),
+              PostBar(
+                postID: postId,
+                shareView: widget.shareView,
+                shareButtonHandler: widget.shareButtonHandler,
+                isInFeed: false,
+                upButtonHandler: widget.upButtonHandler,
+                commentButtonHandler: widget.commentButtonHandler,
+                topicButtonHandler: widget.topicButtonHandler,
+                upView: widget.upView,
+                commentView: widget.commentsView,
+                topicsView: widget.topicsView,
+                isInOtherProfile: false,
+              ),
+              if (widget.upView ||
+                  widget.commentsView ||
+                  widget.topicsView ||
+                  widget.shareView && widget.display != null)
+                SizedBox(
+                  child: widget.display,
+                ),
+            ],
           ),
-          PostBar(
-            postID: postId,
-            shareView: shareView,
-            shareButtonHandler: shareButtonHandler,
-            isInFeed: false,
-            upButtonHandler: upButtonHandler,
-            commentButtonHandler: commentButtonHandler,
-            topicButtonHandler: topicButtonHandler,
-            upView: upView,
-            commentView: commentsView,
-            topicsView: topicsView,
-          ),
-          if (upView ||
-              commentsView ||
-              topicsView ||
-              shareView && display != null)
-            SizedBox(
-              child: display,
-            ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

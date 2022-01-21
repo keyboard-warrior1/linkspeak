@@ -16,6 +16,13 @@ abstract class Profile {
   late int _age;
   late TheVisibility _visibility;
   String _profileImageUrl;
+  String _profileBannerUrl;
+  String _additionalWebsite;
+  String _additionalEmail;
+  String _additionalNumber;
+  bool _hasSpotlight;
+  dynamic _additionalAddress;
+  String _additionalAddressName;
   List<Map<String, String>> _postLikesNotifs;
   List<String> _newLinksNotifs;
   List<String> _linkRequestsNotifs;
@@ -41,9 +48,16 @@ abstract class Profile {
     required String bio,
     required String activity,
     required String status,
+    required bool hasSpotlight,
     required int age,
     TheVisibility visibility = TheVisibility.public,
     required String profileImageUrl,
+    required String profileBannerUrl,
+    required String additionalWebsite,
+    required String additionalEmail,
+    required String additionalNumber,
+    required dynamic additionalAddress,
+    required String additionalAddressName,
     required String userID,
     required List<String> postIDs,
     required List<String> linkIDs,
@@ -64,8 +78,15 @@ abstract class Profile {
         this._bio = bio,
         this._activity = activity,
         this._status = status,
+        this._hasSpotlight = hasSpotlight,
         this._age = age,
         this._profileImageUrl = profileImageUrl,
+        this._profileBannerUrl = profileBannerUrl,
+        this._additionalWebsite = additionalWebsite,
+        this._additionalEmail = additionalEmail,
+        this._additionalNumber = additionalNumber,
+        this._additionalAddress = additionalAddress,
+        this._additionalAddressName = additionalAddressName,
         this._posts = <Post>[],
         this._topics = <String>[],
         this._links = <Profile>[],
@@ -90,6 +111,7 @@ abstract class Profile {
   String get getBio => _bio;
   String get getActivity => _activity;
   String get getStatus => _status;
+  bool get getHasSpotlight => _hasSpotlight;
   int get getAge => _age;
   List<Profile> get getlinks => _links;
   List<String> get getLinkIDs => _linkIDs;
@@ -103,8 +125,13 @@ abstract class Profile {
   List<String> get getPostIDs => _postIDs;
   int get getNumberOfPosts => _posts.length;
   List<String> get getTopics => _topics;
-
   String get getProfileImage => _profileImageUrl;
+  String get getProfileBanner => _profileBannerUrl;
+  String get getAdditionalWebsite => _additionalWebsite;
+  String get getAdditionalEmail => _additionalEmail;
+  String get getAdditionalNumber => _additionalNumber;
+  dynamic get getAdditionalAddress => _additionalAddress;
+  String get getAdditionalAddressName => _additionalAddressName;
   List<Map<String, String>> get getpostLikesNotifs => _postLikesNotifs;
   List<String> get getnewLinksNotifs => _newLinksNotifs;
   List<String> get getlinkRequestNotifs => _linkRequestsNotifs;
@@ -172,6 +199,10 @@ abstract class Profile {
     _status = status;
   }
 
+  set setHasSpotlight(bool hasSpotlight) {
+    _hasSpotlight = hasSpotlight;
+  }
+
   set setPosts(List<Post> posts) {
     _posts = posts;
   }
@@ -210,5 +241,29 @@ abstract class Profile {
 
   set setProfileImage(String imgUrl) {
     _profileImageUrl = imgUrl;
+  }
+
+  set setProfileBanner(String bannerUrl) {
+    _profileBannerUrl = bannerUrl;
+  }
+
+  set setAdditionalWebsite(String website) {
+    _additionalWebsite = website;
+  }
+
+  set setAdditionalEmail(String email) {
+    _additionalEmail = email;
+  }
+
+  set setAdditionalNumber(String number) {
+    _additionalNumber = number;
+  }
+
+  set setAdditionalAddress(dynamic address) {
+    _additionalAddress = address;
+  }
+
+  set setAdditionalAddressName(String name) {
+    _additionalAddressName = name;
   }
 }

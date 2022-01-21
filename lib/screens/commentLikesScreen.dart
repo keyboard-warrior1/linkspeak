@@ -247,7 +247,6 @@ class _CommentLikesScreenState extends State<CommentLikesScreen> {
         }
 
         if (snapshot.hasError) {
-          print(snapshot.error);
           return SafeArea(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,

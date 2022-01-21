@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:link_speak/routes.dart';
 import '../models/topicSearch.dart';
-// import '../routes.dart';
 import '../models/miniProfile.dart';
 import '../widgets/searchTabBar.dart';
 import '../widgets/userResult.dart';
@@ -81,7 +80,7 @@ class _SearchTabState extends State<SearchTab>
     super.initState();
 
     _controller = TabController(
-      length: 2,
+      length: 3,
       vsync: this,
     );
 
@@ -382,7 +381,33 @@ class _SearchTabState extends State<SearchTab>
                   ),
                 ],
               ),
-            )
+            ),
+            NotificationListener<OverscrollIndicatorNotification>(
+              onNotification: (overscroll) {
+                overscroll.disallowGlow();
+                return false;
+              },
+              child: ListView(
+                padding: const EdgeInsets.only(bottom: 50.0),
+                children: <Widget>[
+                  Column(
+                    children: <Widget>[
+                      if (_textController.value.text.isEmpty)
+                        Container(
+                          child: const Center(
+                            child: const Text(
+                              'Search for clubs',
+                              style: const TextStyle(
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

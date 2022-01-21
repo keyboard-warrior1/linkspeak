@@ -36,7 +36,6 @@ class _ChatMessagesState extends State<ChatMessages> {
 
   Future<void> getProducts(String _myUsername) async {
     if (!hasMore) {
-      print('No More Products');
       return;
     }
     if (isLoading) {
@@ -311,10 +310,10 @@ class _ChatMessagesState extends State<ChatMessages> {
         .collection('Users/$_myUsername/chats')
         .doc('${widget.chatId}')
         .update({'isRead': true});
-    firestore
-        .collection('Users/${widget.chatId}/chats')
-        .doc('$_myUsername')
-        .update({'isRead': true});
+    // firestore
+    //     .collection('Users/${widget.chatId}/chats')
+    //     .doc('$_myUsername')
+    //     .update({'isRead': true});
     var unreadMessages = await theMessages
         .where('isRead', isEqualTo: false)
         .where('user', isNotEqualTo: _myUsername)

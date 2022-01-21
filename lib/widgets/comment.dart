@@ -1,12 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../routes.dart';
-import '../my_flutter_app_icons.dart' as customIcons;
 import '../models/screenArguments.dart';
 import '../providers/myProfileProvider.dart';
 import '../providers/commentProvider.dart';
+import '../providers/themeModel.dart';
 import 'sensitiveComment.dart';
 import 'profileImage.dart';
 import 'reportDialog.dart';
@@ -51,7 +52,6 @@ class CommentTile extends StatefulWidget {
 }
 
 class _CommentTileState extends State<CommentTile> {
-  bool _showSensitive = false;
   final firestore = FirebaseFirestore.instance;
   String timeStamp(DateTime postedDate) {
     final String _datewithYear = DateFormat('MMMM d yyyy').format(postedDate);
@@ -69,13 +69,13 @@ class _CommentTileState extends State<CommentTile> {
     if (_withinMinute) {
       return 'a few seconds';
     } else if (_withinHour && _difference.inMinutes > 1) {
-      return '${_difference.inMinutes} minutes';
+      return '~ ${_difference.inMinutes} minutes';
     } else if (_withinHour && _difference.inMinutes == 1) {
-      return '${_difference.inMinutes} minute';
+      return '~ ${_difference.inMinutes} minute';
     } else if (_withinDay && _difference.inHours > 1) {
-      return '${_difference.inHours} hours';
+      return '~ ${_difference.inHours} hours';
     } else if (_withinDay && _difference.inHours == 1) {
-      return '${_difference.inHours} hour';
+      return '~ ${_difference.inHours} hour';
     } else if (!_withinMinute && !_withinHour && !_withinDay && _withinYear) {
       return '$_dateNoYear';
     } else {
@@ -101,14 +101,24 @@ class _CommentTileState extends State<CommentTile> {
 
   Future<void> likeComment(String myUsername, void Function() like) async {
     like();
+    final DateTime _rightNow = DateTime.now();
     var batch = firestore.batch();
     final theComment = firestore
         .collection('Posts')
         .doc(widget.postID)
         .collection('comments')
         .doc(widget.commentId);
+    final myLikedComments = firestore
+        .collection('Users')
+        .doc(myUsername)
+        .collection('Liked Comments');
     final myLike = theComment.collection('likes').doc(myUsername);
-    batch.set(myLike, {'0': 1});
+    batch.set(myLikedComments.doc(widget.commentId), {
+      'post ID': widget.postID,
+      'comment ID': widget.commentId,
+      'like date': _rightNow,
+    });
+    batch.set(myLike, {'date': _rightNow});
     batch.update(theComment, {'likeCount': FieldValue.increment(1)});
     final getMyLike = await myLike.get();
     if (!getMyLike.exists) {
@@ -126,8 +136,13 @@ class _CommentTileState extends State<CommentTile> {
         .doc(widget.postID)
         .collection('comments')
         .doc(widget.commentId);
+    final myLikedComments = firestore
+        .collection('Users')
+        .doc(myUsername)
+        .collection('Liked Comments');
     final myLike = theComment.collection('likes').doc(myUsername);
     batch.delete(myLike);
+    batch.delete(myLikedComments.doc(widget.commentId));
     batch.update(theComment, {'likeCount': FieldValue.increment(-1)});
     final getMyLike = await myLike.get();
     if (getMyLike.exists) {
@@ -152,6 +167,12 @@ class _CommentTileState extends State<CommentTile> {
 
   @override
   Widget build(BuildContext context) {
+    final themeIconHelper = Provider.of<ThemeModel>(context, listen: false);
+    final String currentIconName = themeIconHelper.selectedIconName;
+    final IconData currentIcon = themeIconHelper.themeIcon;
+    final Color currentIconColor = themeIconHelper.likeColor;
+    final String inactiveIconPath = themeIconHelper.themeIconPathInactive;
+    final String activeIconPath = themeIconHelper.themeIconPathActive;
     final String myUsername =
         Provider.of<MyProfile>(context, listen: false).getUsername;
     return ChangeNotifierProvider<FullCommentHelper>.value(
@@ -172,6 +193,7 @@ class _CommentTileState extends State<CommentTile> {
           postID: widget.postID,
           commentID: widget.commentId,
           instance: widget.instance,
+          commenterName: widget.commenterUsername,
           isNotif: false,
         );
         final CommentLikesScreenArgs args2 = CommentLikesScreenArgs(
@@ -280,7 +302,7 @@ class _CommentTileState extends State<CommentTile> {
         );
         final Text _commenterName = Text(
           widget.commenterUsername,
-          style: TextStyle(
+          style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
             fontSize: 17.0,
@@ -312,7 +334,7 @@ class _CommentTileState extends State<CommentTile> {
               children: <Widget>[
                 Text(
                   timeStamp(widget.commentDate),
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.grey,
                   ),
                 ),
@@ -371,12 +393,20 @@ class _CommentTileState extends State<CommentTile> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    Icon(
-                      customIcons.MyFlutterApp.upvote,
-                      color: (_isLiked)
-                          ? Colors.lightGreenAccent.shade400
-                          : Colors.grey.shade400,
-                    ),
+                    if (currentIconName != 'Custom')
+                      Icon(
+                        currentIcon,
+                        color: (_isLiked)
+                            ? currentIconColor
+                            : Colors.grey.shade400,
+                      ),
+                    if (currentIconName == 'Custom' && _isLiked)
+                      ImageIcon(
+                        FileImage(
+                          File((_isLiked) ? activeIconPath : inactiveIconPath),
+                        ),
+                        size: 35.0,
+                      ),
                     const SizedBox(
                       height: 7.0,
                     ),
@@ -386,7 +416,7 @@ class _CommentTileState extends State<CommentTile> {
                           : '${_optimisedNumbers(_numOfLikes)}',
                       style: TextStyle(
                           color: (_isLiked)
-                              ? Colors.lightGreenAccent.shade400
+                              ? currentIconColor
                               : Colors.grey.shade400),
                     )
                   ],

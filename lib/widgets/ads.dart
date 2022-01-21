@@ -52,7 +52,7 @@ class _NativeAdsState extends State<NativeAds>
             Container(
               height: 25.0,
               width: 25.0,
-              child: const CircularProgressIndicator(),
+              // child: const CircularProgressIndicator(),
             ),
           ],
         ),
@@ -67,7 +67,7 @@ class _NativeAdsState extends State<NativeAds>
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
-                const Text('An error has occured'),
+                const Text('Could not load ad'),
                 const SizedBox(
                   width: 5.0,
                 ),
@@ -137,7 +137,7 @@ class _NativeAdsState extends State<NativeAds>
             Container(
               height: 25.0,
               width: 25.0,
-              child: const CircularProgressIndicator(),
+              // child: const CircularProgressIndicator(),
             ),
           ],
         ),
@@ -152,7 +152,7 @@ class _NativeAdsState extends State<NativeAds>
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
-                const Text('An error has occured'),
+                const Text('Could not load ad'),
                 const SizedBox(
                   width: 5.0,
                 ),

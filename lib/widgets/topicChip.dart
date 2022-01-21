@@ -6,16 +6,16 @@ class TopicChip extends StatelessWidget {
   final void Function()? handler;
   final Color fontColor;
   final FontWeight fontWeight;
+  final Color? otherPrimaryColor;
   const TopicChip(
-    this.topicName,
-    this.icon,
-    this.handler,
-    this.fontColor,
-    this.fontWeight,
-  );
+      this.topicName, this.icon, this.handler, this.fontColor, this.fontWeight,
+      [this.otherPrimaryColor]);
   @override
   Widget build(BuildContext context) {
-    final Color _primarySwatch = Theme.of(context).primaryColor;
+    Color _primarySwatch = Theme.of(context).primaryColor;
+    if (otherPrimaryColor != null) {
+      _primarySwatch = otherPrimaryColor!;
+    }
     return Container(
       margin: const EdgeInsets.all(
         2.0,

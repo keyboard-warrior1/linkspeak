@@ -943,7 +943,6 @@ class _SwitchSheetState extends State<SwitchSheet> {
                   );
                 }
                 if (snapshot.hasError) {
-                  print(snapshot.error);
                   return Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
