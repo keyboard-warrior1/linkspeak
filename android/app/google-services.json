@@ -1,0 +1,146 @@
+{
+  "project_info": {
+    "project_number": "761764606457",
+    "project_id": "linkspeak-9817c",
+    "storage_bucket": "linkspeak-9817c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:761764606457:android:17d5d765326c5e9f1bcd28",
+        "android_client_info": {
+          "package_name": "com.example.linkspeak"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "761764606457-9hia55er9ak6ci8gvbbdrqh1714o9m7l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.linkspeak",
+            "certificate_hash": "3d9ee6cc79e42d03f3b300034363152e6394e5fd"
+          }
+        },
+        {
+          "client_id": "761764606457-glkqbsq3la6tfpbibd9puho1kdota50d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.linkspeak",
+            "certificate_hash": "875c7bc31ef3f24890e8d76b8d269ef7c23a9c92"
+          }
+        },
+        {
+          "client_id": "761764606457-v0vn8s12laajh0h0bdeuj3s8ff5ablak.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.linkspeak",
+            "certificate_hash": "68df6bd1b849b9d1fe5184f6fef4bce03650ac2a"
+          }
+        },
+        {
+          "client_id": "761764606457-v3rmropbldq83j84gcnlmfkv7h615sbo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.linkspeak",
+            "certificate_hash": "846fd29e24bb39d8cfbbe6c1f2899fb9bf6bc869"
+          }
+        },
+        {
+          "client_id": "761764606457-4fme2ir5cshduikc0hkf34jq8smvelra.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgxEU8OzCBbtGE3ctl5DBLELtgOUqmhM4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "761764606457-4fme2ir5cshduikc0hkf34jq8smvelra.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "761764606457-7ntrqcmvcno15cqsg4eob6atjqbe8cr7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.linkspeak.techlr"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:761764606457:android:c2e60f0db64a1ad31bcd28",
+        "android_client_info": {
+          "package_name": "com.linkspeak.techlr"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "761764606457-bcenmjvdu7iq6b41dpo2m0bhrcrqtbqf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.linkspeak.techlr",
+            "certificate_hash": "875c7bc31ef3f24890e8d76b8d269ef7c23a9c92"
+          }
+        },
+        {
+          "client_id": "761764606457-e08m4a72us360cpr7mb3rqg6u41f3fue.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.linkspeak.techlr",
+            "certificate_hash": "846fd29e24bb39d8cfbbe6c1f2899fb9bf6bc869"
+          }
+        },
+        {
+          "client_id": "761764606457-grv6qlmk33agmtn438569uget53p76ah.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.linkspeak.techlr",
+            "certificate_hash": "68df6bd1b849b9d1fe5184f6fef4bce03650ac2a"
+          }
+        },
+        {
+          "client_id": "761764606457-pdkf4a04u17kmituf35mulcbhvgsgb0h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.linkspeak.techlr",
+            "certificate_hash": "3d9ee6cc79e42d03f3b300034363152e6394e5fd"
+          }
+        },
+        {
+          "client_id": "761764606457-4fme2ir5cshduikc0hkf34jq8smvelra.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgxEU8OzCBbtGE3ctl5DBLELtgOUqmhM4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "761764606457-4fme2ir5cshduikc0hkf34jq8smvelra.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "761764606457-7ntrqcmvcno15cqsg4eob6atjqbe8cr7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.linkspeak.techlr"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
