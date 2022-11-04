@@ -8,6 +8,14 @@ workflows:
         - ios_config
         - appstore_credentials
     scripts:
+      - name: pub get
+        script: flutter pub get
+      - name: pub upgrade
+        script: flutter pub upgrade
+      - name: enter
+        script: cd ios
+      - name: install pods
+        script: pod install
       - name: Build ipa for distribution
         script: flutter build ipa
     artifacts:
