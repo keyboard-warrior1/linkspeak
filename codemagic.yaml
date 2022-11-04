@@ -13,6 +13,8 @@ workflows:
         - ios_config
         - appstore_credentials
     scripts:
+      - name: Set up code signing settings on Xcode project
+        script: xcode-project use-profiles
       - name: pub get
         script: flutter pub get
       - name: pub upgrade
@@ -27,4 +29,5 @@ workflows:
         script: flutter build ipa
     artifacts:
       - build/ios/ipa/*.ipa
+
 
