@@ -5,6 +5,8 @@ workflows:
     max_build_duration: 120
     environment:
       ios_signing:
+        provisioning_profiles:
+         - omars_profile
         certificates:
          - main_certificate
       groups:
@@ -25,3 +27,4 @@ workflows:
         script: flutter build ipa
     artifacts:
       - build/ios/ipa/*.ipa
+
