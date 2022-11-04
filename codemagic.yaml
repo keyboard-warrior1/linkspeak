@@ -12,12 +12,12 @@ workflows:
         script: flutter pub get
       - name: pub upgrade
         script: flutter pub upgrade
-      - name: enter
-        script: cd ios
-      - name: init pod
-        script: pod init
-      - name: install pods
-        script: pod install
+#       - name: enter
+#         script: cd ios
+#       - name: init pod
+#         script: pod init
+#       - name: install pods
+#         script: pod install
       - name: Build ipa for distribution
         script: flutter build ipa
     artifacts:
