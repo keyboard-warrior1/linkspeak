@@ -26,7 +26,7 @@ workflows:
 #       - name: install pods
 #         script: pod install
       - name: Build ipa for distribution
-        script: flutter build ipa
+        script: flutter build ios --release
     artifacts:
       - build/ios/ipa/*.ipa
 
