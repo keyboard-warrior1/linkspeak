@@ -5,7 +5,7 @@ workflows:
     max_build_duration: 120
     environment:
       groups:
-        -
+        - ios_config
     scripts:
       - name: Build ipa for distribution
         script: flutter build ipa
