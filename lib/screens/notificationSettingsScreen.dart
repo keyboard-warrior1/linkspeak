@@ -1,8 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../general.dart';
 import '../providers/myProfileProvider.dart';
-import '../widgets/settingsBar.dart';
+import '../widgets/common/noglow.dart';
+import '../widgets/common/settingsBar.dart';
 
 class NotificationSettings extends StatefulWidget {
   const NotificationSettings();
@@ -13,15 +16,26 @@ class NotificationSettings extends StatefulWidget {
 
 class _NotificationSettingsState extends State<NotificationSettings> {
   final firestore = FirebaseFirestore.instance;
+  bool flareLikeAlerts = true;
+  bool flareCommentAlerts = true;
   bool likeAlerts = true;
   bool replyAlerts = true;
   bool commentAlerts = true;
   bool linksAlert = true;
   bool linkedAlert = true;
+  bool mentionAlert = true;
   late Future<void> _getSettings;
   Future<void> getSettings(String myUsername) async {
     final myUser = firestore.collection('Users').doc(myUsername);
     final getMe = await myUser.get();
+    if (getMe.data()!.containsKey('AllowFlareLikes')) {
+      final value = getMe.get('AllowFlareLikes');
+      flareLikeAlerts = value;
+    }
+    if (getMe.data()!.containsKey('AllowFlareComments')) {
+      final value = getMe.get('AllowFlareComments');
+      flareCommentAlerts = value;
+    }
     if (getMe.data()!.containsKey('AllowLikes')) {
       final value = getMe.get('AllowLikes');
       likeAlerts = value;
@@ -41,6 +55,11 @@ class _NotificationSettingsState extends State<NotificationSettings> {
     if (getMe.data()!.containsKey('AllowLinked')) {
       final value = getMe.get('AllowLinked');
       linkedAlert = value;
+    }
+
+    if (getMe.data()!.containsKey('AllowMentions')) {
+      final value = getMe.get('AllowMentions');
+      mentionAlert = value;
     }
   }
 
@@ -62,6 +81,51 @@ class _NotificationSettingsState extends State<NotificationSettings> {
         ),
       ),
     );
+  }
+
+  Future<void> mentionHandler(String myUsername) async {
+    final myUser = firestore.collection('Users').doc(myUsername);
+    if (mentionAlert) {
+      setState(() {
+        mentionAlert = false;
+      });
+      return myUser.set({'AllowMentions': false}, SetOptions(merge: true));
+    } else {
+      setState(() {
+        mentionAlert = true;
+      });
+      return myUser.set({'AllowMentions': true}, SetOptions(merge: true));
+    }
+  }
+
+  Future<void> flareLikeHandler(String myUsername) async {
+    final myUser = firestore.collection('Users').doc(myUsername);
+    if (flareLikeAlerts) {
+      setState(() {
+        flareLikeAlerts = false;
+      });
+      return myUser.set({'AllowFlareLikes': false}, SetOptions(merge: true));
+    } else {
+      setState(() {
+        flareLikeAlerts = true;
+      });
+      return myUser.set({'AllowFlareLikes': true}, SetOptions(merge: true));
+    }
+  }
+
+  Future<void> flareCommentHandler(String myUsername) async {
+    final myUser = firestore.collection('Users').doc(myUsername);
+    if (flareCommentAlerts) {
+      setState(() {
+        flareCommentAlerts = false;
+      });
+      return myUser.set({'AllowFlareComments': false}, SetOptions(merge: true));
+    } else {
+      setState(() {
+        flareCommentAlerts = true;
+      });
+      return myUser.set({'AllowFlareComments': true}, SetOptions(merge: true));
+    }
   }
 
   Future<void> likeHandler(String myUsername) async {
@@ -151,12 +215,13 @@ class _NotificationSettingsState extends State<NotificationSettings> {
   Widget build(BuildContext context) {
     final String _myUsername =
         Provider.of<MyProfile>(context, listen: false).getUsername;
-    final _primarySwatch = Theme.of(context).primaryColor;
-    final _accentColor = Theme.of(context).accentColor;
+    final _primarySwatch = Theme.of(context).colorScheme.primary;
+    final _accentColor = Theme.of(context).colorScheme.secondary;
     final _deviceHeight = MediaQuery.of(context).size.height;
-    final _deviceWidth = MediaQuery.of(context).size.width;
-    const Widget _heightBox = SizedBox(height: 5.0);
+    final _deviceWidth = General.widthQuery(context);
+    const Widget _heightBox = const SizedBox(height: 10);
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: FutureBuilder(
           future: _getSettings,
@@ -171,7 +236,7 @@ class _NotificationSettingsState extends State<NotificationSettings> {
                   children: <Widget>[
                     const SettingsBar('Alert settings'),
                     const Spacer(),
-                    const CircularProgressIndicator(),
+                    const CircularProgressIndicator(strokeWidth: 1.50),
                     const Spacer(),
                   ],
                 ),
@@ -260,46 +325,78 @@ class _NotificationSettingsState extends State<NotificationSettings> {
                     ),
                   ),
                   const SizedBox(height: 15.0),
-                  giveSwitch(
-                    value: likeAlerts,
-                    handler: likeHandler,
-                    description: 'My posts get liked',
-                    myUsername: _myUsername,
-                    primaryColor: _primarySwatch,
+                  Expanded(
+                    child: Noglow(
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: <Widget>[
+                          giveSwitch(
+                            value: mentionAlert,
+                            handler: mentionHandler,
+                            description: "I'm mentioned",
+                            myUsername: _myUsername,
+                            primaryColor: _primarySwatch,
+                          ),
+                          _heightBox,
+                          giveSwitch(
+                            value: linksAlert,
+                            handler: linksHandler,
+                            description: 'I get new links',
+                            myUsername: _myUsername,
+                            primaryColor: _primarySwatch,
+                          ),
+                          _heightBox,
+                          giveSwitch(
+                            value: likeAlerts,
+                            handler: likeHandler,
+                            description: 'My posts are liked',
+                            myUsername: _myUsername,
+                            primaryColor: _primarySwatch,
+                          ),
+                          _heightBox,
+                          giveSwitch(
+                            value: flareLikeAlerts,
+                            handler: flareLikeHandler,
+                            description: 'My flares are liked',
+                            myUsername: _myUsername,
+                            primaryColor: _primarySwatch,
+                          ),
+                          _heightBox,
+                          giveSwitch(
+                            value: replyAlerts,
+                            handler: replyHandler,
+                            description: 'My comments are replied to',
+                            myUsername: _myUsername,
+                            primaryColor: _primarySwatch,
+                          ),
+                          _heightBox,
+                          giveSwitch(
+                            value: commentAlerts,
+                            handler: commentHandler,
+                            description: 'My posts have new comments',
+                            myUsername: _myUsername,
+                            primaryColor: _primarySwatch,
+                          ),
+                          _heightBox,
+                          giveSwitch(
+                            value: flareCommentAlerts,
+                            handler: flareCommentHandler,
+                            description: 'My flares have new comments',
+                            myUsername: _myUsername,
+                            primaryColor: _primarySwatch,
+                          ),
+                          _heightBox,
+                          giveSwitch(
+                            value: linkedAlert,
+                            handler: linkedHandler,
+                            description: 'My link requests get accepted',
+                            myUsername: _myUsername,
+                            primaryColor: _primarySwatch,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  _heightBox,
-                  giveSwitch(
-                    value: commentAlerts,
-                    handler: commentHandler,
-                    description: 'My posts have new comments',
-                    myUsername: _myUsername,
-                    primaryColor: _primarySwatch,
-                  ),
-                  _heightBox,
-                  giveSwitch(
-                    value: replyAlerts,
-                    handler: replyHandler,
-                    description: 'My comments get replied',
-                    myUsername: _myUsername,
-                    primaryColor: _primarySwatch,
-                  ),
-                  _heightBox,
-                  giveSwitch(
-                    value: linksAlert,
-                    handler: linksHandler,
-                    description: 'I get new links',
-                    myUsername: _myUsername,
-                    primaryColor: _primarySwatch,
-                  ),
-                  _heightBox,
-                  giveSwitch(
-                    value: linkedAlert,
-                    handler: linkedHandler,
-                    description: 'My link requests get accepted',
-                    myUsername: _myUsername,
-                    primaryColor: _primarySwatch,
-                  ),
-                  const Spacer(),
                 ],
               ),
             );

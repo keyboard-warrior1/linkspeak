@@ -1,20 +1,27 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../general.dart';
 import '../models/miniProfile.dart';
-import '../providers/myProfileProvider.dart';
 import '../providers/commentProvider.dart';
-import '../widgets/settingsBar.dart';
-import '../widgets/linkObject.dart';
+import '../providers/myProfileProvider.dart';
+import '../widgets/common/linkObject.dart';
+import '../widgets/common/noglow.dart';
+import '../widgets/common/settingsBar.dart';
 
 class CommentLikesScreen extends StatefulWidget {
   final dynamic instance;
   final dynamic postID;
   final dynamic commentID;
+  final dynamic isClubPost;
+  final dynamic clubName;
   const CommentLikesScreen({
     required this.instance,
     required this.postID,
     required this.commentID,
+    required this.isClubPost,
+    required this.clubName,
   });
 
   @override
@@ -39,10 +46,8 @@ class _CommentLikesScreenState extends State<CommentLikesScreen> {
         .collection('likes')
         .doc(myUsername);
     final _myDoc = await _myLike.get();
-
     if (_myDoc.exists) {
-      final MiniProfile replier =
-          MiniProfile(username: myUsername, imgUrl: myIMG);
+      final MiniProfile replier = MiniProfile(username: myUsername);
       tempReplies.add(replier);
     }
     final _currentPostAndComment = firestore
@@ -54,24 +59,14 @@ class _CommentLikesScreenState extends State<CommentLikesScreen> {
         .limit(20);
     final repliesCollection = await _currentPostAndComment.get();
     final theReplies = repliesCollection.docs;
-    for (var reply in theReplies) {
-      final replierName = reply.id;
-      final replierUser =
-          await firestore.collection('Users').doc(replierName).get();
-      if (replierUser.exists) {
-        if (replierName == myUsername) {
-        } else {
-          final replierImage = replierUser.get('Avatar');
-          final MiniProfile replier =
-              MiniProfile(username: replierName, imgUrl: replierImage);
+    if (theReplies.isNotEmpty) {
+      for (var reply in theReplies) {
+        final replierName = reply.id;
+        final MiniProfile replier = MiniProfile(username: replierName);
+        if (replierName != myUsername) {
           tempReplies.add(replier);
           cacheReplies.add(replier);
         }
-      } else {
-        final MiniProfile replier =
-            MiniProfile(username: replierName, imgUrl: '');
-        tempReplies.add(replier);
-        cacheReplies.add(replier);
       }
     }
     if (theReplies.length < 20) {
@@ -110,26 +105,10 @@ class _CommentLikesScreenState extends State<CommentLikesScreen> {
         if (theReplies.isNotEmpty) {
           for (var reply in theReplies) {
             final replierName = reply.id;
-            final replierUser =
-                await firestore.collection('Users').doc(replierName).get();
-            if (replierUser.exists) {
-              final replierImage = replierUser.get('Avatar');
-              final MiniProfile replier =
-                  MiniProfile(username: replierName, imgUrl: replierImage);
-
-              if (replierName == myUsername) {
-                cacheReplies.add(replier);
-              } else {
-                if (!cacheReplies
-                    .any((element) => element.username == replierName)) {
-                  cacheReplies.add(replier);
-                  tempReplies.add(replier);
-                }
-              }
+            final MiniProfile replier = MiniProfile(username: replierName);
+            if (replierName == myUsername) {
+              cacheReplies.add(replier);
             } else {
-              final MiniProfile replier =
-                  MiniProfile(username: replierName, imgUrl: '');
-
               if (!cacheReplies
                   .any((element) => element.username == replierName)) {
                 cacheReplies.add(replier);
@@ -157,24 +136,10 @@ class _CommentLikesScreenState extends State<CommentLikesScreen> {
         if (theReplies.isNotEmpty) {
           for (var reply in theReplies) {
             final replierName = reply.id;
-            final replierUser =
-                await firestore.collection('Users').doc(replierName).get();
-            if (replierUser.exists) {
-              final replierImage = replierUser.get('Avatar');
-              final MiniProfile replier =
-                  MiniProfile(username: replierName, imgUrl: replierImage);
-              if (replierName == myUsername) {
-                cacheReplies.add(replier);
-              } else {
-                if (!cacheReplies
-                    .any((element) => element.username == replierName)) {
-                  cacheReplies.add(replier);
-                  tempReplies.add(replier);
-                }
-              }
+            final MiniProfile replier = MiniProfile(username: replierName);
+            if (replierName == myUsername) {
+              cacheReplies.add(replier);
             } else {
-              final MiniProfile replier =
-                  MiniProfile(username: replierName, imgUrl: '');
               if (!cacheReplies
                   .any((element) => element.username == replierName)) {
                 cacheReplies.add(replier);
@@ -223,180 +188,156 @@ class _CommentLikesScreenState extends State<CommentLikesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final String myUsername =
+        Provider.of<MyProfile>(context, listen: false).getUsername;
+    final String myIMG =
+        Provider.of<MyProfile>(context, listen: false).getProfileImage;
     final _deviceHeight = MediaQuery.of(context).size.height;
-    final _deviceWidth = MediaQuery.of(context).size.width;
-    final _primaryColor = Theme.of(context).primaryColor;
-    final _accentColor = Theme.of(context).accentColor;
+    final _deviceWidth = General.widthQuery(context);
+    final _primaryColor = Theme.of(context).colorScheme.primary;
+    final _accentColor = Theme.of(context).colorScheme.secondary;
     const Widget emptyBox = SizedBox(height: 0, width: 0);
     return FutureBuilder(
-      future: _getReplies,
-      builder: (ctx, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return SafeArea(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                const SettingsBar('Likes'),
-                const Spacer(),
-                const CircularProgressIndicator(),
-                const Spacer(),
-              ],
-            ),
-          );
-        }
+        future: _getReplies,
+        builder: (ctx, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting)
+            return Scaffold(
+                backgroundColor: Colors.white,
+                body: SafeArea(
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                      const SettingsBar('Likes'),
+                      const Spacer(),
+                      const CircularProgressIndicator(strokeWidth: 1.50),
+                      const Spacer()
+                    ])));
 
-        if (snapshot.hasError) {
-          return SafeArea(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                const SettingsBar('Likes'),
-                const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    const Text(
-                      'An error has occured, please try again',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 15.0,
-                      ),
-                    ),
-                    const SizedBox(width: 10.0),
-                    TextButton(
-                      style: ButtonStyle(
-                        backgroundColor:
-                            MaterialStateProperty.all<Color?>(_primaryColor),
-                        padding: MaterialStateProperty.all<EdgeInsetsGeometry?>(
-                          const EdgeInsets.all(0.0),
-                        ),
-                        shape: MaterialStateProperty.all<OutlinedBorder?>(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                          ),
-                        ),
-                      ),
-                      onPressed: () => setState(() {}),
-                      child: Center(
-                        child: Text(
-                          'Retry',
-                          style: TextStyle(
-                            color: _accentColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-              ],
-            ),
-          );
-        }
-        return Builder(
-          builder: (context) => ChangeNotifierProvider<FullCommentHelper>.value(
-            value: widget.instance,
-            child: Builder(
-              builder: (context) {
-                Provider.of<FullCommentHelper>(context, listen: false)
-                    .setLikes(replies);
-                return Builder(
-                  builder: (context) {
-                    final List<MiniProfile> _replies =
-                        Provider.of<FullCommentHelper>(context).likes;
-                    final int _numOfReplies =
-                        Provider.of<FullCommentHelper>(context).numOfLikes;
-                    return Scaffold(
-                      appBar: null,
-                      body: SafeArea(
-                        child: Container(
-                          color: Colors.white,
-                          child: SizedBox(
-                            height: _deviceHeight,
-                            width: _deviceWidth,
-                            child: Column(
-                              children: [
-                                const SettingsBar('Likes'),
-                                if (_numOfReplies == 0)
-                                  Expanded(
-                                    child: Column(
-                                      children: <Widget>[
-                                        const Text(
-                                          'Be the first to like',
-                                          style: TextStyle(
-                                            color: Colors.grey,
-                                            fontSize: 21.0,
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                if (_numOfReplies != 0)
-                                  Expanded(
-                                    child: NotificationListener<
-                                        OverscrollIndicatorNotification>(
-                                      onNotification: (overscroll) {
-                                        overscroll.disallowGlow();
-                                        return false;
-                                      },
-                                      child: ListView.builder(
-                                        controller: _scrollController,
-                                        itemCount: _replies.length + 1,
-                                        itemBuilder: (_, index) {
-                                          if (index == _replies.length) {
-                                            if (isLoading) {
-                                              return Center(
-                                                child: Container(
-                                                  margin: const EdgeInsets.all(
-                                                      10.0),
-                                                  height: 35.0,
-                                                  width: 35.0,
-                                                  child: Center(
-                                                    child:
-                                                        const CircularProgressIndicator(),
-                                                  ),
-                                                ),
-                                              );
-                                            }
-                                            if (isLastPage) {
-                                              return emptyBox;
-                                            }
-                                          } else {
-                                            final MiniProfile _currentReply =
-                                                _replies[index];
-                                            final String replierUsername =
-                                                _currentReply.username;
-                                            final String replierImg =
-                                                _currentReply.imgUrl;
-                                            final Widget _replyTile =
-                                                LinkObject(
-                                              imgUrl: replierImg,
-                                              username: replierUsername,
-                                            );
-                                            return _replyTile;
-                                          }
-                                          return emptyBox;
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
+          if (snapshot.hasError)
+            return Scaffold(
+                backgroundColor: Colors.white,
+                body: SafeArea(
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                      const SettingsBar('Likes'),
+                      const Spacer(),
+                      Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: <Widget>[
+                            const Text('An error has occured, please try again',
+                                style: TextStyle(
+                                    color: Colors.black, fontSize: 15.0)),
+                            const SizedBox(width: 10.0),
+                            TextButton(
+                                style: ButtonStyle(
+                                    backgroundColor: MaterialStateProperty.all<Color?>(
+                                        _primaryColor),
+                                    padding: MaterialStateProperty.all<EdgeInsetsGeometry?>(
+                                        const EdgeInsets.all(0.0)),
+                                    shape: MaterialStateProperty.all<OutlinedBorder?>(
+                                        RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10.0)))),
+                                onPressed: () => setState(() {
+                                      _getReplies =
+                                          getReplies(myUsername, myIMG);
+                                    }),
+                                child: Center(
+                                    child: Text('Retry',
+                                        style: TextStyle(
+                                            color: _accentColor,
+                                            fontWeight: FontWeight.bold))))
+                          ]),
+                      const Spacer()
+                    ])));
+
+          return Builder(
+              builder: (context) =>
+                  ChangeNotifierProvider<FullCommentHelper>.value(
+                      value: widget.instance,
+                      child: Builder(builder: (context) {
+                        Provider.of<FullCommentHelper>(context, listen: false)
+                            .setLikes(replies);
+                        return Builder(builder: (context) {
+                          final List<MiniProfile> _replies =
+                              Provider.of<FullCommentHelper>(context).likes;
+                          final int _numOfReplies = _replies.length;
+                          return Scaffold(
+                              appBar: null,
+                              backgroundColor: Colors.white,
+                              body: SafeArea(
+                                  child: Container(
+                                      color: Colors.white,
+                                      child: SizedBox(
+                                          height: _deviceHeight,
+                                          width: _deviceWidth,
+                                          child: Column(children: [
+                                            const SettingsBar('Likes'),
+                                            if (_numOfReplies == 0)
+                                              Expanded(
+                                                  child:
+                                                      Column(children: <Widget>[
+                                                const Text(
+                                                    'Be the first to like',
+                                                    style: TextStyle(
+                                                        color: Colors.grey,
+                                                        fontSize: 21.0))
+                                              ])),
+                                            if (_numOfReplies != 0)
+                                              Expanded(
+                                                  child: Noglow(
+                                                      child: ListView.builder(
+                                                          controller:
+                                                              _scrollController,
+                                                          itemCount:
+                                                              _replies.length +
+                                                                  1,
+                                                          itemBuilder:
+                                                              (_, index) {
+                                                            if (index ==
+                                                                _replies
+                                                                    .length) {
+                                                              if (isLoading) {
+                                                                return Center(
+                                                                    child: Container(
+                                                                        margin: const EdgeInsets.all(
+                                                                            10.0),
+                                                                        height:
+                                                                            35.0,
+                                                                        width:
+                                                                            35.0,
+                                                                        child: Center(
+                                                                            child:
+                                                                                const CircularProgressIndicator(strokeWidth: 1.50))));
+                                                              }
+                                                              if (isLastPage) {
+                                                                return emptyBox;
+                                                              }
+                                                            } else {
+                                                              final MiniProfile
+                                                                  _currentReply =
+                                                                  _replies[
+                                                                      index];
+                                                              final String
+                                                                  replierUsername =
+                                                                  _currentReply
+                                                                      .username;
+                                                              final Widget
+                                                                  _replyTile =
+                                                                  LinkObject(
+                                                                      username:
+                                                                          replierUsername);
+                                                              return _replyTile;
+                                                            }
+                                                            return emptyBox;
+                                                          })))
+                                          ])))));
+                        });
+                      })));
+        });
   }
 }

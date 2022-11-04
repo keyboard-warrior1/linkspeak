@@ -1,0 +1,129 @@
+# Diff Details
+
+Date : 2022-10-31 19:01:43
+
+Directory c:\\Users\\User\\Desktop\\receive\\linkspeak
+
+Total : 114 files,  217 codes, 0 comments, 5 blanks, all 222 lines
+
+[Summary](results.md) / [Details](details.md) / [Diff Summary](diff.md) / Diff Details
+
+## Files
+| filename | language | code | comment | blank | total |
+| :--- | :--- | ---: | ---: | ---: | ---: |
+| [lib/admin/screens/adminFeeedbackScreen.dart](/lib/admin/screens/adminFeeedbackScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/admin/screens/archiveFindScreen.dart](/lib/admin/screens/archiveFindScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/admin/screens/mainAdminScreen.dart](/lib/admin/screens/mainAdminScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/admin/screens/mainArchiveScreen.dart](/lib/admin/screens/mainArchiveScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/admin/screens/mainControlScreen.dart](/lib/admin/screens/mainControlScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/admin/screens/mainProfanityScreen.dart](/lib/admin/screens/mainProfanityScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/admin/widgets/Misc/prohibitDialog.dart](/lib/admin/widgets/Misc/prohibitDialog.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/clubs/adminItem.dart](/lib/clubs/adminItem.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/clubs/assignAdminScreen.dart](/lib/clubs/assignAdminScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/clubs/banMemberScreen.dart](/lib/clubs/banMemberScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/clubs/clubBannedScreen.dart](/lib/clubs/clubBannedScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/clubs/clubBanner.dart](/lib/clubs/clubBanner.dart) | Dart | 2 | 0 | 0 | 2 |
+| [lib/clubs/clubCenterScreen.dart](/lib/clubs/clubCenterScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/clubs/clubMemberScreen.dart](/lib/clubs/clubMemberScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/clubs/clubTopicsTab.dart](/lib/clubs/clubTopicsTab.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/clubs/manageClubScreen.dart](/lib/clubs/manageClubScreen.dart) | Dart | 2 | 0 | 0 | 2 |
+| [lib/clubs/newClubPost.dart](/lib/clubs/newClubPost.dart) | Dart | 13 | 0 | 0 | 13 |
+| [lib/flares/addFlareComment.dart](/lib/flares/addFlareComment.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/flares/addFlareReply.dart](/lib/flares/addFlareReply.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/flares/customizeFlareScreen.dart](/lib/flares/customizeFlareScreen.dart) | Dart | 1 | 0 | 1 | 2 |
+| [lib/flares/flareCommentAlerts.dart](/lib/flares/flareCommentAlerts.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/flares/flareCommentLikesScreen.dart](/lib/flares/flareCommentLikesScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/flares/flareHistoryScreen.dart](/lib/flares/flareHistoryScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/flares/flareLikeAlerts.dart](/lib/flares/flareLikeAlerts.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/flares/flareProfileScreen.dart](/lib/flares/flareProfileScreen.dart) | Dart | 3 | 0 | 0 | 3 |
+| [lib/flares/flareTabWidget.dart](/lib/flares/flareTabWidget.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/flares/flaresTab.dart](/lib/flares/flaresTab.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/flares/likedFlareScreen.dart](/lib/flares/likedFlareScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/flares/megaFlare.dart](/lib/flares/megaFlare.dart) | Dart | 1 | 0 | 1 | 2 |
+| [lib/flares/newCollectionScreen.dart](/lib/flares/newCollectionScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/general.dart](/lib/general.dart) | Dart | 12 | 0 | 1 | 13 |
+| [lib/loading/clubSkeleton.dart](/lib/loading/clubSkeleton.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/loading/flareProfileSkeleton.dart](/lib/loading/flareProfileSkeleton.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/main.dart](/lib/main.dart) | Dart | 28 | 0 | 1 | 29 |
+| [lib/screens/Feed.dart](/lib/screens/Feed.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/LinkedNotifScreen.dart](/lib/screens/LinkedNotifScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/LinksNotifScreen.dart](/lib/screens/LinksNotifScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/PostCommentsNotifScreen.dart](/lib/screens/PostCommentsNotifScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/addPostScreen.dart](/lib/screens/addPostScreen.dart) | Dart | 17 | 0 | 0 | 17 |
+| [lib/screens/additionalDetails.dart](/lib/screens/additionalDetails.dart) | Dart | 4 | 0 | 0 | 4 |
+| [lib/screens/blockedUserScreen.dart](/lib/screens/blockedUserScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/chatScreen.dart](/lib/screens/chatScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/clubsTab.dart](/lib/screens/clubsTab.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/commentLikesScreen.dart](/lib/screens/commentLikesScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/commentRepliesNotifScreen.dart](/lib/screens/commentRepliesNotifScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/editProfile.dart](/lib/screens/editProfile.dart) | Dart | 2 | 0 | 0 | 2 |
+| [lib/screens/favClubPosts.dart](/lib/screens/favClubPosts.dart) | Dart | 1 | 0 | -1 | 0 |
+| [lib/screens/favUserPosts.dart](/lib/screens/favUserPosts.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/favoritePostsScreen.dart](/lib/screens/favoritePostsScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/featureDocScreen.dart](/lib/screens/featureDocScreen.dart) | Dart | 1 | 0 | 1 | 2 |
+| [lib/screens/finishSetup.dart](/lib/screens/finishSetup.dart) | Dart | 3 | 0 | 0 | 3 |
+| [lib/screens/flareCommentHistoryScreen.dart](/lib/screens/flareCommentHistoryScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/flareReplyHistoryScreen.dart](/lib/screens/flareReplyHistoryScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/fullMapScreen.dart](/lib/screens/fullMapScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/likedClubPosts.dart](/lib/screens/likedClubPosts.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/likedPostScreen.dart](/lib/screens/likedPostScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/likedUserPosts.dart](/lib/screens/likedUserPosts.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/loginScreen.dart](/lib/screens/loginScreen.dart) | Dart | -2 | 0 | 0 | -2 |
+| [lib/screens/mediaScreen.dart](/lib/screens/mediaScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/mentionsScreen.dart](/lib/screens/mentionsScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/myJoinedClubScreen.dart](/lib/screens/myJoinedClubScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/noteScreen.dart](/lib/screens/noteScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/notificationSettingsScreen.dart](/lib/screens/notificationSettingsScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/otherJoinedClubScreen.dart](/lib/screens/otherJoinedClubScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/placePostsScreen.dart](/lib/screens/placePostsScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/postCommentHistoryScreen.dart](/lib/screens/postCommentHistoryScreen.dart) | Dart | 1 | 0 | 1 | 2 |
+| [lib/screens/postCommentReplyHistoryScreen.dart](/lib/screens/postCommentReplyHistoryScreen.dart) | Dart | 1 | 0 | 1 | 2 |
+| [lib/screens/postLikesNotifScreen.dart](/lib/screens/postLikesNotifScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/replyLikesScreen.dart](/lib/screens/replyLikesScreen.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/screens/searchScreen.dart](/lib/screens/searchScreen.dart) | Dart | 2 | 0 | 0 | 2 |
+| [lib/screens/settingsScreen.dart](/lib/screens/settingsScreen.dart) | Dart | 2 | 0 | 0 | 2 |
+| [lib/widgets/auth/linkModeDialog.dart](/lib/widgets/auth/linkModeDialog.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/auth/mosaic.dart](/lib/widgets/auth/mosaic.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/auth/registrationAuth.dart](/lib/widgets/auth/registrationAuth.dart) | Dart | 4 | 0 | 0 | 4 |
+| [lib/widgets/auth/registrationDialog.dart](/lib/widgets/auth/registrationDialog.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/chat/chatLocationWidget.dart](/lib/widgets/chat/chatLocationWidget.dart) | Dart | 7 | 0 | 0 | 7 |
+| [lib/widgets/chat/chatMessages.dart](/lib/widgets/chat/chatMessages.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/chat/miniDescription.dart](/lib/widgets/chat/miniDescription.dart) | Dart | 1 | 0 | -1 | 0 |
+| [lib/widgets/chat/sendButton.dart](/lib/widgets/chat/sendButton.dart) | Dart | 6 | 0 | 0 | 6 |
+| [lib/widgets/common/additionalAddressButton.dart](/lib/widgets/common/additionalAddressButton.dart) | Dart | 2 | 0 | 0 | 2 |
+| [lib/widgets/common/clubObject.dart](/lib/widgets/common/clubObject.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/common/fullMapText.dart](/lib/widgets/common/fullMapText.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/common/linkObject.dart](/lib/widgets/common/linkObject.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/common/settingsBar.dart](/lib/widgets/common/settingsBar.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/common/title.dart](/lib/widgets/common/title.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/fullPost/addComment.dart](/lib/widgets/fullPost/addComment.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/fullPost/addReply.dart](/lib/widgets/fullPost/addReply.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/fullPost/fullPostCarousel.dart](/lib/widgets/fullPost/fullPostCarousel.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/fullPost/likesView.dart](/lib/widgets/fullPost/likesView.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/home/speedFactor.dart](/lib/widgets/home/speedFactor.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/misc/suggestedWidget.dart](/lib/widgets/misc/suggestedWidget.dart) | Dart | 4 | 0 | 0 | 4 |
+| [lib/widgets/misc/userResult.dart](/lib/widgets/misc/userResult.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/places/placePosts.dart](/lib/widgets/places/placePosts.dart) | Dart | 2 | 0 | 0 | 2 |
+| [lib/widgets/places/placeScreenMap.dart](/lib/widgets/places/placeScreenMap.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/post/backsideMap.dart](/lib/widgets/post/backsideMap.dart) | Dart | 4 | 0 | 0 | 4 |
+| [lib/widgets/post/backsideTopics.dart](/lib/widgets/post/backsideTopics.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/post/descriptionPreview.dart](/lib/widgets/post/descriptionPreview.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/post/noMediaDescription.dart](/lib/widgets/post/noMediaDescription.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/post/postWidgetTitile.dart](/lib/widgets/post/postWidgetTitile.dart) | Dart | -1 | 0 | 0 | -1 |
+| [lib/widgets/profile/myLinked.dart](/lib/widgets/profile/myLinked.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/profile/myLinks.dart](/lib/widgets/profile/myLinks.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/profile/myProfileBanner.dart](/lib/widgets/profile/myProfileBanner.dart) | Dart | 2 | 0 | 0 | 2 |
+| [lib/widgets/profile/otherLinked.dart](/lib/widgets/profile/otherLinked.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/profile/otherLinks.dart](/lib/widgets/profile/otherLinks.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/profile/otherProfileBanner.dart](/lib/widgets/profile/otherProfileBanner.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/profile/profileBackAddress.dart](/lib/widgets/profile/profileBackAddress.dart) | Dart | 4 | 0 | 0 | 4 |
+| [lib/widgets/profile/profileBackside.dart](/lib/widgets/profile/profileBackside.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/profile/profileBox.dart](/lib/widgets/profile/profileBox.dart) | Dart | 5 | 0 | -1 | 4 |
+| [lib/widgets/profile/profileSensitiveBanner.dart](/lib/widgets/profile/profileSensitiveBanner.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/profile/topicsTab.dart](/lib/widgets/profile/topicsTab.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/snackbar/visSnack.dart](/lib/widgets/snackbar/visSnack.dart) | Dart | 1 | 0 | 1 | 2 |
+| [lib/widgets/topics/addTopic.dart](/lib/widgets/topics/addTopic.dart) | Dart | 1 | 0 | 0 | 1 |
+| [lib/widgets/topics/topicPosts.dart](/lib/widgets/topics/topicPosts.dart) | Dart | 1 | 0 | 0 | 1 |
+| [pubspec.yaml](/pubspec.yaml) | YAML | 1 | 0 | 0 | 1 |
+
+[Summary](results.md) / [Details](details.md) / [Diff Summary](diff.md) / Diff Details

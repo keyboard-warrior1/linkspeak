@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../widgets/settingsBar.dart';
-import '../widgets/privacyPolicy.dart';
+import '../widgets/common/settingsBar.dart';
+import '../widgets/settings/privacyPolicy.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen();
@@ -10,6 +10,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final double _deviceHeight = MediaQuery.of(context).size.height;
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SizedBox(
           height: _deviceHeight,

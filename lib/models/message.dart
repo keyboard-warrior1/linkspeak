@@ -11,13 +11,12 @@ class Message {
 
   String get getMessage => description;
 
-  Message({
-    required this.id,
-    required this.description,
-    required this.user,
-    required this.date,
-    required this.isRead,
-    required this.isPost,
-    required this.isDeleted,
-  });
+  Message(
+      {required this.id,
+      required this.description,
+      required this.user,
+      required this.date,
+      required this.isRead,
+      required this.isPost,
+      required this.isDeleted});
 }

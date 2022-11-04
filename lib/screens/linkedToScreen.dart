@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/myProfileProvider.dart';
-import '../widgets/settingsBar.dart';
-import '../widgets/myLinked.dart';
-import '../widgets/otherLinked.dart';
+import '../widgets/common/settingsBar.dart';
+import '../widgets/profile/myLinked.dart';
+import '../widgets/profile/otherLinked.dart';
 
 class LinkedToScreen extends StatelessWidget {
   final dynamic userID;
@@ -34,6 +34,7 @@ class LinkedToScreen extends StatelessWidget {
     final bool isMyProfile = userID == myUsername;
     return Scaffold(
       appBar: null,
+      backgroundColor: Colors.white,
       body: SafeArea(
           child: (!isMyProfile)
               ? (!publicProfile)

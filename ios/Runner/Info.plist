@@ -5,12 +5,12 @@
 		<key>GADApplicationIdentifier</key>
 		<string>ca-app-pub-9528572745786880~5952730956</string>
 		<key>SKAdNetworkItems</key>
-		  <array>
+		<array>
 			<dict>
-			  <key>SKAdNetworkIdentifier</key>
-			  <string>cstr6suwn9.skadnetwork</string>
+				<key>SKAdNetworkIdentifier</key>
+				<string>cstr6suwn9.skadnetwork</string>
 			</dict>
-		  </array>
+		</array>
 		<key>CFBundleURLTypes</key>
 		<array>
 			<dict>
@@ -24,12 +24,12 @@
 		</array>
 		<key>CFBundleURLTypes</key>
 		<array>
-		<dict>
-		<key>CFBundleURLSchemes</key>
-		<array>
-			<string>270986471513771</string>
-		</array>
-		</dict>
+			<dict>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>270986471513771</string>
+				</array>
+			</dict>
 		</array>
 		<key>FacebookAppID</key>
 		<string>270986471513771</string>
@@ -43,13 +43,15 @@
 			<true/>
 		</dict>
 		<key>NSPhotoLibraryUsageDescription</key>
-		<string>Linkspeak needs permission to access device storage.</string>
-        <key>io.flutter.embedded_views_preview</key>
-        <true/>
-        <key>NSCameraUsageDescription</key>
-        <string>Linkspeak needs camera access to scan QR codes.</string>
-        <key>NSLocationWhenInUsageDescription</key>
-        <string>Linkspeak needs permission to access device location.</string>
+		<string>Linkspeak requires permission to access your storage</string>
+		<key>io.flutter.embedded_views_preview</key>
+		<true/>
+		<key>NSCameraUsageDescription</key>
+		<string>Linkspeak requires permission to use your camera</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>Linkspeak requires permission to use your microphone</string>
+		<key>NSLocationWhenInUsageDescription</key>
+		<string>Linkspeak requires permission to access your location</string>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleExecutable</key>
@@ -59,7 +61,7 @@
 		<key>CFBundleInfoDictionaryVersion</key>
 		<string>6.0</string>
 		<key>CFBundleName</key>
-		<string>DuckSpeak</string>
+	<string>Linkspeak</string>
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>
@@ -91,5 +93,7 @@
 		<false/>
 		<key>UIStatusBarHidden</key>
 		<true/>
-	</dict>
+		<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+</dict>
 </plist>

@@ -1,12 +1,13 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:provider/provider.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
+
 import '../providers/themeModel.dart';
-import '../widgets/settingsBar.dart';
-import '../widgets/registrationDialog.dart';
-import '../my_flutter_app_icons.dart' as customIcons;
+import '../widgets/auth/registrationDialog.dart';
+import '../widgets/common/settingsBar.dart';
 
 class CustomIconScreen extends StatefulWidget {
   const CustomIconScreen();
@@ -31,15 +32,14 @@ class _CustomIconScreenState extends State<CustomIconScreen> {
 
   Future<void> _chooseActive(Color primaryColor) async {
     const int _maxAssets = 1;
-    final _english = EnglishTextDelegate();
-    final List<AssetEntity>? _result = await AssetPicker.pickAssets(
-      context,
-      maxAssets: _maxAssets,
-      textDelegate: _english,
-      selectedAssets: activeAssets,
-      requestType: RequestType.image,
-      themeColor: primaryColor,
-    );
+    const _english = const EnglishAssetPickerTextDelegate();
+    final List<AssetEntity>? _result = await AssetPicker.pickAssets(context,
+        pickerConfig: AssetPickerConfig(
+            maxAssets: _maxAssets,
+            textDelegate: _english,
+            selectedAssets: activeAssets,
+            requestType: RequestType.image,
+            themeColor: primaryColor));
     if (_result != null) {
       activeAssets = List<AssetEntity>.from(_result);
       final imageFile = await activeAssets[0].originFile;
@@ -53,15 +53,14 @@ class _CustomIconScreenState extends State<CustomIconScreen> {
 
   Future<void> _chooseInactive(Color primaryColor) async {
     const int _maxAssets = 1;
-    final _english = EnglishTextDelegate();
-    final List<AssetEntity>? _result = await AssetPicker.pickAssets(
-      context,
-      maxAssets: _maxAssets,
-      textDelegate: _english,
-      selectedAssets: inActiveAssets,
-      requestType: RequestType.image,
-      themeColor: primaryColor,
-    );
+    const _english = const EnglishAssetPickerTextDelegate();
+    final List<AssetEntity>? _result = await AssetPicker.pickAssets(context,
+        pickerConfig: AssetPickerConfig(
+            maxAssets: _maxAssets,
+            textDelegate: _english,
+            selectedAssets: inActiveAssets,
+            requestType: RequestType.image,
+            themeColor: primaryColor));
     if (_result != null) {
       inActiveAssets = List<AssetEntity>.from(_result);
       final imageFile = await inActiveAssets[0].originFile;
@@ -75,22 +74,19 @@ class _CustomIconScreenState extends State<CustomIconScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Color _primaryColor = Theme.of(context).colorScheme.primary;
+    final Color _accentColor = Theme.of(context).colorScheme.secondary;
+    final selectedLikeColor = Provider.of<ThemeModel>(context).likeColor;
+    final selectedIcon = Provider.of<ThemeModel>(context).themeIcon;
     _showDialog(IconData icon, Color iconColor, String title, String rule) {
       showDialog(
-        context: context,
-        builder: (_) => RegistrationDialog(
-          icon: icon,
-          iconColor: iconColor,
-          title: title,
-          rules: rule,
-        ),
-      );
+          context: context,
+          builder: (_) => RegistrationDialog(
+              icon: icon, iconColor: iconColor, title: title, rules: rule));
     }
 
-    final Color _primaryColor = Theme.of(context).primaryColor;
-    final Color _accentColor = Theme.of(context).accentColor;
-    final selectedLikeColor = Provider.of<ThemeModel>(context).likeColor;
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SizedBox(
           height: double.infinity,
@@ -113,16 +109,19 @@ class _CustomIconScreenState extends State<CustomIconScreen> {
                   ),
                   const SizedBox(width: 15.0),
                   if (currentActivePath != '')
-                    ImageIcon(
-                      FileImage(
+                    IconButton(
+                      padding: const EdgeInsets.all(0.0),
+                      onPressed: () => _chooseActive(_primaryColor),
+                      icon: Image.file(
                         File(currentActivePath),
                       ),
                     ),
                   if (currentActivePath == '')
                     IconButton(
+                      padding: const EdgeInsets.all(0.0),
                       onPressed: () => _chooseActive(_primaryColor),
                       icon: Icon(
-                        customIcons.MyFlutterApp.upvote,
+                        selectedIcon,
                         color: selectedLikeColor,
                         size: 32.0,
                       ),
@@ -144,8 +143,10 @@ class _CustomIconScreenState extends State<CustomIconScreen> {
                   ),
                   const SizedBox(width: 15.0),
                   if (currentInactivePath != '')
-                    ImageIcon(
-                      FileImage(
+                    IconButton(
+                      padding: const EdgeInsets.all(0.0),
+                      onPressed: () => _chooseInactive(_primaryColor),
+                      icon: Image.file(
                         File(currentInactivePath),
                       ),
                     ),
@@ -153,7 +154,7 @@ class _CustomIconScreenState extends State<CustomIconScreen> {
                     IconButton(
                       onPressed: () => _chooseInactive(_primaryColor),
                       icon: Icon(
-                        customIcons.MyFlutterApp.upvote,
+                        selectedIcon,
                         color: Colors.grey.shade400,
                         size: 32.0,
                       ),
@@ -190,7 +191,7 @@ class _CustomIconScreenState extends State<CustomIconScreen> {
                           Icons.info_outline,
                           Colors.blue,
                           'Notice',
-                          "Active and Inactive images must both be provided",
+                          "Both active and inactive images must be provided",
                         );
                       }
                     },

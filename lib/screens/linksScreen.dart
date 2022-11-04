@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/Provider.dart';
 
 import '../providers/myProfileProvider.dart';
-import '../widgets/settingsBar.dart';
-import '../widgets/myLinks.dart';
-import '../widgets/otherLinks.dart';
+import '../widgets/common/settingsBar.dart';
+import '../widgets/profile/myLinks.dart';
+import '../widgets/profile/otherLinks.dart';
 
 class LinksScreen extends StatelessWidget {
   final dynamic userID;
@@ -34,6 +34,7 @@ class LinksScreen extends StatelessWidget {
     final bool isMyProfile = userID == myUsername;
     return Scaffold(
       appBar: null,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: (!isMyProfile)
             ? (!publicProfile)

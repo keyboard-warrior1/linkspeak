@@ -4,21 +4,21 @@ enum ShowFields { one, two, three }
 
 class RegHelper with ChangeNotifier {
   bool _isLoading = false;
-  ShowFields _showFields = ShowFields.one;
   bool _agreeToTerms = false;
   bool _obscurePass = true;
   bool _obscureRepeat = true;
   bool _isMale = true;
   bool _isFemale = false;
   bool _isOther = false;
+  ShowFields _showFields = ShowFields.one;
   bool get isLoading => _isLoading;
-  ShowFields get showFields => _showFields;
   bool get agreeToTerms => _agreeToTerms;
   bool get obscurePass => _obscurePass;
   bool get obscureRepeat => _obscureRepeat;
   bool get isMale => _isMale;
   bool get isFemale => _isFemale;
   bool get isOther => _isOther;
+  ShowFields get showFields => _showFields;
   void maleHandler() {
     _isMale = !_isMale;
     if (isFemale) {

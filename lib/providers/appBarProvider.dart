@@ -1,15 +1,16 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 enum View { normal, autoScroll }
+
 enum Scroll { scrolling, paused }
 
 class AppBarProvider with ChangeNotifier {
-  View viewMode = View.normal;
-  Scroll scrollMode = Scroll.paused;
   int speedFactor = 1;
   int selectedIndex = 0;
   bool showBar = true;
+  View viewMode = View.normal;
+  Scroll scrollMode = Scroll.paused;
 
   void hideBar() {
     if (showBar) {
@@ -37,8 +38,10 @@ class AppBarProvider with ChangeNotifier {
   }
 
   void changeScroll(Scroll newScroll) {
-    scrollMode = newScroll;
-    notifyListeners();
+    if (scrollMode != newScroll) {
+      scrollMode = newScroll;
+      notifyListeners();
+    }
   }
 
   void increaseSpeed() {

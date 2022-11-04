@@ -21,6 +21,7 @@ class MyFlutterApp {
   static const _kFontFam = 'MyFlutterApp';
   static const String? _kFontPkg = null;
 
+  static const IconData endgame = IconData(0xe800, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData globe_no_map = IconData(0xe801, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData chats = IconData(0xe802, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData upvote = IconData(0xe803, fontFamily: _kFontFam, fontPackage: _kFontPkg);
@@ -28,7 +29,7 @@ class MyFlutterApp {
   static const IconData chat = IconData(0xe805, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData curve_arrow = IconData(0xe806, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData add_cross_outlined_symbol = IconData(0xe807, fontFamily: _kFontFam, fontPackage: _kFontPkg);
-  static const IconData thumbs_up = IconData(0xe808, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData thumbs_up= IconData(0xe808, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData big_anchor_1_ = IconData(0xe809, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData night = IconData(0xe80a, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData radio_1_ = IconData(0xe80b, fontFamily: _kFontFam, fontPackage: _kFontPkg);

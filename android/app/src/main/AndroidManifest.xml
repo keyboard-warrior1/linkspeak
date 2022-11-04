@@ -8,13 +8,21 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <queries>
+     <intent>
+        <action android:name=
+             "android.support.customtabs.action.CustomTabsService" />
+     </intent>
+    </queries>
     <application
         tools:replace="android:label"
-        android:name="io.flutter.app.FlutterApplication"
         android:label="Linkspeak"
         android:resizeableActivity="false"
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
         android:usesCleartextTraffic="true"
+        android:requestLegacyExternalStorage="true"
         android:icon="@mipmap/launcher_icon">
         <meta-data android:name="com.google.android.geo.API_KEY"
                android:value="AIzaSyAgxEU8OzCBbtGE3ctl5DBLELtgOUqmhM4"/>

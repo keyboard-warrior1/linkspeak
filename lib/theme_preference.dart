@@ -1,5 +1,5 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemePreferences {
   static const PRIM_KEY = "primary";
@@ -10,6 +10,13 @@ class ThemePreferences {
   static const DARK_MODE = 'darkMode';
   static const INACTIVE_LIKE_PATH = 'inactiveLikePath';
   static const ACTIVE_LIKE_PATH = 'activeLikePath';
+  static const CENSOR_NSFW = 'censorNSFW';
+  static const LOGINTHEME_KEY = 'LoginTheme';
+  setcensorNSFW(bool censorship) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    sharedPreferences.setBool(CENSOR_NSFW, censorship);
+  }
+
   setPrimaryTheme(Color primary) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     sharedPreferences.setString(PRIM_KEY, primary.value.toString());
@@ -46,6 +53,11 @@ class ThemePreferences {
     sharedPreferences.setBool(DARK_MODE, mode);
   }
 
+  setLoginTheme(String type) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    sharedPreferences.setString(LOGINTHEME_KEY, type);
+  }
+
   Future<List<dynamic>> getTheme() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     var primaryColorString =
@@ -59,6 +71,8 @@ class ThemePreferences {
     var likeIconPathActive = sharedPreferences.get(ACTIVE_LIKE_PATH) ?? '';
     var anchorMode = sharedPreferences.getBool(ANCHOR_KEY) ?? true;
     var darkMode = sharedPreferences.getBool(DARK_MODE) ?? false;
+    var censorMode = sharedPreferences.getBool(CENSOR_NSFW) ?? true;
+    var loginTheme = sharedPreferences.getString(LOGINTHEME_KEY) ?? 'Mosaic';
     var primaryValue = int.parse(primaryColorString);
     var secondaryValue = int.parse(secondaryColorString);
     var likeValue = int.parse(likeColorString);
@@ -74,6 +88,8 @@ class ThemePreferences {
       likeColor,
       anchorMode,
       darkMode,
+      censorMode,
+      loginTheme,
     ];
   }
 }

@@ -1,29 +1,39 @@
-import 'dart:io';
 import 'dart:async';
+import 'dart:io';
+
+import 'package:badges/badges.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:detectable_text_field/detector/sample_regular_expressions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:wechat_assets_picker/wechat_assets_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter_nsfw/flutter_nsfw.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:profanity_filter/profanity_filter.dart';
 import 'package:provider/provider.dart';
-import 'package:badges/badges.dart';
-import '../routes.dart';
-import '../my_flutter_app_icons.dart' as customIcons;
+import 'package:wechat_assets_picker/wechat_assets_picker.dart';
+
+import '../general.dart';
+import '../models/miniProfile.dart';
 import '../models/profile.dart';
+import '../my_flutter_app_icons.dart' as customIcons;
 import '../providers/myProfileProvider.dart';
-import '../widgets/settingsBar.dart';
-import '../widgets/addTopic.dart';
-import '../widgets/topicChip.dart';
-import '../widgets/profileImage.dart';
-import '../widgets/visSnack.dart';
-import '../widgets/registrationDialog.dart';
-import '../widgets/deleteProfileButton.dart';
-import '../widgets/myProfileBanner.dart';
+import '../routes.dart';
+import '../widgets/auth/registrationDialog.dart';
+import '../widgets/common/chatProfileImage.dart';
+import '../widgets/common/nestedScroller.dart';
+import '../widgets/common/noglow.dart';
+import '../widgets/common/settingsBar.dart';
+import '../widgets/profile/deleteProfileButton.dart';
+import '../widgets/profile/myProfileBanner.dart';
+import '../widgets/snackbar/visSnack.dart';
+import '../widgets/topics/addTopic.dart';
+import '../widgets/topics/topicChip.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen();
@@ -33,22 +43,24 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  final firestore = FirebaseFirestore.instance;
-  late FirebaseAuth? auth;
-  final storage = FirebaseStorage.instance;
-
   bool isLoading = false;
   bool changedImage = false;
   bool somethingChanged = false;
+  final firestore = FirebaseFirestore.instance;
+  final storage = FirebaseStorage.instance;
+  List<String> mentions = [];
+  late FirebaseAuth? auth;
   late final ScrollController scrollController;
   late final GlobalKey<FormState> _formKey;
   late TextEditingController _bioController;
-  late List<String> _newTopicNames;
+  List<String> _newTopicNames = [];
+  List<String> removedTopicNames = [];
+  List<String> addedTopicNames = [];
   late TheVisibility _newVis;
   late String myImgUrl;
   String? _validateBio(String? value) {
     if (value!.length > 1000) {
-      return 'This cannot be more than 1000 characters long.';
+      return 'Bio can be up to 1000 characters long';
     } else {
       return null;
     }
@@ -67,12 +79,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     scrollController = ScrollController();
     _formKey = GlobalKey<FormState>();
+    final RegExp _exp = RegExp(r'^(?!.*\.\.)(?!.*\.$)[^\W][\w.]{0,30}$',
+        multiLine: true, caseSensitive: false, dotAll: true);
+    const prefix = '@';
     final MyProfile _myProfile = Provider.of<MyProfile>(context, listen: false);
     final String _myBio = _myProfile.getBio;
     _bioController = TextEditingController(text: _myBio);
-    final List<String> _myTopicNames = _myProfile.getTopics;
+    List<String> _myTopicNames = _myProfile.getTopics;
     _newVis = _myProfile.getVisibility;
-    _newTopicNames = _myTopicNames;
+    _newTopicNames = [..._myTopicNames];
     myImgUrl = _myProfile.getProfileImage;
     _bioController.addListener(() {
       if (_bioController.value.text != _myBio) {
@@ -84,6 +99,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           }
         }
       } else {}
+      final text = _bioController.text;
+      final result = text.split(' ');
+      final last =
+          result.where((element) => element.startsWith(prefix)).toList();
+      final removAt = last.map((e) => e.replaceFirst('@', '')).toList();
+      removAt.forEach((e) {
+        if (!mentions.contains(e) && _exp.hasMatch(e) && e.length >= 2)
+          mentions.add(e);
+      });
+      mentions.forEach((element) {
+        if (!removAt.contains(element)) {
+          mentions.remove(element);
+        }
+      });
     });
     Firebase.initializeApp().whenComplete(() {
       auth = FirebaseAuth.instance;
@@ -103,58 +132,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     switch (myVis) {
       case TheVisibility.private:
         ScaffoldMessenger.of(context).removeCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            duration: const Duration(
-              seconds: 3,
-            ),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             backgroundColor: primarySwatch,
-            content: const VisSnack(
-              Icons.lock_outline,
-              'private',
-            ),
-          ),
-        );
+            content: const VisSnack(Icons.lock_outline, 'private', false),
+            duration: const Duration(seconds: 3)));
         break;
       case TheVisibility.public:
         ScaffoldMessenger.of(context).removeCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            duration: const Duration(
-              seconds: 3,
-            ),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             backgroundColor: primarySwatch,
             content: const VisSnack(
-              customIcons.MyFlutterApp.globe_no_map,
-              'public',
-            ),
-          ),
-        );
+                customIcons.MyFlutterApp.globe_no_map, 'public', false),
+            duration: const Duration(seconds: 3)));
         break;
     }
-  }
-
-  String generateVis(TheVisibility vis) {
-    if (vis == TheVisibility.public) {
-      return 'Public';
-    } else if (vis == TheVisibility.private) {
-      return 'Private';
-    }
-    return '';
   }
 
   List<AssetEntity> assets = [];
   Future<void> _choose(String myUsername, Color primaryColor) async {
     const int _maxAssets = 1;
-    final _english = EnglishTextDelegate();
-    final List<AssetEntity>? _result = await AssetPicker.pickAssets(
-      context,
-      maxAssets: _maxAssets,
-      textDelegate: _english,
-      selectedAssets: assets,
-      requestType: RequestType.image,
-      themeColor: primaryColor,
-    );
+    const _english = const EnglishAssetPickerTextDelegate();
+    final List<AssetEntity>? _result = await AssetPicker.pickAssets(context,
+        pickerConfig: AssetPickerConfig(
+            maxAssets: _maxAssets,
+            textDelegate: _english,
+            selectedAssets: assets,
+            requestType: RequestType.image,
+            themeColor: primaryColor));
     if (_result != null) {
       assets = List<AssetEntity>.from(_result);
       final imageFile = await assets[0].originFile;
@@ -170,13 +174,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> updateUser(
-    String myUsername,
-    String profileImageUrl,
-    void Function(String) _changeBio,
-    void Function(List<String>) _changeTopics,
-    void Function(TheVisibility)? _changeVisibility,
-    void Function(String) _changeImage,
-  ) async {
+      {required String myUsername,
+      required String profileImageUrl,
+      required void Function(String) changeBio,
+      required void Function(List<String>) changeTopics,
+      required void Function(TheVisibility)? changeVisibility,
+      required void Function(String) changeImage,
+      required List<String> finalMentions,
+      required String xBanner,
+      required bool xBannerNSFW,
+      required String xAvatar,
+      required String xVisibility,
+      required String xBio,
+      required xTopics}) async {
+    final filter = ProfanityFilter();
+    var batch = firestore.batch();
     _showDialog(IconData icon, Color iconColor, String title, String rule) {
       showDialog(
         context: context,
@@ -190,15 +202,151 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
 
     final users = firestore.collection('Users');
+    Future<void> mentionHandler(String mentionedUser) async {
+      final rightNow = DateTime.now();
+      if (mentionedUser != myUsername) {
+        final targetUser = await users.doc(mentionedUser).get();
+        final userExists = targetUser.exists;
+        if (userExists) {
+          final notifDescription = '$myUsername mentioned you in their bio';
+          final token = targetUser.get('fcm');
+          final theirBlockDoc = await users
+              .doc(mentionedUser)
+              .collection('Blocked')
+              .doc(myUsername)
+              .get();
+          final myBlockDoc = await users
+              .doc(myUsername)
+              .collection('Blocked')
+              .doc(mentionedUser)
+              .get();
+          final bool imBlocked = theirBlockDoc.exists;
+          final bool theyreBlocked = myBlockDoc.exists;
+          final myMentions = users.doc(myUsername).collection('My mentions');
+          final mentionBox = users.doc(mentionedUser).collection('Mention Box');
+          final theirMentionedIn =
+              users.doc(mentionedUser).collection('Mentioned In');
+          final data = {
+            'mentioned user': mentionedUser,
+            'mentioned by': myUsername,
+            'date': rightNow,
+            'postID': '',
+            'commentID': '',
+            'replyID': '',
+            'collectionID': '',
+            'flareID': '',
+            'flareCommentID': '',
+            'flareReplyID': '',
+            'commenterName': '',
+            'clubName': '',
+            'posterName': '',
+            'isClubPost': false,
+            'isPost': false,
+            'isComment': false,
+            'isReply': false,
+            'isBio': true,
+            'isFlare': false,
+            'isFlareComment': false,
+            'isFlareReply': false,
+            'isFlaresBio': false,
+          };
+          final alertData = {
+            'mentioned user': mentionedUser,
+            'mentioned by': myUsername,
+            'token': token,
+            'description': notifDescription,
+            'date': rightNow,
+            'postID': '',
+            'commentID': '',
+            'replyID': '',
+            'collectionID': '',
+            'flareID': '',
+            'flareCommentID': '',
+            'flareReplyID': '',
+            'commenterName': '',
+            'clubName': '',
+            'posterName': '',
+            'isClubPost': false,
+            'isPost': false,
+            'isComment': false,
+            'isReply': false,
+            'isBio': true,
+            'isFlare': false,
+            'isFlareComment': false,
+            'isFlareReply': false,
+            'isFlaresBio': false,
+          };
+          batch.set(myMentions.doc(), data);
+          batch.set(theirMentionedIn.doc(), data);
+          final status = targetUser.get('Status');
+          if (!imBlocked && !theyreBlocked && status != 'Banned') {
+            if (targetUser.data()!.containsKey('AllowMentions')) {
+              final allowMentions = targetUser.get('AllowMentions');
+              if (allowMentions) {
+                batch.update(users.doc(mentionedUser),
+                    {'numOfMentions': FieldValue.increment(1)});
+                batch.set(mentionBox.doc(), alertData);
+              }
+            } else {
+              batch.update(users.doc(mentionedUser),
+                  {'numOfMentions': FieldValue.increment(1)});
+              batch.set(mentionBox.doc(), alertData);
+            }
+          }
+        }
+      }
+    }
+
+    Future<void> mentionPeople(List<String> _mentions) async {
+      if (_mentions.isNotEmpty)
+        for (var tag in _mentions) {
+          await mentionHandler(tag);
+        }
+    }
+
+    Future<void> addTopicHandler(String topicName) {
+      var _batch = firestore.batch();
+      final thisTopic = firestore.collection('Topics').doc(topicName);
+      final thisTopicProfile = thisTopic.collection('profiles').doc(myUsername);
+      _batch.set(thisTopic, {'profiles': FieldValue.increment(1)},
+          SetOptions(merge: true));
+      _batch.set(
+          thisTopicProfile,
+          {'times': FieldValue.increment(1), 'date': DateTime.now()},
+          SetOptions(merge: true));
+      return _batch.commit();
+    }
+
+    Future<void> removeTopicHandler(String topicName) {
+      var _batch = firestore.batch();
+      final thisTopic = firestore.collection('Topics').doc(topicName);
+      final thisTopicProfile =
+          thisTopic.collection('profiles removed').doc(myUsername);
+      _batch.set(
+          thisTopic,
+          {
+            'profiles': FieldValue.increment(-1),
+            'profiles removed': FieldValue.increment(1)
+          },
+          SetOptions(merge: true));
+      _batch.set(
+          thisTopicProfile,
+          {'times': FieldValue.increment(1), 'date': DateTime.now()},
+          SetOptions(merge: true));
+      return _batch.commit();
+    }
+
+    final _now = DateTime.now();
+    final modificationID = _now.toString();
     if (changedImage) {
       if (myImgUrl != 'none') {
-        if (profileImageUrl != 'none') {
-          FirebaseStorage.instance.refFromURL(profileImageUrl).delete();
-        }
+        // if (profileImageUrl != 'none') {
+        //   FirebaseStorage.instance.refFromURL(profileImageUrl).delete();
+        // }
         File? imageFile = await assets[0].originFile;
         final String filePath = imageFile!.absolute.path;
         final int fileSize = imageFile.lengthSync();
-        if (fileSize > 15000000) {
+        if (fileSize > 30000000) {
           setState(() {
             isLoading = false;
           });
@@ -206,7 +354,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             Icons.info_outline,
             Colors.blue,
             'Notice',
-            "Avatars can be up to 15 MB",
+            "Avatars can be up to 30 MB in size",
           );
         } else {
           Directory appDocDir = await getApplicationDocumentsDirectory();
@@ -225,59 +373,105 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             numThreads: 4,
           );
           await FlutterNsfw.getPhotoNSFWScore(filePath).then((result) async {
-            if (result > 0.75) {
+            if (result > 0.759) {
               setState(() {
                 isLoading = false;
               });
               EasyLoading.dismiss();
-              _showDialog(
-                Icons.info_outline,
-                Colors.blue,
-                'Notice',
-                "Image contains content that violates our avatar safety guidelines.",
-              );
+              _showDialog(Icons.info_outline, Colors.blue, 'Notice',
+                  "Image contains content that violates our avatar safety guidelines.");
             } else {
+              if (addedTopicNames.isNotEmpty)
+                for (var topicName in addedTopicNames)
+                  await addTopicHandler(topicName);
+              if (removedTopicNames.isNotEmpty)
+                for (var topicName in removedTopicNames)
+                  await removeTopicHandler(topicName);
               await storage
                   .ref(myImgUrl)
                   .putFile(imageFile)
                   .then((value) async {
                 final String downloadUrl =
                     await storage.ref(myImgUrl).getDownloadURL();
-                await users.doc(myUsername).update(
-                  {
+                await users.doc(myUsername).set({
+                  'Avatar': downloadUrl,
+                  'Visibility': '${General.generateProfileVis(_newVis)}',
+                  'Bio': '${_bioController.value.text}',
+                  'Topics': _newTopicNames,
+                  'last modified': _now,
+                  'modifications': FieldValue.increment(1)
+                }, SetOptions(merge: true)).then((value) async {
+                  Map<String, dynamic> fields = {
+                    'modifications': FieldValue.increment(1)
+                  };
+                  Map<String, dynamic> docFields = {
+                    'id': modificationID,
+                    'date': _now
+                  };
+                  General.updateControl(
+                      fields: fields,
+                      myUsername: myUsername,
+                      collectionName: 'modifications',
+                      docID: modificationID,
+                      docFields: docFields);
+                  if (filter.hasProfanity(_bioController.value.text)) {
+                    batch.update(firestore.doc('Profanity/Profiles'),
+                        {'numOfProfanity': FieldValue.increment(1)});
+                    batch.set(
+                        firestore
+                            .collection('Profanity/Profiles/Profiles')
+                            .doc(),
+                        {
+                          'profile': myUsername,
+                          'date': _now,
+                          'new bio': _bioController.value.text,
+                          'old bio': xBio
+                        });
+                  }
+                  await users
+                      .doc(myUsername)
+                      .collection('Modifications')
+                      .doc(modificationID)
+                      .set({
+                    'xBanner': xBanner,
+                    'xBannerNSFW': xBannerNSFW,
+                    'Banner': xBanner,
+                    'bannerNSFW': xBannerNSFW,
+                    'xAvatar': xAvatar,
+                    'xVisibility': xVisibility,
+                    'xBio': xBio,
+                    'xTopics': xTopics,
                     'Avatar': downloadUrl,
-                    'Visibility': '${generateVis(_newVis)}',
+                    'Visibility': '${General.generateProfileVis(_newVis)}',
                     'Bio': '${_bioController.value.text}',
                     'Topics': _newTopicNames,
-                  },
-                ).then((value) async {
+                    'date': _now,
+                  }, SetOptions(merge: true));
+                  await mentionPeople(finalMentions);
+                  batch.commit();
                   EasyLoading.showSuccess('Success',
-                      duration: const Duration(seconds: 2), dismissOnTap: true);
-                  _changeBio(_bioController.value.text);
-                  _changeTopics(_newTopicNames);
-                  _changeVisibility!(_newVis);
-                  _changeImage(downloadUrl);
+                      duration: const Duration(seconds: 1), dismissOnTap: true);
+                  changeBio(_bioController.value.text);
+                  changeTopics(_newTopicNames);
+                  changeVisibility!(_newVis);
+                  changeImage(downloadUrl);
+                  if (addedTopicNames.isNotEmpty) addedTopicNames.clear();
+                  if (removedTopicNames.isNotEmpty) removedTopicNames.clear();
                   setState(() {
                     isLoading = false;
                     somethingChanged = false;
                     changedImage = false;
                   });
                 }).catchError((_) {
-                  EasyLoading.showError(
-                    'Failed',
-                    duration: const Duration(seconds: 2),
-                    dismissOnTap: true,
-                  );
+                  EasyLoading.showError('Failed',
+                      duration: const Duration(seconds: 2), dismissOnTap: true);
                   setState(() {
                     isLoading = false;
                   });
                 });
               }).catchError((_) {
-                EasyLoading.showError(
-                  'Failed',
-                  duration: const Duration(seconds: 2),
-                  dismissOnTap: true,
-                );
+                EasyLoading.showError('Failed',
+                    duration: const Duration(seconds: 2), dismissOnTap: true);
                 setState(() {
                   isLoading = false;
                 });
@@ -286,62 +480,152 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           });
         }
       } else if (myImgUrl == 'none') {
-        if (profileImageUrl != 'none') {
-          FirebaseStorage.instance.refFromURL(profileImageUrl).delete();
-        }
-        await users.doc(myUsername).update(
-          {
+        // if (profileImageUrl != 'none') {
+        //   FirebaseStorage.instance.refFromURL(profileImageUrl).delete();
+        // }
+        if (addedTopicNames.isNotEmpty)
+          for (var topicName in addedTopicNames)
+            await addTopicHandler(topicName);
+        if (removedTopicNames.isNotEmpty)
+          for (var topicName in removedTopicNames)
+            await removeTopicHandler(topicName);
+        await users.doc(myUsername).set({
+          'Avatar': 'none',
+          'Visibility': '${General.generateProfileVis(_newVis)}',
+          'Bio': '${_bioController.value.text}',
+          'Topics': _newTopicNames,
+          'last modified': _now,
+          'modifications': FieldValue.increment(1)
+        }, SetOptions(merge: true)).then((value) async {
+          Map<String, dynamic> fields = {
+            'modifications': FieldValue.increment(1)
+          };
+          Map<String, dynamic> docFields = {'id': modificationID, 'date': _now};
+          General.updateControl(
+              fields: fields,
+              myUsername: myUsername,
+              collectionName: 'modifications',
+              docID: modificationID,
+              docFields: docFields);
+          if (filter.hasProfanity(_bioController.value.text)) {
+            batch.update(firestore.doc('Profanity/Profiles'),
+                {'numOfProfanity': FieldValue.increment(1)});
+            batch.set(
+                firestore.collection('Profanity/Profiles/Profiles').doc(), {
+              'profile': myUsername,
+              'date': _now,
+              'new bio': _bioController.value.text,
+              'old bio': xBio
+            });
+          }
+          await users
+              .doc(myUsername)
+              .collection('Modifications')
+              .doc(modificationID)
+              .set({
+            'xBanner': xBanner,
+            'xBannerNSFW': xBannerNSFW,
+            'Banner': xBanner,
+            'bannerNSFW': xBannerNSFW,
+            'xAvatar': xAvatar,
+            'xVisibility': xVisibility,
+            'xBio': xBio,
+            'xTopics': xTopics,
             'Avatar': 'none',
-            'Visibility': '${generateVis(_newVis)}',
+            'Visibility': '${General.generateProfileVis(_newVis)}',
             'Bio': '${_bioController.value.text}',
             'Topics': _newTopicNames,
-          },
-        ).then((value) async {
+            'date': _now,
+          }, SetOptions(merge: true));
+          await mentionPeople(finalMentions);
+          batch.commit();
           EasyLoading.showSuccess('Success',
-              duration: const Duration(seconds: 2), dismissOnTap: true);
-          _changeBio(_bioController.value.text);
-          _changeTopics(_newTopicNames);
-          _changeVisibility!(_newVis);
-          _changeImage('none');
+              duration: const Duration(seconds: 1), dismissOnTap: true);
+          changeBio(_bioController.value.text);
+          changeTopics(_newTopicNames);
+          changeVisibility!(_newVis);
+          changeImage('none');
+          if (addedTopicNames.isNotEmpty) addedTopicNames.clear();
+          if (removedTopicNames.isNotEmpty) removedTopicNames.clear();
           setState(() {
             isLoading = false;
             somethingChanged = false;
             changedImage = false;
           });
         }).catchError((_) {
-          EasyLoading.showError(
-            'Failed',
-            duration: const Duration(seconds: 2),
-            dismissOnTap: true,
-          );
+          EasyLoading.showError('Failed',
+              duration: const Duration(seconds: 2), dismissOnTap: true);
           setState(() {
             isLoading = false;
           });
         });
       }
     } else {
-      await users.doc(myUsername).update(
-        {
-          'Visibility': '${generateVis(_newVis)}',
+      Map<String, dynamic> fields = {'modifications': FieldValue.increment(1)};
+      Map<String, dynamic> docFields = {'id': modificationID, 'date': _now};
+      General.updateControl(
+          fields: fields,
+          myUsername: myUsername,
+          collectionName: 'modifications',
+          docID: modificationID,
+          docFields: docFields);
+      if (addedTopicNames.isNotEmpty)
+        for (var topicName in addedTopicNames) await addTopicHandler(topicName);
+      if (removedTopicNames.isNotEmpty)
+        for (var topicName in removedTopicNames)
+          await removeTopicHandler(topicName);
+      await users.doc(myUsername).set({
+        'Visibility': '${General.generateProfileVis(_newVis)}',
+        'Bio': '${_bioController.value.text}',
+        'Topics': _newTopicNames,
+        'last modified': _now,
+        'modifications': FieldValue.increment(1)
+      }, SetOptions(merge: true)).then((value) async {
+        if (filter.hasProfanity(_bioController.value.text)) {
+          batch.update(firestore.doc('Profanity/Profiles'),
+              {'numOfProfanity': FieldValue.increment(1)});
+          batch.set(firestore.collection('Profanity/Profiles/Profiles').doc(), {
+            'profile': myUsername,
+            'date': _now,
+            'new bio': _bioController.value.text,
+            'old bio': xBio
+          });
+        }
+        await users
+            .doc(myUsername)
+            .collection('Modifications')
+            .doc(modificationID)
+            .set({
+          'xBanner': xBanner,
+          'xBannerNSFW': xBannerNSFW,
+          'Banner': xBanner,
+          'bannerNSFW': xBannerNSFW,
+          'xAvatar': xAvatar,
+          'xVisibility': xVisibility,
+          'xBio': xBio,
+          'xTopics': xTopics,
+          'Avatar': xAvatar,
+          'Visibility': '${General.generateProfileVis(_newVis)}',
           'Bio': '${_bioController.value.text}',
           'Topics': _newTopicNames,
-        },
-      ).then((value) async {
+          'date': _now,
+        }, SetOptions(merge: true));
+        await mentionPeople(finalMentions);
+        batch.commit();
         EasyLoading.showSuccess('Success',
-            duration: const Duration(seconds: 2), dismissOnTap: true);
-        _changeBio(_bioController.value.text);
-        _changeTopics(_newTopicNames);
-        _changeVisibility!(_newVis);
+            duration: const Duration(seconds: 1), dismissOnTap: true);
+        if (addedTopicNames.isNotEmpty) addedTopicNames.clear();
+        if (removedTopicNames.isNotEmpty) removedTopicNames.clear();
+        changeBio(_bioController.value.text);
+        changeTopics(_newTopicNames);
+        changeVisibility!(_newVis);
         setState(() {
           isLoading = false;
           somethingChanged = false;
         });
       }).catchError((_) {
-        EasyLoading.showError(
-          'Failed',
-          duration: const Duration(seconds: 2),
-          dismissOnTap: true,
-        );
+        EasyLoading.showError('Failed',
+            duration: const Duration(seconds: 2), dismissOnTap: true);
         setState(() {
           isLoading = false;
         });
@@ -349,230 +633,496 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final double _deviceHeight = MediaQuery.of(context).size.height;
-    final Color _primaryColor = Theme.of(context).primaryColor;
-    final Color _accentColor = Theme.of(context).accentColor;
-    final double _deviceWidth = MediaQuery.of(context).size.width;
-    final String myUsername = Provider.of<MyProfile>(context).getUsername;
-    final String profileImgUrl =
-        Provider.of<MyProfile>(context).getProfileImage;
-    const SizedBox _heightBox = SizedBox(height: 15.0);
-    final Widget _myDialog = Center(
+  Future<List<MiniProfile>> getSuggestedTags(String newString) async {
+    List<MiniProfile> userSearchResults = [];
+    final getUsers = await firestore.collection('Users').get();
+    final docs = getUsers.docs;
+    final lowerCaseName = newString.toLowerCase();
+    docs.forEach((doc) {
+      if (userSearchResults.length < 25) {
+        final String id = doc.id.toString().toLowerCase();
+        final String username = doc.id;
+        if (id.startsWith(lowerCaseName) &&
+            !userSearchResults.any((result) => result.username == username) &&
+            !mentions.any((element) => element == username)) {
+          final MiniProfile mini = MiniProfile(username: username);
+          userSearchResults.add(mini);
+          setState(() {});
+        }
+        if (id.contains(lowerCaseName) &&
+            !userSearchResults.any((result) => result.username == username) &&
+            !mentions.any((element) => element == username)) {
+          final MiniProfile mini = MiniProfile(username: username);
+          userSearchResults.add(mini);
+          setState(() {});
+        }
+        if (id.endsWith(lowerCaseName) &&
+            !userSearchResults.any((result) => result.username == username) &&
+            !mentions.any((element) => element == username)) {
+          final MiniProfile mini = MiniProfile(username: username);
+          userSearchResults.add(mini);
+          setState(() {});
+        }
+      }
+    });
+    return userSearchResults;
+  }
+
+  Widget fieldBuilder(BuildContext _, MiniProfile mini) {
+    final username = mini.username;
+    return ListTile(
+        onTap: () => selectionHandler(mini),
+        key: ValueKey<String>(username),
+        horizontalTitleGap: 5.0,
+        leading: ChatProfileImage(
+            username: username, factor: 0.04, inEdit: false, asset: null),
+        title: Text(username,
+            textAlign: TextAlign.start,
+            style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.w400,
+                fontSize: 14.0)));
+  }
+
+  FutureOr<Iterable<MiniProfile>> fieldHandler(String input) {
+    final RegExp atRegexp = atSignRegExp;
+    final isTagging = atRegexp.hasMatch(input);
+    if (isTagging) {
+      final RegExp _exp = RegExp(r'^(?!.*\.\.)(?!.*\.$)[^\W][\w.]{0,30}$',
+          multiLine: true, caseSensitive: false, dotAll: true);
+      final cursorLocation = _bioController.selection.base.offset;
+      final beginningTillHere = input.substring(0, cursorLocation);
+      final lastCharEmpty = beginningTillHere.endsWith(' ');
+      if (lastCharEmpty) {
+        return [];
+      }
+      final result = beginningTillHere.split(' ');
+      final last = result.lastWhere((element) => element.startsWith('@'));
+      final trimmed = last.trim();
+      final newString = trimmed.replaceFirst('@', '');
+      if (_exp.hasMatch(newString)) {
+        return getSuggestedTags(newString);
+      } else {
+        return [];
+      }
+    } else {
+      return [];
+    }
+  }
+
+  void selectionHandler(MiniProfile mini) {
+    const prefix = '@';
+    final oldText = _bioController.text;
+    final cursorLocation = _bioController.selection.base.offset;
+    final beginningTillHere = oldText.substring(0, cursorLocation);
+    final result = beginningTillHere.split(' ');
+    final last = result.lastWhere((element) => element.startsWith(prefix));
+    final newUsername = '@${mini.username}';
+    final length = newUsername.length;
+    final newText = oldText.replaceFirst(last, newUsername);
+    mentions.add(mini.username);
+    _bioController.value = _bioController.value.copyWith(text: newText);
+    final theIndex = _bioController.text.indexOf(newUsername) + length;
+    final newPosition = TextPosition(offset: theIndex);
+    _bioController.selection = TextSelection.fromPosition(newPosition);
+  }
+
+  Widget buildMyDialog(String myUsername, Color _primaryColor) => Center(
       child: Container(
-        padding: const EdgeInsets.all(10.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(5.0),
-          color: Colors.white,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _choose(myUsername, _primaryColor);
-              },
-              style: const ButtonStyle(splashFactory: NoSplash.splashFactory),
-              child: const Text(
-                'Change avatar',
-                style: TextStyle(
-                  fontWeight: FontWeight.normal,
-                  decoration: TextDecoration.none,
-                  fontFamily: 'Roboto',
-                  fontSize: 21.0,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-            if (myImgUrl != 'none')
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  myImgUrl = 'none';
-                  somethingChanged = true;
-                  changedImage = true;
-
-                  setState(() {});
-                },
-                style: const ButtonStyle(splashFactory: NoSplash.splashFactory),
-                child: const Text(
-                  'Remove photo',
-                  style: TextStyle(
-                    fontWeight: FontWeight.normal,
-                    decoration: TextDecoration.none,
-                    fontFamily: 'Roboto',
-                    fontSize: 21.0,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-    final Widget _page = GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        body: SafeArea(
-          child: Consumer<MyProfile>(builder: (ctx, myProfile, _) {
-            final String _myUsername = myProfile.getUsername;
-
-            final void Function(TheVisibility)? _changeVisibility =
-                myProfile.setMyVisibilityStatus;
-            final int _numOfBlockedUsers = myProfile.myNumOfBlocked;
-            void _changeLocalVis(TheVisibility vis) {
-              setState(() {
-                _newVis = vis;
-                somethingChanged = true;
-              });
-              _changeVis(vis, _primaryColor);
-            }
-
-            void addTopic(String newTopic) {
-              setState(() {
-                _newTopicNames.insert(0, newTopic);
-                somethingChanged = true;
-              });
-            }
-
-            void _removeTopic(int idx) {
-              setState(() {
-                _newTopicNames.removeAt(idx);
-                somethingChanged = true;
-              });
-            }
-
-            void _changeTopics(List<String> newNames) {
-              myProfile.changeTopics(newNames);
-            }
-
-            void _changeBio(String newBio) {
-              myProfile.changeBio(newBio);
-            }
-
-            void _changeImage(String newUrl) {
-              myProfile.setMyProfileImage(newUrl);
-            }
-
-            final Widget _myImage = ProfileImage(
-              username: _myUsername,
-              url: myImgUrl,
-              factor: 0.20,
-              inEdit: true,
-              asset:
-                  (myImgUrl != 'none' && assets.isNotEmpty) ? assets[0] : null,
-            );
-            final Widget visMenu = DropdownButton(
+          padding: const EdgeInsets.all(10.0),
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(5.0), color: Colors.white),
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                if(!kIsWeb)
+                TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _choose(myUsername, _primaryColor);
+                    },
+                    style: const ButtonStyle(
+                        splashFactory: NoSplash.splashFactory),
+                    child: const Text('Change avatar',
+                        style: TextStyle(
+                            fontWeight: FontWeight.normal,
+                            decoration: TextDecoration.none,
+                            fontFamily: 'Roboto',
+                            fontSize: 21.0,
+                            color: Colors.black))),
+                if (myImgUrl != 'none')
+                  TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        myImgUrl = 'none';
+                        somethingChanged = true;
+                        changedImage = true;
+                        assets.clear();
+                        setState(() {});
+                      },
+                      style: const ButtonStyle(
+                          splashFactory: NoSplash.splashFactory),
+                      child: const Text('Remove photo',
+                          style: TextStyle(
+                              fontWeight: FontWeight.normal,
+                              decoration: TextDecoration.none,
+                              fontFamily: 'Roboto',
+                              fontSize: 21.0,
+                              color: Colors.black)))
+              ])));
+  DropdownMenuItem<TheVisibility> buildDropItem(
+          dynamic _changeLocalVis,
+          Color _primaryColor,
+          String label,
+          TheVisibility value,
+          IconData icon) =>
+      DropdownMenuItem<TheVisibility>(
+          value: value,
+          onTap: () => _changeLocalVis(value),
+          child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Icon(icon, color: _primaryColor, size: 25.0),
+                const SizedBox(width: 15.0),
+                Text(label,
+                    style: const TextStyle(color: Colors.black, fontSize: 15.0))
+              ]));
+  Widget buildDropButton(dynamic _changeLocalVis, Color _primaryColor) =>
+      Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 5.0),
+          child: DropdownButton(
               borderRadius: BorderRadius.circular(15.0),
               onChanged: (_) => setState(() {}),
               underline: Container(color: Colors.transparent),
-              icon: const Icon(
-                Icons.keyboard_arrow_down,
-                color: Colors.grey,
-              ),
+              icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
               value: _newVis,
               items: [
-                DropdownMenuItem<TheVisibility>(
-                  value: TheVisibility.public,
-                  onTap: () => _changeLocalVis(TheVisibility.public),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Icon(
-                        customIcons.MyFlutterApp.globe_no_map,
-                        color: _primaryColor,
-                        size: 25.0,
-                      ),
-                      const SizedBox(
-                        width: 15.0,
-                      ),
-                      const Text(
-                        'Public',
-                        style: TextStyle(color: Colors.black, fontSize: 15.0),
-                      ),
-                    ],
-                  ),
-                ),
-                DropdownMenuItem<TheVisibility>(
-                  value: TheVisibility.private,
-                  onTap: () => _changeLocalVis(TheVisibility.private),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Icon(
-                        Icons.lock_outline,
-                        color: _primaryColor,
-                        size: 25.0,
-                      ),
-                      const SizedBox(
-                        width: 15.0,
-                      ),
-                      const Text(
-                        'Private',
-                        style: TextStyle(color: Colors.black, fontSize: 15.0),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            );
-            final Widget _myTopics = ConstrainedBox(
-              constraints: BoxConstraints(
+                buildDropItem(
+                    _changeLocalVis,
+                    _primaryColor,
+                    'Public',
+                    TheVisibility.public,
+                    customIcons.MyFlutterApp.globe_no_map),
+                buildDropItem(_changeLocalVis, _primaryColor, 'Private',
+                    TheVisibility.private, Icons.lock_outline),
+              ]));
+  Widget buildAdditionalInfoButton(Color _primaryColor) =>
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+        Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextButton(
+                onPressed: () {
+                  FocusScope.of(context).unfocus();
+                  if (!isLoading)
+                    Navigator.pushNamed(
+                        context, RouteGenerator.additionalInfoScreen);
+                },
+                style: ButtonStyle(
+                    backgroundColor:
+                        MaterialStateProperty.all<Color?>(_primaryColor)),
+                child: const Center(
+                    child: const Text('Additional details',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold)))))
+      ]);
+  Widget buildBlockedButton(int _numOfBlockedUsers) => ListTile(
+      onTap: () =>
+          Navigator.of(context).pushNamed(RouteGenerator.blockedUserScreen),
+      horizontalTitleGap: 5.0,
+      leading:
+          const Icon(customIcons.MyFlutterApp.no_stopping, color: Colors.black),
+      title: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Text('Blocked users', style: TextStyle(color: Colors.black)),
+            const SizedBox(width: 10.0),
+            if (_numOfBlockedUsers > 0)
+              Badge(
+                  elevation: 0.0,
+                  toAnimate: false,
+                  badgeColor: Colors.amber,
+                  borderRadius: BorderRadius.circular(5.0),
+                  shape: BadgeShape.square,
+                  badgeContent: Container(
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 0.0, horizontal: 10.0),
+                      child: Text(_blockedNumber(_numOfBlockedUsers),
+                          style: const TextStyle(
+                              letterSpacing: 0.85,
+                              fontSize: 15.0,
+                              color: Colors.black,
+                              fontWeight: FontWeight.w400))))
+          ]));
+  Widget buildAvatar(dynamic myUsername, Color _primaryColor) =>
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+        TextButton(
+            style: const ButtonStyle(splashFactory: NoSplash.splashFactory),
+            onPressed: () => showDialog(
+                context: context,
+                builder: (ctx) => buildMyDialog(myUsername, _primaryColor)),
+            child: ChatProfileImage(
+                username: myUsername,
+                factor: 0.20,
+                inEdit: true,
+                asset: (myImgUrl != 'none' && assets.isNotEmpty)
+                    ? assets[0]
+                    : null,
+                editUrl: myImgUrl))
+      ]);
+  @override
+  Widget build(BuildContext context) {
+    final Color _primaryColor = Theme.of(context).colorScheme.primary;
+    final Color _accentColor = Theme.of(context).colorScheme.secondary;
+    final double _deviceHeight = MediaQuery.of(context).size.height;
+    final myProfile = Provider.of<MyProfile>(context);
+    final String myUsername = myProfile.getUsername;
+    final String xbanner = myProfile.getProfileBanner;
+    final bool xbannerNSFW = myProfile.getBannerNSFW;
+    final String xVisibility =
+        General.generateProfileVis(myProfile.getVisibility);
+    final String xAvatar = myProfile.getProfileImage;
+    final String xBio = myProfile.getBio;
+    final xTopics = myProfile.getTopics;
+    final String profileImgUrl = myProfile.getProfileImage;
+    const SizedBox _heightBox = SizedBox(height: 15.0);
+    return GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+            backgroundColor: Colors.white,
+            body: SafeArea(
+                child: Consumer<MyProfile>(builder: (ctx, myProfile, _) {
+              final void Function(TheVisibility)? _changeVisibility =
+                  myProfile.setMyVisibilityStatus;
+              final int _numOfBlockedUsers = myProfile.myNumOfBlocked;
+              void _changeLocalVis(TheVisibility vis) {
+                setState(() {
+                  _newVis = vis;
+                  somethingChanged = true;
+                });
+                _changeVis(vis, _primaryColor);
+              }
+
+              void addTopic(String newTopic) {
+                setState(() {
+                  _newTopicNames.insert(0, newTopic);
+                  addedTopicNames.add(newTopic);
+                  if (removedTopicNames.contains(newTopic))
+                    removedTopicNames.remove(newTopic);
+                  somethingChanged = true;
+                });
+              }
+
+              void _removeTopic(int idx) {
+                setState(() {
+                  final thisTopic = _newTopicNames[idx];
+                  _newTopicNames.removeAt(idx);
+                  if (addedTopicNames.contains(thisTopic)) {
+                    addedTopicNames.remove(thisTopic);
+                  } else {
+                    if (!removedTopicNames.contains(thisTopic))
+                      removedTopicNames.add(thisTopic);
+                  }
+                  somethingChanged = true;
+                });
+              }
+
+              void _changeTopics(List<String> newNames) =>
+                  myProfile.changeTopics(newNames);
+              void _changeBio(String newBio) => myProfile.changeBio(newBio);
+              void _changeImage(String newUrl) =>
+                  myProfile.setMyProfileImage(newUrl);
+              return Form(
+                  key: _formKey,
+                  child: SizedBox(
+                      height: _deviceHeight,
+                      child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            const SettingsBar('Edit Profile'),
+                            Expanded(
+                                child: Noglow(
+                                    child: SingleChildScrollView(
+                                        keyboardDismissBehavior:
+                                            ScrollViewKeyboardDismissBehavior
+                                                .onDrag,
+                                        controller: scrollController,
+                                        child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: <Widget>[
+                                              _heightBox,
+                                              const MyProfileBanner(true),
+                                              _heightBox,
+                                              buildDropButton(_changeLocalVis,
+                                                  _primaryColor),
+                                              _heightBox,
+                                              buildAvatar(
+                                                  myUsername, _primaryColor),
+                                              _heightBox,
+                                              EditProfileTextField(
+                                                  scrollController,
+                                                  fieldHandler,
+                                                  fieldBuilder,
+                                                  _validateBio,
+                                                  _bioController),
+                                              _heightBox,
+                                              _heightBox,
+                                              EditProfileTopics(
+                                                  scrollController,
+                                                  addTopic,
+                                                  _newTopicNames,
+                                                  _removeTopic),
+                                              const Divider(),
+                                              buildBlockedButton(
+                                                  _numOfBlockedUsers),
+                                              const Divider(),
+                                              buildAdditionalInfoButton(
+                                                  _primaryColor),
+                                              DeleteProfileButton(
+                                                  isLoading,
+                                                  () => setState(
+                                                      () => isLoading = true))
+                                            ])))),
+                            Opacity(
+                                opacity: (somethingChanged) ? 1.0 : .65,
+                                child: TextButton(
+                                    style: ButtonStyle(
+                                        enableFeedback: false,
+                                        elevation: MaterialStateProperty.all<double?>(
+                                            0.0),
+                                        backgroundColor:
+                                            MaterialStateProperty.all<Color?>(
+                                                _primaryColor),
+                                        shape: MaterialStateProperty.all<OutlinedBorder?>(RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.only(
+                                                topRight:
+                                                    const Radius.circular(15.0),
+                                                topLeft: const Radius.circular(
+                                                    15.0))))),
+                                    onPressed: () {
+                                      FocusScope.of(context).unfocus();
+                                      bool _isValid =
+                                          _formKey.currentState!.validate();
+                                      if (_isValid && somethingChanged) {
+                                        if (isLoading) {
+                                        } else {
+                                          setState(() {
+                                            isLoading = true;
+                                          });
+                                          updateUser(
+                                              myUsername: myUsername,
+                                              profileImageUrl: profileImgUrl,
+                                              changeBio: _changeBio,
+                                              changeTopics: _changeTopics,
+                                              changeVisibility:
+                                                  _changeVisibility!,
+                                              changeImage: _changeImage,
+                                              finalMentions: mentions,
+                                              xBanner: xbanner,
+                                              xBannerNSFW: xbannerNSFW,
+                                              xVisibility: xVisibility,
+                                              xAvatar: xAvatar,
+                                              xBio: xBio,
+                                              xTopics: xTopics);
+                                        }
+                                      } else {}
+                                    },
+                                    child: (isLoading)
+                                        ? CircularProgressIndicator(
+                                            color: _accentColor,
+                                            strokeWidth: 1.50)
+                                        : Text('Save', style: TextStyle(fontSize: 35.0, color: _accentColor))))
+                          ])));
+            }))));
+  }
+}
+
+class EditProfileTextField extends StatelessWidget {
+  final dynamic scrollController;
+  final dynamic fieldHandler;
+  final dynamic fieldBuilder;
+  final dynamic _validateBio;
+  final dynamic _bioController;
+  const EditProfileTextField(this.scrollController, this.fieldHandler,
+      this.fieldBuilder, this._validateBio, this._bioController);
+
+  @override
+  Widget build(BuildContext context) {
+    final Color _primaryColor = Theme.of(context).colorScheme.primary;
+    return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: NestedScroller(
+            controller: scrollController,
+            child: TypeAheadFormField<MiniProfile>(
+                suggestionsCallback: fieldHandler,
+                itemBuilder: fieldBuilder,
+                onSuggestionSelected: (_) {},
+                hideOnEmpty: true,
+                hideOnError: true,
+                hideOnLoading: true,
+                hideSuggestionsOnKeyboardHide: false,
+                validator: _validateBio,
+                suggestionsBoxDecoration: SuggestionsBoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    hasScrollbar: false),
+                textFieldConfiguration: TextFieldConfiguration(
+                    controller: _bioController,
+                    keyboardType: TextInputType.multiline,
+                    minLines: 5,
+                    maxLines: 20,
+                    maxLength: 1000,
+                    decoration: InputDecoration(
+                        labelText: 'Bio',
+                        counterText: '',
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
+                        border: OutlineInputBorder(
+                            borderSide: BorderSide(color: _primaryColor)))))));
+  }
+}
+
+class EditProfileTopics extends StatelessWidget {
+  final dynamic scrollController;
+  final dynamic addTopic;
+  final dynamic _newTopicNames;
+  final dynamic _removeTopic;
+  const EditProfileTopics(this.scrollController, this.addTopic,
+      this._newTopicNames, this._removeTopic);
+
+  @override
+  Widget build(BuildContext context) {
+    final Color _accentColor = Theme.of(context).colorScheme.secondary;
+    final double _deviceWidth = General.widthQuery(context);
+    return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ConstrainedBox(
+            constraints: BoxConstraints(
                 minHeight: 75.0,
                 maxHeight: 500.0,
                 minWidth: _deviceWidth,
-                maxWidth: _deviceWidth,
-              ),
-              child: NotificationListener<OverscrollNotification>(
-                onNotification: (OverscrollNotification value) {
-                  if (value.overscroll < 0 &&
-                      scrollController.offset + value.overscroll <= 0) {
-                    if (scrollController.offset != 0)
-                      scrollController.jumpTo(0);
-                    return true;
-                  }
-                  if (scrollController.offset + value.overscroll >=
-                      scrollController.position.maxScrollExtent) {
-                    if (scrollController.offset !=
-                        scrollController.position.maxScrollExtent)
-                      scrollController
-                          .jumpTo(scrollController.position.maxScrollExtent);
-                    return true;
-                  }
-                  scrollController
-                      .jumpTo(scrollController.offset + value.overscroll);
-                  return true;
-                },
+                maxWidth: _deviceWidth),
+            child: NestedScroller(
+                controller: scrollController,
                 child: SingleChildScrollView(
-                  child: Wrap(
-                    children: <Widget>[
-                      Container(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 5.0,
-                        ),
-                        child: GestureDetector(
+                    child: Wrap(children: <Widget>[
+                  Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                      child: GestureDetector(
                           onTap: () => showModalBottomSheet(
-                            isScrollControlled: true,
-                            context: context,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                31.0,
-                              ),
-                            ),
-                            backgroundColor: Colors.white,
-                            builder: (_) {
-                              return AddTopic(
-                                  addTopic, _newTopicNames, false, false);
-                            },
-                          ),
+                              isScrollControlled: true,
+                              context: context,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(31.0)),
+                              backgroundColor: Colors.white,
+                              builder: (_) => AddTopic(addTopic, _newTopicNames,
+                                  false, false, false)),
                           child: TopicChip(
                               'Add topics',
                               Icon(Icons.add, color: _accentColor),
@@ -580,280 +1130,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   isScrollControlled: true,
                                   context: context,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      31.0,
-                                    ),
-                                  ),
+                                      borderRadius:
+                                          BorderRadius.circular(31.0)),
                                   backgroundColor: Colors.white,
-                                  builder: (_) {
-                                    final _addTopic = AddTopic(
-                                      addTopic,
-                                      _newTopicNames,
-                                      false,
-                                      false,
-                                    );
-                                    return _addTopic;
-                                  }),
+                                  builder: (_) => AddTopic(addTopic,
+                                      _newTopicNames, false, false, false)),
                               _accentColor,
-                              FontWeight.bold),
-                        ),
-                      ),
-                      ..._newTopicNames.map((topic) {
-                        int idx = _newTopicNames.indexOf(topic);
-                        void removeTopic() {
-                          _removeTopic(idx);
-                        }
-
-                        final _chip = TopicChip(
-                            topic,
-                            Icon(
-                              Icons.cancel_rounded,
-                              color: Colors.red,
-                            ),
-                            removeTopic,
-                            Colors.white,
-                            FontWeight.normal);
-                        return _chip;
-                      }).toList()
-                    ],
-                  ),
-                ),
-              ),
-            );
-            final Widget _deleteProfile = DeleteProfileButton(isLoading, () {
-              setState(() {
-                isLoading = true;
-              });
-            });
-            final Widget _additionalInfoButton = Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextButton(
-                    onPressed: () {
-                      FocusScope.of(context).unfocus();
-                      if (!isLoading) {
-                        Navigator.pushNamed(
-                            context, RouteGenerator.additionalInfoScreen);
-                      }
-                    },
-                    style: ButtonStyle(
-                      backgroundColor:
-                          MaterialStateProperty.all<Color?>(_primaryColor),
-                    ),
-                    child: const Center(
-                      child: const Text(
-                        'Additional details',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            );
-            final Widget _saveButton = Opacity(
-              opacity: (somethingChanged) ? 1.0 : .65,
-              child: TextButton(
-                style: ButtonStyle(
-                  enableFeedback: false,
-                  elevation: MaterialStateProperty.all<double?>(0.0),
-                  shape: MaterialStateProperty.all<OutlinedBorder?>(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.only(
-                        topRight: const Radius.circular(15.0),
-                        topLeft: const Radius.circular(15.0),
-                      ),
-                    ),
-                  ),
-                  backgroundColor:
-                      MaterialStateProperty.all<Color?>(_primaryColor),
-                ),
-                onPressed: () {
-                  bool _isValid = _formKey.currentState!.validate();
-                  if (_isValid && somethingChanged) {
-                    if (isLoading) {
-                    } else {
-                      setState(() {
-                        isLoading = true;
-                      });
-                      updateUser(
-                        myUsername,
-                        profileImgUrl,
-                        _changeBio,
-                        _changeTopics,
-                        _changeVisibility!,
-                        _changeImage,
-                      );
-                    }
-                  } else {}
-                },
-                child: (isLoading)
-                    ? CircularProgressIndicator(color: _accentColor)
-                    : Text(
-                        'Save',
-                        style: TextStyle(
-                          fontSize: 35.0,
-                          color: _accentColor,
-                        ),
-                      ),
-              ),
-            );
-            const Widget _bar = const SettingsBar('Edit Profile');
-            final Widget _stuff = Expanded(
-              child: NotificationListener<OverscrollIndicatorNotification>(
-                onNotification: (overscroll) {
-                  overscroll.disallowGlow();
-                  return false;
-                },
-                child: SingleChildScrollView(
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  controller: scrollController,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      _heightBox,
-                      MyProfileBanner(true),
-                      _heightBox,
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                        child: visMenu,
-                      ),
-                      _heightBox,
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          TextButton(
-                            style: const ButtonStyle(
-                                splashFactory: NoSplash.splashFactory),
-                            onPressed: () => showDialog(
-                                context: context,
-                                builder: (ctx) {
-                                  return _myDialog;
-                                }),
-                            child: _myImage,
-                          ),
-                        ],
-                      ),
-                      _heightBox,
-                      NotificationListener<OverscrollNotification>(
-                        onNotification: (OverscrollNotification value) {
-                          if (value.overscroll < 0 &&
-                              scrollController.offset + value.overscroll <= 0) {
-                            if (scrollController.offset != 0)
-                              scrollController.jumpTo(0);
-                            return true;
-                          }
-                          if (scrollController.offset + value.overscroll >=
-                              scrollController.position.maxScrollExtent) {
-                            if (scrollController.offset !=
-                                scrollController.position.maxScrollExtent)
-                              scrollController.jumpTo(
-                                  scrollController.position.maxScrollExtent);
-                            return true;
-                          }
-                          scrollController.jumpTo(
-                              scrollController.offset + value.overscroll);
-                          return true;
-                        },
-                        child: TextFormField(
-                          controller: _bioController,
-                          validator: _validateBio,
-                          keyboardType: TextInputType.multiline,
-                          decoration: InputDecoration(
-                            labelText: 'bio',
-                            counterText: '',
-                            floatingLabelBehavior: FloatingLabelBehavior.always,
-                            border: OutlineInputBorder(
-                              borderSide: BorderSide(color: _primaryColor),
-                            ),
-                          ),
-                          minLines: 5,
-                          maxLines: 20,
-                          maxLength: 1000,
-                        ),
-                      ),
-                      _heightBox,
-                      _heightBox,
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: _myTopics,
-                      ),
-                      const Divider(),
-                      ListTile(
-                        onTap: () => Navigator.of(context)
-                            .pushNamed(RouteGenerator.blockedUserScreen),
-                        horizontalTitleGap: 5.0,
-                        leading: Icon(
-                          customIcons.MyFlutterApp.no_stopping,
-                          color: Colors.black,
-                        ),
-                        title: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            const Text(
-                              'Blocked users',
-                              style: TextStyle(color: Colors.black),
-                            ),
-                            const SizedBox(width: 10.0),
-                            if (_numOfBlockedUsers > 0)
-                              Badge(
-                                elevation: 0.0,
-                                toAnimate: false,
-                                badgeContent: Container(
-                                  margin: const EdgeInsets.symmetric(
-                                      vertical: 0.0, horizontal: 10.0),
-                                  child: Text(
-                                    _blockedNumber(_numOfBlockedUsers),
-                                    style: const TextStyle(
-                                      letterSpacing: 0.85,
-                                      fontSize: 15.0,
-                                      color: Colors.black,
-                                      fontFamily: 'Poppins',
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                ),
-                                badgeColor: Colors.amber,
-                                borderRadius: BorderRadius.circular(5.0),
-                                shape: BadgeShape.square,
-                              ),
-                          ],
-                        ),
-                      ),
-                      const Divider(),
-                      _additionalInfoButton,
-                      _deleteProfile,
-                    ],
-                  ),
-                ),
-              ),
-            );
-            return Form(
-              key: _formKey,
-              child: SizedBox(
-                height: _deviceHeight,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    _bar,
-                    _stuff,
-                    _saveButton,
-                  ],
-                ),
-              ),
-            );
-          }),
-        ),
-      ),
-    );
-    return _page;
+                              FontWeight.bold))),
+                  ..._newTopicNames.map((topic) {
+                    int idx = _newTopicNames.indexOf(topic);
+                    void removeTopic() => _removeTopic(idx);
+                    return TopicChip(
+                        topic,
+                        const Icon(Icons.close, color: Colors.red),
+                        removeTopic,
+                        Colors.white,
+                        FontWeight.normal);
+                  }).toList()
+                ])))));
   }
 }

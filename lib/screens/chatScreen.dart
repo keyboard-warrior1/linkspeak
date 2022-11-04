@@ -1,15 +1,16 @@
-import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:link_speak/providers/myProfileProvider.dart';
-import 'package:link_speak/widgets/chatProfileImage.dart';
 import 'package:provider/provider.dart';
-import '../widgets/sendButton.dart';
-import '../widgets/chatMenu.dart';
-import '../widgets/chatMessages.dart';
+
+import '../general.dart';
 import '../models/screenArguments.dart';
+import '../providers/myProfileProvider.dart';
 import '../routes.dart';
+import '../widgets/chat/chatMenu.dart';
+import '../widgets/chat/chatMessages.dart';
+import '../widgets/chat/sendButton.dart';
+import '../widgets/common/chatProfileImage.dart';
 
 class ChatScreen extends StatefulWidget {
   final dynamic comeFromProfile;
@@ -21,30 +22,7 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
-  late Future setOnlineFuture;
-  late Future setOfflineFuture;
   ScrollController _scrollController = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    setOfflineFuture = setOffline();
-    setOnlineFuture = setOnline();
-  }
-
-  Future setOnline() async {
-    final _myUsername =
-        Provider.of<MyProfile>(context, listen: false).getUsername;
-    await firestore
-        .doc('Users/$_myUsername')
-        .update({'Activity': 'inChatScreen'});
-  }
-
-  Future setOffline() async {
-    final _myUsername =
-        Provider.of<MyProfile>(context, listen: false).getUsername;
-    await firestore.doc('Users/$_myUsername').update({'Activity': 'Offline'});
-  }
 
   @override
   void dispose() {
@@ -68,45 +46,50 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     }
 
+    var displayChatName = widget.chatId;
+    if (widget.chatId.length > 15) {
+      displayChatName = "${widget.chatId.substring(0, 15)}..";
+    }
     final _myUsername =
         Provider.of<MyProfile>(context, listen: false).getUsername;
     final _myFriendCollection =
         firestore.collection('Users/${widget.chatId}/chats').doc(_myUsername);
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = General.widthQuery(context);
     final screenHeigth = MediaQuery.of(context).size.height;
-    final Color _primaryColor = Theme.of(context).primaryColor;
-    final Color _accentColor = Theme.of(context).accentColor;
+
+    final Color _primaryColor = Theme.of(context).colorScheme.primary;
+    final Color _accentColor = Theme.of(context).colorScheme.secondary;
     return WillPopScope(
       onWillPop: () async {
         Future.delayed(const Duration(milliseconds: 50), () async {
-          await setOffline();
           var col = await _myFriendCollection.get();
           if (col.exists) {
-            _myFriendCollection.update({'isTyping': false});
+            _myFriendCollection
+                .update({'isTyping': false, 'isRecording': false});
           }
           SystemChannels.textInput.invokeMethod('TextInput.hide');
         });
         return true;
       },
       child: Scaffold(
+        backgroundColor: Colors.white,
         body: SafeArea(
           child: Container(
             width: double.infinity,
             height: double.infinity,
-            color: Colors.white12,
+            color: Colors.white,
             child: Column(
               children: [
                 Container(
                   width: screenWidth,
                   height: screenHeigth * 0.075,
-                  color: Colors.white12,
+                  color: Colors.white,
                   child: Row(
                     children: [
                       BackButton(
                         onPressed: () async {
                           Future.delayed(const Duration(milliseconds: 50),
                               () async {
-                            await setOffline();
                             var col = await _myFriendCollection.get();
                             if (col.exists) {
                               _myFriendCollection.update({'isTyping': false});
@@ -117,7 +100,6 @@ class _ChatScreenState extends State<ChatScreen> {
                           Navigator.pop(context);
                         },
                       ),
-                      SizedBox(width: 15.0),
                       GestureDetector(
                         onTap: () {
                           if (!widget.comeFromProfile) {
@@ -126,11 +108,12 @@ class _ChatScreenState extends State<ChatScreen> {
                         },
                         child: ChatProfileImage(
                             username: widget.chatId,
-                            factor: 0.04,
+                            factor: 0.03,
                             inEdit: false,
-                            asset: null),
+                            asset: null,
+                            editUrl: ''),
                       ),
-                      SizedBox(width: 10.0),
+                      const SizedBox(width: 5.0),
                       Expanded(
                         flex: 4,
                         child: Row(
@@ -141,20 +124,39 @@ class _ChatScreenState extends State<ChatScreen> {
                                   _visitProfile(username: widget.chatId);
                                 }
                               },
-                              child: Text("${widget.chatId}",
+                              child: Text(displayChatName,
                                   style: const TextStyle(
-                                      fontFamily: 'Poppins',
                                       fontWeight: FontWeight.w400,
-                                      fontSize: 20.0,
+                                      fontSize: 17.0,
                                       color: Colors.black)),
                             ),
-                            SizedBox(width: 5),
+                            const SizedBox(width: 5.0),
                             StreamBuilder(
                               stream: firestore
                                   .collection('Users')
                                   .doc('${widget.chatId}')
                                   .snapshots(),
-                              builder: (context, AsyncSnapshot snapshot) {
+                              builder: (context,
+                                  AsyncSnapshot<
+                                          DocumentSnapshot<
+                                              Map<String, dynamic>>>
+                                      snapshot) {
+                                if (snapshot.data == null) {
+                                  return Container(
+                                      width: 10.0,
+                                      height: 10.0,
+                                      decoration: const BoxDecoration(
+                                          color: Colors.grey,
+                                          shape: BoxShape.circle));
+                                }
+                                if (!snapshot.data!.exists) {
+                                  return Container(
+                                      width: 10.0,
+                                      height: 10.0,
+                                      decoration: const BoxDecoration(
+                                          color: Colors.grey,
+                                          shape: BoxShape.circle));
+                                }
                                 if (widget.chatId == 'Linkspeak') {
                                   return Stack(
                                     children: <Widget>[
@@ -187,8 +189,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                             color: Colors.grey,
                                             shape: BoxShape.circle));
                                   } else {
-                                    if (snapshot.data['Activity'] == "Away" ||
-                                        snapshot.data['Activity'] ==
+                                    if (snapshot.data!['Activity'] == "Away" ||
+                                        snapshot.data!['Activity'] ==
                                             "Offline") {
                                       return Container(
                                           width: 10,
@@ -196,9 +198,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                           decoration: BoxDecoration(
                                               color: Colors.grey.shade400,
                                               shape: BoxShape.circle));
-                                    } else if (snapshot.data['Activity'] ==
+                                    } else if (snapshot.data!['Activity'] ==
                                             "Online" ||
-                                        snapshot.data['Activity'] ==
+                                        snapshot.data!['Activity'] ==
                                             "inChatScreen") {
                                       return Container(
                                         width: 10.0,
@@ -212,7 +214,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                       return Container(
                                           width: 10.0,
                                           height: 10.0,
-                                          decoration: BoxDecoration(
+                                          decoration: const BoxDecoration(
                                               color: Colors.grey,
                                               shape: BoxShape.circle));
                                     }

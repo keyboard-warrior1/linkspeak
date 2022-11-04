@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:link_speak/models/message.dart';
+
+import 'message.dart';
 
 class Chat {
   final String userName;
@@ -14,6 +15,6 @@ class Chat {
       {required this.userName,
       required this.profileImage,
       required this.lastMessageTime,
-      required this.isRead, 
+      required this.isRead,
       required this.messageList});
 }

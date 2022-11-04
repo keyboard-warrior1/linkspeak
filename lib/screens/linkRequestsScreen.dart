@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:link_speak/providers/myProfileProvider.dart';
 import 'package:provider/provider.dart';
-import '../widgets/linkRequest.dart';
-import '../widgets/settingsBar.dart';
+
+import '../providers/myProfileProvider.dart';
+import '../widgets/alerts/linkRequest.dart';
+import '../widgets/common/noglow.dart';
+import '../widgets/common/settingsBar.dart';
 
 class LinkRequestsScreen extends StatefulWidget {
   const LinkRequestsScreen();
@@ -25,6 +27,7 @@ class _LinkRequestsScreenState extends State<LinkRequestsScreen> {
         .collection('Users')
         .doc(_myProfile.getUsername.toString())
         .collection('LinkRequestsNotifs')
+        .orderBy('date', descending: true)
         .limit(30)
         .get();
     final docs = _linkRequestsCollection.docs;
@@ -56,6 +59,7 @@ class _LinkRequestsScreenState extends State<LinkRequestsScreen> {
             .collection('Users')
             .doc(_myProfile.getUsername.toString())
             .collection('LinkRequestsNotifs')
+            .orderBy('date', descending: true)
             .startAfterDocument(getLastRequest)
             .limit(30)
             .get();
@@ -73,6 +77,7 @@ class _LinkRequestsScreenState extends State<LinkRequestsScreen> {
             .collection('Users')
             .doc(_myProfile.getUsername.toString())
             .collection('LinkRequestsNotifs')
+            .orderBy('date', descending: true)
             .limit(35)
             .get();
         final docs = _linkRequestsCollection.docs;
@@ -112,20 +117,13 @@ class _LinkRequestsScreenState extends State<LinkRequestsScreen> {
     _scrollController.dispose();
   }
 
-  String _topicNumber(num value) {
-    if (value >= 99) {
-      return '99+';
-    } else {
-      return value.toString();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final _num = Provider.of<MyProfile>(context).myNumOfLinkRequestNotifs;
+    // final _num = Provider.of<MyProfile>(context).myNumOfLinkRequestNotifs;
     const Widget emptyBox = SizedBox(height: 0, width: 0);
     return Scaffold(
       appBar: null,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Container(
           width: double.infinity,
@@ -134,7 +132,8 @@ class _LinkRequestsScreenState extends State<LinkRequestsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.max,
             children: [
-              SettingsBar('Requests  ${_topicNumber(_num)}'),
+              // SettingsBar('Requests  ${General.topicNumber(_num)}'),
+              const SettingsBar('Requests'),
               FutureBuilder(
                 future: _linkRequestFuture,
                 builder: (context, snapshot) {
@@ -145,7 +144,8 @@ class _LinkRequestsScreenState extends State<LinkRequestsScreen> {
                         children: <Widget>[
                           const Spacer(),
                           const Center(
-                            child: const CircularProgressIndicator(),
+                            child: const CircularProgressIndicator(
+                                strokeWidth: 1.50),
                           ),
                           const Spacer(),
                         ],
@@ -156,33 +156,36 @@ class _LinkRequestsScreenState extends State<LinkRequestsScreen> {
                       return Container();
                     } else {
                       return Expanded(
-                        child: ListView.builder(
-                          controller: _scrollController,
-                          itemCount: source.length + 1,
-                          itemBuilder: (BuildContext context, int index) {
-                            if (index == source.length) {
-                              if (isLoading) {
-                                return Center(
-                                  child: Container(
-                                    margin: const EdgeInsets.all(10.0),
-                                    height: 35.0,
-                                    width: 35.0,
-                                    child: Center(
-                                      child: const CircularProgressIndicator(),
+                        child: Noglow(
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            itemCount: source.length + 1,
+                            itemBuilder: (BuildContext context, int index) {
+                              if (index == source.length) {
+                                if (isLoading) {
+                                  return Center(
+                                    child: Container(
+                                      margin: const EdgeInsets.all(10.0),
+                                      height: 35.0,
+                                      width: 35.0,
+                                      child: Center(
+                                        child: const CircularProgressIndicator(
+                                            strokeWidth: 1.50),
+                                      ),
                                     ),
-                                  ),
+                                  );
+                                }
+                                if (isLastPage) {
+                                  return emptyBox;
+                                }
+                              } else {
+                                return NewLinkRequest(
+                                  requestProfile: source[index].id.toString(),
                                 );
                               }
-                              if (isLastPage) {
-                                return emptyBox;
-                              }
-                            } else {
-                              return NewLinkRequest(
-                                requestProfile: source[index].id.toString(),
-                              );
-                            }
-                            return emptyBox;
-                          },
+                              return emptyBox;
+                            },
+                          ),
                         ),
                       );
                     }

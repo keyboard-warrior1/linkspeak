@@ -1,17 +1,18 @@
 import 'package:flutter/foundation.dart';
 
 class NewPostHelper with ChangeNotifier {
-  dynamic _location = '';
   String _locationName = '';
+  dynamic _location = '';
   List<String> _formTopics = [];
   bool _hasSomeThingTyped = false;
   bool _containsSensitiveContent = false;
-
-  List<String> get formTopics => _formTopics;
-  dynamic get getLocation => _location;
+  bool _disabledComments = false;
   String get getLocationName => _locationName;
+  dynamic get getLocation => _location;
   bool get hasSomeThingTyped => _hasSomeThingTyped;
   bool get containsSensitive => _containsSensitiveContent;
+  bool get disabledComments => _disabledComments;
+  List<String> get formTopics => _formTopics;
   void changeLocation(dynamic newLocation) {
     _location = newLocation;
     notifyListeners();
@@ -24,6 +25,16 @@ class NewPostHelper with ChangeNotifier {
 
   void changeSensitivity(bool value) {
     _containsSensitiveContent = value;
+    notifyListeners();
+  }
+
+  void changeDisabledComments(bool value) {
+    _disabledComments = value;
+    notifyListeners();
+  }
+
+  void toggleDisabledComments() {
+    _disabledComments = !_disabledComments;
     notifyListeners();
   }
 
@@ -48,7 +59,8 @@ class NewPostHelper with ChangeNotifier {
   }
 
   void addMyTopics(List<String> myTopics) {
-    _formTopics = [...myTopics];
+    for (var topic in myTopics)
+      if (!_formTopics.contains(topic)) _formTopics.add(topic);
     notifyListeners();
   }
 
@@ -61,8 +73,7 @@ class NewPostHelper with ChangeNotifier {
     _formTopics.clear();
     _hasSomeThingTyped = false;
     _containsSensitiveContent = false;
-    _location = '';
-    _locationName = '';
+    _disabledComments = false;
     notifyListeners();
   }
 }

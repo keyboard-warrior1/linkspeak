@@ -1,9 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../general.dart';
 import '../providers/myProfileProvider.dart';
-import '../widgets/newLinkedWith.dart';
-import '../widgets/settingsBar.dart';
+import '../widgets/alerts/newLinkedWith.dart';
+import '../widgets/common/noglow.dart';
+import '../widgets/common/settingsBar.dart';
 
 class NewLinkedScreen extends StatefulWidget {
   const NewLinkedScreen();
@@ -26,6 +29,7 @@ class _NewLinkedScreenState extends State<NewLinkedScreen> {
         .collection('Users')
         .doc(_myProfile.getUsername.toString())
         .collection('NewLinkedNotifs')
+        .orderBy('date', descending: true)
         .limit(30)
         .get();
     final docs = _linkedCollection.docs;
@@ -51,6 +55,7 @@ class _NewLinkedScreenState extends State<NewLinkedScreen> {
           .collection('Users')
           .doc(_myProfile.getUsername.toString())
           .collection('NewLinkedNotifs')
+          .orderBy('date', descending: true)
           .startAfterDocument(lastItem)
           .limit(15)
           .get();
@@ -64,14 +69,6 @@ class _NewLinkedScreenState extends State<NewLinkedScreen> {
       }
       isLoading = false;
       setState(() {});
-    }
-  }
-
-  String _topicNumber(num value) {
-    if (value >= 99) {
-      return '99+';
-    } else {
-      return value.toString();
     }
   }
 
@@ -101,12 +98,13 @@ class _NewLinkedScreenState extends State<NewLinkedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _num = Provider.of<MyProfile>(context).myNumOfNewLinkedNotifs;
+    // final _num = Provider.of<MyProfile>(context).myNumOfNewLinkedNotifs;
     const Widget emptyBox = SizedBox(height: 0, width: 0);
     final _deviceHeight = MediaQuery.of(context).size.height;
-    final _deviceWidth = MediaQuery.of(context).size.width;
+    final _deviceWidth = General.widthQuery(context);
     return Scaffold(
       appBar: null,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Container(
           color: Colors.white,
@@ -115,7 +113,8 @@ class _NewLinkedScreenState extends State<NewLinkedScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.max,
             children: [
-              SettingsBar('Linked  ${_topicNumber(_num)}'),
+              // SettingsBar('Linked  ${General.topicNumber(_num)}'),
+              const SettingsBar('Linked'),
               FutureBuilder(
                 future: _newLinkedFuture,
                 builder: (context, snapshot) {
@@ -126,7 +125,8 @@ class _NewLinkedScreenState extends State<NewLinkedScreen> {
                         children: <Widget>[
                           const Spacer(),
                           const Center(
-                            child: const CircularProgressIndicator(),
+                            child: const CircularProgressIndicator(
+                                strokeWidth: 1.50),
                           ),
                           const Spacer(),
                         ],
@@ -137,34 +137,37 @@ class _NewLinkedScreenState extends State<NewLinkedScreen> {
                       return Container();
                     } else {
                       return Expanded(
-                        child: ListView.builder(
-                          controller: _scrollController,
-                          itemCount: source.length + 1,
-                          itemBuilder: (BuildContext context, int index) {
-                            if (index == source.length) {
-                              if (isLoading) {
-                                return Center(
-                                  child: Container(
-                                    margin: const EdgeInsets.all(10.0),
-                                    height: 35.0,
-                                    width: 35.0,
-                                    child: Center(
-                                      child: const CircularProgressIndicator(),
+                        child: Noglow(
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            itemCount: source.length + 1,
+                            itemBuilder: (BuildContext context, int index) {
+                              if (index == source.length) {
+                                if (isLoading) {
+                                  return Center(
+                                    child: Container(
+                                      margin: const EdgeInsets.all(10.0),
+                                      height: 35.0,
+                                      width: 35.0,
+                                      child: Center(
+                                        child: const CircularProgressIndicator(
+                                            strokeWidth: 1.50),
+                                      ),
                                     ),
-                                  ),
+                                  );
+                                }
+                                if (isLastPage) {
+                                  return emptyBox;
+                                }
+                              } else {
+                                return NewLinkedWith(
+                                  userName: source[index].id,
+                                  date: source[index].data()['date'].toDate(),
                                 );
                               }
-                              if (isLastPage) {
-                                return emptyBox;
-                              }
-                            } else {
-                              return NewLinkedWith(
-                                userName: source[index].id,
-                                date: source[index].data()['date'].toDate(),
-                              );
-                            }
-                            return emptyBox;
-                          },
+                              return emptyBox;
+                            },
+                          ),
                         ),
                       );
                     }

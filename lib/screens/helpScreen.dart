@@ -1,15 +1,18 @@
-import 'package:flutter/material.dart';
-import 'package:form_field_validator/form_field_validator.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../widgets/settingsBar.dart';
-import '../widgets/adaptiveText.dart';
-import '../widgets/registrationDialog.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:form_field_validator/form_field_validator.dart';
+import 'package:profanity_filter/profanity_filter.dart';
+
+import '../general.dart';
+import '../widgets/auth/registrationDialog.dart';
+import '../widgets/common/adaptiveText.dart';
+import '../widgets/common/settingsBar.dart';
 
 class HelpScreen extends StatefulWidget {
   const HelpScreen();
-
   @override
   _HelpScreenState createState() => _HelpScreenState();
 }
@@ -29,50 +32,37 @@ class _HelpScreenState extends State<HelpScreen> {
   final TextEditingController _feedBackController = TextEditingController();
   void _showDialog(IconData icon, Color iconColor, String title, String rule) {
     showDialog(
-      context: context,
-      builder: (_) => RegistrationDialog(
-        icon: icon,
-        iconColor: iconColor,
-        title: title,
-        rules: rule,
-      ),
-    );
+        context: context,
+        builder: (_) => RegistrationDialog(
+            icon: icon, iconColor: iconColor, title: title, rules: rule));
   }
 
   final emailValidator = MultiValidator([
     RequiredValidator(errorText: '* Invalid email address'),
     EmailValidator(errorText: '* Invalid email address'),
     MaxLengthValidator(100,
-        errorText: '* Email address cannot be more than 100 characters long')
+        errorText: '* Email address can be up to 100 characters long')
   ]);
   String? usernameValidator(String? value) {
-    final RegExp _exp = RegExp(
-      r'^(?!.*\.\.)(?!.*\.$)[^\W][\w.]{0,20}$',
-      multiLine: true,
-      caseSensitive: false,
-      dotAll: true,
-    );
-    if (value!.isEmpty ||
-        value.replaceAll(' ', '') == '' ||
-        value.trim() == '') {
-      return '* Invalid username';
-    }
-    if (value.length < 3 || value.length > 21) {
-      return '* Invalid username';
-    }
-    if (!_exp.hasMatch(value)) {
-      return '* Invalid username';
-    }
-    if (_exp.hasMatch(value)) {
-      return null;
-    }
+    final filter = ProfanityFilter();
+    final RegExp _exp = RegExp(r'^(?!.*\.\.)(?!.*\.$)[^\W][\w.]{0,30}$',
+        multiLine: true, caseSensitive: false, dotAll: true);
+    final RegExp _hitlerexp = RegExp('hitler', caseSensitive: false);
+    if (value!.isEmpty || value.replaceAll(' ', '') == '' || value.trim() == '')
+      return '* Username is required';
+    if (value.length < 2 || value.length > 30) return '* Invalid username';
+    if (!_exp.hasMatch(value)) return '* Invalid username';
+    if (_hitlerexp.hasMatch(value)) return '* Invalid username';
+    if (filter.hasProfanity(value)) return '* Invalid username';
+    if (_exp.hasMatch(value)) return null;
+    return null;
   }
 
   String? feedbackValidator(String? value) {
     if (value!.isEmpty ||
         value.replaceAll(' ', '') == '' ||
         value.trim() == '') {
-      return '* Invalid input';
+      return '* Invalid feedback';
     } else {
       return null;
     }
@@ -124,12 +114,8 @@ class _HelpScreenState extends State<HelpScreen> {
                 emailSent = true;
                 isLoading = false;
               });
-              _showDialog(
-                Icons.help,
-                Colors.blue,
-                'Code sent',
-                'A reset code has been sent to your email address',
-              );
+              _showDialog(Icons.help, Colors.blue, 'Code sent',
+                  'A reset request has been sent to your email address');
             }).catchError((onError) {
               setState(() {
                 isLoading = false;
@@ -164,11 +150,10 @@ class _HelpScreenState extends State<HelpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Size _sizeQUery = MediaQuery.of(context).size;
-    final double _deviceWidth = _sizeQUery.width;
+    final double _deviceWidth = General.widthQuery(context);
     final ThemeData _theme = Theme.of(context);
-    final Color _primaryColor = _theme.primaryColor;
-    final Color _accentColor = _theme.accentColor;
+    final Color _primaryColor = _theme.colorScheme.primary;
+    final Color _accentColor = _theme.colorScheme.secondary;
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -258,7 +243,7 @@ class _HelpScreenState extends State<HelpScreen> {
                         fillColor: Colors.white,
                         focusColor: Colors.transparent,
                         hoverColor: Colors.transparent,
-                        hintText: 'Email',
+                        hintText: 'Email address',
                       ),
                     ),
                   ),
@@ -269,6 +254,7 @@ class _HelpScreenState extends State<HelpScreen> {
                       minLines: 5,
                       maxLines: 25,
                       maxLength: 1000,
+                      maxLengthEnforcement: MaxLengthEnforcement.enforced,
                       controller: _feedBackController,
                       validator: feedbackValidator,
                       decoration: const InputDecoration(
@@ -360,6 +346,7 @@ class _HelpScreenState extends State<HelpScreen> {
                       child: (isLoading)
                           ? CircularProgressIndicator(
                               color: _accentColor,
+                              strokeWidth: 1.50,
                             )
                           : Text(
                               'Submit',

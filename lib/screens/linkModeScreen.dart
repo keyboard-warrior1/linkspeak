@@ -1,15 +1,16 @@
-import 'dart:io' show Platform;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
-import '../providers/myProfileProvider.dart';
-import '../screens/feedScreen.dart';
-import '../widgets/load.dart';
-import '../widgets/linkModeDialog.dart';
+
 import '../my_flutter_app_icons.dart' as customIcons;
+import '../providers/myProfileProvider.dart';
+import '../widgets/auth/linkModeDialog.dart';
+import '../widgets/common/load.dart';
+
+enum ViewMode { normal, showSettings }
 
 class LinkModeScreen extends StatefulWidget {
   const LinkModeScreen();
@@ -19,16 +20,22 @@ class LinkModeScreen extends StatefulWidget {
 }
 
 class _LinkModeScreenState extends State<LinkModeScreen> {
+  ViewMode view = ViewMode.normal;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   bool isLoading = false;
+  bool handicap = false;
   bool showCode = false;
   bool modeEnabled = false;
+  bool scanForUsers = true;
+  bool scanForClubs = false;
+  bool flashToggled = false;
   late Future<void> _getMode;
   Barcode? result;
-  QRViewController? controller;
+  MobileScannerController controller = MobileScannerController();
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  void _showDialog(String username) {
-    showDialog(context: context, builder: (_) => LinkModeDialog(username));
+  void _showDialog(String username, bool isClub) {
+    showDialog(
+        context: context, builder: (_) => LinkModeDialog(username, isClub));
   }
 
   void _showIt(BuildContext context) {
@@ -45,58 +52,38 @@ class _LinkModeScreenState extends State<LinkModeScreen> {
         });
   }
 
-  @override
-  void reassemble() {
-    super.reassemble();
-    if (Platform.isAndroid) {
-      controller!.pauseCamera();
-    }
-    controller!.resumeCamera();
-  }
-
-  Widget _buildQrView(BuildContext context) {
-    var scanArea = (MediaQuery.of(context).size.width < 400 ||
-            MediaQuery.of(context).size.height < 400)
-        ? 150.0
-        : 300.0;
-    return QRView(
-      key: qrKey,
-      onQRViewCreated: _onQRViewCreated,
-      overlay: QrScannerOverlayShape(
-          borderColor: Colors.red,
-          borderRadius: 10,
-          borderLength: 30,
-          borderWidth: 10,
-          cutOutSize: scanArea),
-    );
-  }
-
-  void _onQRViewCreated(QRViewController controller) {
+  void toggleHandicap(bool newH) => setState(() => handicap = newH);
+  void removeHandicap() =>
+      Future.delayed(const Duration(seconds: 3), () => toggleHandicap(false));
+  void startLoading() => setState(() => isLoading = true);
+  void stopLoading() => setState(() => isLoading = false);
+  void _onDetect(Barcode code, MobileScannerArguments? _) {
     final String myUsername =
         Provider.of<MyProfile>(context, listen: false).getUsername;
     final profileLink =
         Provider.of<MyProfile>(context, listen: false).addLinked;
-    setState(() {
-      this.controller = controller;
-    });
-    controller.scannedDataStream.listen((scanData) async {
-      if (isLoading) {
-      } else {
-        result = scanData;
-        var thecode = result!.code;
+    final profileJoinClub =
+        Provider.of<MyProfile>(context, listen: false).addClubs;
+    if (isLoading || handicap) {
+    } else {
+      if (scanForUsers) {
+        result = code;
+        var thecode = result?.rawValue;
         if ((thecode == myUsername)) {
         } else {
-          controller.pauseCamera();
-          link(thecode, myUsername, profileLink);
+          if (thecode != null) {
+            link(thecode, myUsername, profileLink);
+          }
         }
       }
-    });
-  }
-
-  @override
-  void dispose() {
-    controller?.dispose();
-    super.dispose();
+      if (scanForClubs) {
+        result = code;
+        var thecode = result?.rawValue;
+        if (thecode != null) {
+          joinClub(thecode, myUsername, profileJoinClub);
+        }
+      }
+    }
   }
 
   Future<void> getMode(String myUsername) async {
@@ -111,55 +98,43 @@ class _LinkModeScreenState extends State<LinkModeScreen> {
 
   Future<void> link(
       String username, String myUsername, void Function() profileLink) async {
-    if (isLoading) {
+    if (isLoading || handicap) {
     } else {
-      setState(() {
-        isLoading = true;
-      });
+      startLoading();
       _showIt(context);
       bool allowsLinks = false;
       final targetUser =
           await firestore.collection('Users').doc(username).get();
       final userLinks =
           firestore.collection('Users').doc(username).collection('Links');
-      if (targetUser.data()!.containsKey('LinkModeEnabled')) {
-        final actual = targetUser.get('LinkModeEnabled');
-        allowsLinks = actual;
+      if (targetUser.exists) {
+        if (targetUser.data()!.containsKey('LinkModeEnabled')) {
+          final actual = targetUser.get('LinkModeEnabled');
+          allowsLinks = actual;
+        }
       }
       final myLinkDoc = await userLinks.doc(myUsername).get();
       if (!targetUser.exists) {
         Navigator.pop(context);
-        EasyLoading.showError(
-          "User not found",
-          duration: const Duration(seconds: 3),
-          dismissOnTap: true,
-        );
-        setState(() {
-          isLoading = false;
-        });
-        controller!.resumeCamera();
+        toggleHandicap(true);
+        EasyLoading.showError("Profile not found",
+            duration: const Duration(seconds: 3), dismissOnTap: true);
+        removeHandicap();
+        stopLoading();
       } else if (!allowsLinks) {
         Navigator.pop(context);
-        EasyLoading.showError(
-          "User has link mode disabled",
-          duration: const Duration(seconds: 3),
-          dismissOnTap: true,
-        );
-        setState(() {
-          isLoading = false;
-        });
-        controller!.resumeCamera();
+        toggleHandicap(true);
+        EasyLoading.showError("This profile has Quick Linking disabled",
+            duration: const Duration(seconds: 3), dismissOnTap: true);
+        removeHandicap();
+        stopLoading();
       } else if (myLinkDoc.exists) {
         Navigator.pop(context);
-        EasyLoading.showSuccess(
-          "Already linked",
-          duration: const Duration(seconds: 2),
-          dismissOnTap: true,
-        );
-        setState(() {
-          isLoading = false;
-        });
-        controller!.resumeCamera();
+        toggleHandicap(true);
+        EasyLoading.showSuccess("Already linked",
+            duration: const Duration(seconds: 2), dismissOnTap: true);
+        removeHandicap();
+        stopLoading();
       } else {
         final DateTime _rightNow = DateTime.now();
         var batch = firestore.batch();
@@ -198,22 +173,83 @@ class _LinkModeScreenState extends State<LinkModeScreen> {
             {'numOfLinked': FieldValue.increment(1)});
         batch.commit().then((value) {
           Navigator.pop(context);
-          EasyLoading.showSuccess(
-            'Linked',
-            dismissOnTap: true,
-            duration: const Duration(seconds: 2),
-          );
-          _showDialog(username);
+          toggleHandicap(true);
+          EasyLoading.showSuccess('Linked',
+              dismissOnTap: true, duration: const Duration(seconds: 2));
+          _showDialog(username, false);
           profileLink();
-          setState(() {
-            isLoading = false;
-          });
-          controller!.resumeCamera();
+          removeHandicap();
+          stopLoading();
         }).catchError((_) {
-          setState(() {
-            isLoading = false;
-          });
-          controller!.resumeCamera();
+          stopLoading();
+        });
+      }
+    }
+  }
+
+  Future<void> joinClub(String clubName, String myUsername,
+      void Function() profileJoinClub) async {
+    if (isLoading || handicap) {
+    } else {
+      startLoading();
+      _showIt(context);
+      bool allowsLinks = false;
+      final targetUser =
+          await firestore.collection('Clubs').doc(clubName).get();
+      final userLinks =
+          firestore.collection('Clubs').doc(clubName).collection('Members');
+      if (targetUser.exists) {
+        if (targetUser.data()!.containsKey('allowQuickJoin')) {
+          final actual = targetUser.get('allowQuickJoin');
+          allowsLinks = actual;
+        }
+      }
+      final myLinkDoc = await userLinks.doc(myUsername).get();
+      if (!targetUser.exists) {
+        Navigator.pop(context);
+        toggleHandicap(true);
+        EasyLoading.showError("Club not found",
+            duration: const Duration(seconds: 3), dismissOnTap: true);
+        removeHandicap();
+        stopLoading();
+      } else if (!allowsLinks) {
+        Navigator.pop(context);
+        EasyLoading.showError("This club has Quick joining disabled",
+            duration: const Duration(seconds: 3), dismissOnTap: true);
+        stopLoading();
+      } else if (myLinkDoc.exists) {
+        Navigator.pop(context);
+        toggleHandicap(true);
+        EasyLoading.showSuccess("Already joined",
+            duration: const Duration(seconds: 2), dismissOnTap: true);
+        removeHandicap();
+        stopLoading();
+      } else {
+        final DateTime _rightNow = DateTime.now();
+        var batch = firestore.batch();
+        final myLinked = firestore
+            .collection('Users')
+            .doc(myUsername)
+            .collection('Joined Clubs');
+        batch.set(userLinks.doc(myUsername), {'date': _rightNow});
+        batch.set(myLinked.doc(clubName), {'date': _rightNow});
+        batch.update(firestore.collection('Clubs').doc(clubName),
+            {'numOfNewMembers': FieldValue.increment(1)});
+        batch.update(firestore.collection('Clubs').doc(clubName),
+            {'numOfMembers': FieldValue.increment(1)});
+        batch.update(firestore.collection('Users').doc(myUsername),
+            {'joinedClubs': FieldValue.increment(1)});
+        batch.commit().then((value) {
+          Navigator.pop(context);
+          toggleHandicap(true);
+          EasyLoading.showSuccess('Joined',
+              dismissOnTap: true, duration: const Duration(seconds: 2));
+          _showDialog(clubName, true);
+          profileJoinClub();
+          removeHandicap();
+          stopLoading();
+        }).catchError((_) {
+          stopLoading();
         });
       }
     }
@@ -222,141 +258,225 @@ class _LinkModeScreenState extends State<LinkModeScreen> {
   @override
   void initState() {
     super.initState();
-    FeedScreen.detector.stopListening();
     final String _myUsername =
         Provider.of<MyProfile>(context, listen: false).getUsername;
     _getMode = getMode(_myUsername);
+    // controller.start();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    controller.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final _primaryColor = Theme.of(context).primaryColor;
-    final _accentColor = Theme.of(context).accentColor;
+    final _primaryColor = Theme.of(context).colorScheme.primary;
+    final _accentColor = Theme.of(context).colorScheme.secondary;
     final String _myUsername =
         Provider.of<MyProfile>(context, listen: false).getUsername;
     return WillPopScope(
-      onWillPop: () async {
-        controller?.dispose();
-        FeedScreen.detector.startListening();
-        return true;
-      },
-      child: Scaffold(
-        body: SafeArea(
-          child: Stack(
-            children: [
-              _buildQrView(context),
-              Align(
-                alignment: Alignment.topLeft,
-                child: IconButton(
-                  onPressed: () {
-                    controller?.dispose();
-                    FeedScreen.detector.startListening();
-                    Navigator.pop(context);
-                  },
-                  splashColor: Colors.transparent,
-                  icon: Container(
-                    padding: const EdgeInsets.all(4.0),
-                    decoration: BoxDecoration(
-                        color: _primaryColor,
-                        borderRadius: BorderRadius.circular(5.0),
-                        border: Border.all(color: _accentColor)),
-                    child: Icon(
-                      customIcons.MyFlutterApp.curve_arrow,
-                      color: _accentColor,
-                    ),
-                  ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.topCenter,
-                child: AnimatedOpacity(
+        onWillPop: () async {
+          // controller.dispose();
+          return true;
+        },
+        child: Scaffold(
+            body: SafeArea(
+                child: Stack(children: [
+          MobileScanner(
+              onDetect: _onDetect,
+              allowDuplicates: true,
+              controller: controller),
+          Align(
+              alignment: Alignment.topLeft,
+              child: Container(
+                  margin: const EdgeInsets.all(10),
+                  child: IconButton(
+                      onPressed: () {
+                        // controller.dispose();
+                        Navigator.pop(context);
+                      },
+                      splashColor: Colors.transparent,
+                      icon: Container(
+                          padding: const EdgeInsets.all(4.0),
+                          decoration: BoxDecoration(
+                              color: _primaryColor,
+                              borderRadius: BorderRadius.circular(5.0),
+                              border: Border.all(color: _accentColor)),
+                          child: Icon(customIcons.MyFlutterApp.curve_arrow,
+                              color: _accentColor))))),
+          Align(
+              alignment: Alignment.topCenter,
+              child: AnimatedOpacity(
                   opacity: (showCode) ? 1.0 : 0.2,
                   duration: kThemeAnimationDuration,
                   child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        showCode = !showCode;
-                      });
-                    },
-                    child: Container(
-                      height: 200.0,
-                      width: 200.0,
-                      margin: const EdgeInsets.all(10.0),
+                      onTap: () {
+                        setState(() => showCode = !showCode);
+                      },
+                      child: Container(
+                          height: 175.0,
+                          width: 175.0,
+                          margin: const EdgeInsets.all(10.0),
+                          color: Colors.white,
+                          child: Center(
+                              child: QrImage(
+                                  data: _myUsername,
+                                  version: QrVersions.auto,
+                                  size: 200.0)))))),
+          Align(
+              alignment: Alignment.bottomCenter,
+              child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Container(
+                        decoration: BoxDecoration(
+                            color: _primaryColor.withOpacity(0.7),
+                            borderRadius: const BorderRadius.only(
+                                topLeft: const Radius.circular(10.0),
+                                topRight: const Radius.circular(10.0))),
+                        child: IconButton(
+                            iconSize: 35.0,
+                            color: Colors.transparent,
+                            onPressed: () =>
+                                setState(() => view = ViewMode.showSettings),
+                            icon: Icon(Icons.settings, color: _accentColor))),
+                    const SizedBox(width: 25.0),
+                    Container(
+                        decoration: BoxDecoration(
+                            color: _primaryColor
+                                .withOpacity(flashToggled ? 1 : 0.7),
+                            borderRadius: BorderRadius.only(
+                                topLeft: const Radius.circular(10.0),
+                                topRight: const Radius.circular(10.0))),
+                        child: IconButton(
+                            iconSize: 35.0,
+                            color: Colors.transparent,
+                            onPressed: () {
+                              controller.toggleTorch();
+                              setState(() => flashToggled = !flashToggled);
+                            },
+                            icon: Column(children: <Widget>[
+                              Icon(
+                                  (!flashToggled)
+                                      ? Icons.flashlight_on
+                                      : Icons.flashlight_off,
+                                  color: _accentColor)
+                            ])))
+                  ])),
+          Align(
+              alignment: Alignment.bottomCenter,
+              child: AnimatedContainer(
+                  height: view == ViewMode.normal ? 0 : 250.0,
+                  decoration: const BoxDecoration(
                       color: Colors.white,
-                      child: Center(
-                        child: QrImage(
-                          data: _myUsername,
-                          version: QrVersions.auto,
-                          size: 200.0,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  margin: const EdgeInsets.all(20.0),
-                  padding: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15.0),
-                  ),
+                      borderRadius: const BorderRadius.only(
+                          topLeft: const Radius.circular(15.0),
+                          topRight: const Radius.circular(15.0))),
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
                   child: FutureBuilder(
                       future: _getMode,
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                                 ConnectionState.waiting ||
-                            snapshot.hasError) {
-                          return Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            snapshot.hasError)
+                          return Column(
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: <Widget>[
-                                Text(
-                                  'Enable link mode',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 15.0,
-                                  ),
-                                ),
-                                SizedBox(
-                                  height: 25.0,
-                                  width: 25.0,
-                                  child: const CircularProgressIndicator(),
-                                )
-                              ],
-                            ),
-                          );
-                        }
-                        return SwitchListTile(
-                          activeColor: _primaryColor,
-                          value: modeEnabled,
-                          onChanged: (_) async {
-                            firestore.collection('Users').doc(_myUsername).set(
-                              {'LinkModeEnabled': !modeEnabled},
-                              SetOptions(merge: true),
-                            );
-                            setState(() {
-                              modeEnabled = !modeEnabled;
-                            });
-                          },
-                          title: Text(
-                            'Enable link mode',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 15.0,
-                            ),
-                          ),
-                        );
-                      }),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+                                Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: <Widget>[
+                                      IconButton(
+                                          onPressed: () {
+                                            setState(
+                                                () => view = ViewMode.normal);
+                                          },
+                                          icon: Icon(Icons.arrow_back))
+                                    ]),
+                                Center(
+                                    child: const SizedBox(
+                                        height: 25.0,
+                                        width: 25.0,
+                                        child: Center(
+                                            child:
+                                                const CircularProgressIndicator(
+                                                    strokeWidth: 1.50))))
+                              ]);
+                        return Column(
+                            mainAxisSize: MainAxisSize.max,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: <Widget>[
+                              Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: <Widget>[
+                                    IconButton(
+                                        onPressed: () {
+                                          setState(
+                                              () => view = ViewMode.normal);
+                                        },
+                                        icon: Icon(Icons.arrow_back))
+                                  ]),
+                              SwitchListTile(
+                                  activeColor: _primaryColor,
+                                  value: modeEnabled,
+                                  onChanged: (_) async {
+                                    firestore
+                                        .collection('Users')
+                                        .doc(_myUsername)
+                                        .set(
+                                      {'LinkModeEnabled': !modeEnabled},
+                                      SetOptions(merge: true),
+                                    );
+                                    setState(() => modeEnabled = !modeEnabled);
+                                  },
+                                  title: const Text('Enable Quick Linking',
+                                      style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 15.0))),
+                              SwitchListTile(
+                                  activeColor: _primaryColor,
+                                  value: scanForUsers,
+                                  onChanged: (_) {
+                                    if (scanForUsers) {
+                                      scanForUsers = false;
+                                      scanForClubs = true;
+                                    } else {
+                                      scanForUsers = true;
+                                      scanForClubs = false;
+                                    }
+                                    setState(() {});
+                                  },
+                                  title: const Text('Scan for profiles',
+                                      style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 15.0))),
+                              SwitchListTile(
+                                  activeColor: _primaryColor,
+                                  value: scanForClubs,
+                                  onChanged: (_) {
+                                    if (scanForClubs) {
+                                      scanForUsers = true;
+                                      scanForClubs = false;
+                                    } else {
+                                      scanForUsers = false;
+                                      scanForClubs = true;
+                                    }
+                                    setState(() {});
+                                  },
+                                  title: const Text('Scan for clubs',
+                                      style: TextStyle(
+                                          color: Colors.black, fontSize: 15.0)))
+                            ]);
+                      })))
+        ]))));
   }
 }

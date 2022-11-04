@@ -1,9 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../general.dart';
 import '../providers/myProfileProvider.dart';
-import '../widgets/newComments.dart';
-import '../widgets/settingsBar.dart';
+import '../widgets/alerts/newComments.dart';
+import '../widgets/common/noglow.dart';
+import '../widgets/common/settingsBar.dart';
 
 class PostCommentsNotifScreen extends StatefulWidget {
   const PostCommentsNotifScreen();
@@ -27,6 +30,7 @@ class _PostCommentsNotifScreenState extends State<PostCommentsNotifScreen> {
         .collection('Users')
         .doc(_myProfile.getUsername.toString())
         .collection('PostCommentsNotifs')
+        .orderBy('date', descending: true)
         .limit(30)
         .get();
 
@@ -53,6 +57,7 @@ class _PostCommentsNotifScreenState extends State<PostCommentsNotifScreen> {
           .collection('Users')
           .doc(_myProfile.getUsername.toString())
           .collection('PostCommentsNotifs')
+          .orderBy('date', descending: true)
           .startAfterDocument(lastItem)
           .limit(15)
           .get();
@@ -66,14 +71,6 @@ class _PostCommentsNotifScreenState extends State<PostCommentsNotifScreen> {
       }
       isLoading = false;
       setState(() {});
-    }
-  }
-
-  String _topicNumber(num value) {
-    if (value >= 99) {
-      return '99+';
-    } else {
-      return value.toString();
     }
   }
 
@@ -103,83 +100,86 @@ class _PostCommentsNotifScreenState extends State<PostCommentsNotifScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _num = Provider.of<MyProfile>(context).myNumOfPostCommentsNotifs;
+    // final _num = Provider.of<MyProfile>(context).myNumOfPostCommentsNotifs;
     const Widget emptyBox = SizedBox(height: 0, width: 0);
     final _deviceHeight = MediaQuery.of(context).size.height;
-    final _deviceWidth = MediaQuery.of(context).size.width;
+    final _deviceWidth = General.widthQuery(context);
     return Scaffold(
-      appBar: null,
-      body: SafeArea(
-        child: Container(
-          height: _deviceHeight,
-          width: _deviceWidth,
-          color: Colors.white,
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              SettingsBar('Comments  ${_topicNumber(_num)}'),
-              FutureBuilder(
-                future: _commentsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        children: <Widget>[
-                          const Spacer(),
-                          const Center(
-                            child: const CircularProgressIndicator(),
-                          ),
-                          const Spacer(),
-                        ],
-                      ),
-                    );
-                  } else {
-                    if (source.length == 0) {
-                      return Container();
-                    } else {
-                      return Expanded(
-                        child: ListView.builder(
-                          controller: _scrollController,
-                          itemCount: source.length + 1,
-                          itemBuilder: (BuildContext context, int index) {
-                            if (index == source.length) {
-                              if (isLoading) {
-                                return Center(
-                                  child: Container(
-                                    margin: const EdgeInsets.all(10.0),
-                                    height: 35.0,
-                                    width: 35.0,
-                                    child: Center(
-                                      child: const CircularProgressIndicator(),
-                                    ),
-                                  ),
-                                );
-                              }
-                              if (isLastPage) {
-                                return emptyBox;
-                              }
-                            } else {
-                              return NewComments(
-                                commentUserName:
-                                    source[index].data()['user'].toString(),
-                                postUrl:
-                                    source[index].data()['post'].toString(),
-                                date: source[index].data()['date'].toDate(),
-                              );
-                            }
-                            return emptyBox;
-                          },
-                        ),
-                      );
-                    }
-                  }
-                },
-              )
-            ],
-          ),
-        ),
-      ),
-    );
+        backgroundColor: Colors.white,
+        appBar: null,
+        body: SafeArea(
+            child: Container(
+                height: _deviceHeight,
+                width: _deviceWidth,
+                color: Colors.white,
+                child: Column(mainAxisSize: MainAxisSize.max, children: [
+                  // SettingsBar('Comments  ${General.topicNumber(_num)}'),
+                  const SettingsBar('Comments'),
+                  FutureBuilder(
+                      future: _commentsFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Expanded(
+                              child: Column(
+                                  mainAxisSize: MainAxisSize.max,
+                                  children: <Widget>[
+                                const Spacer(),
+                                const Center(
+                                    child: const CircularProgressIndicator(
+                                        strokeWidth: 1.50)),
+                                const Spacer()
+                              ]));
+                        } else {
+                          if (source.length == 0) {
+                            return Container();
+                          } else {
+                            return Expanded(
+                                child: Noglow(
+                                    child: ListView.builder(
+                                        controller: _scrollController,
+                                        itemCount: source.length + 1,
+                                        itemBuilder:
+                                            (BuildContext context, int index) {
+                                          if (index == source.length) {
+                                            if (isLoading) {
+                                              return Center(
+                                                  child: Container(
+                                                      margin:
+                                                          const EdgeInsets.all(
+                                                              10.0),
+                                                      height: 35.0,
+                                                      width: 35.0,
+                                                      child: Center(
+                                                          child:
+                                                              const CircularProgressIndicator(
+                                                                  strokeWidth:
+                                                                      1.50))));
+                                            }
+                                            if (isLastPage) {
+                                              return emptyBox;
+                                            }
+                                          } else {
+                                            return NewComments(
+                                                commentUserName: source[index]
+                                                    .data()['user']
+                                                    .toString(),
+                                                postUrl: source[index]
+                                                    .data()['post']
+                                                    .toString(),
+                                                date: source[index]
+                                                    .data()['date']
+                                                    .toDate(),
+                                                clubName: source[index]
+                                                    .data()['clubName'],
+                                                commentID: source[index]
+                                                    .data()['commentID']);
+                                          }
+                                          return emptyBox;
+                                        })));
+                          }
+                        }
+                      })
+                ]))));
   }
 }

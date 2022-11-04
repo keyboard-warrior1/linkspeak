@@ -1,45 +1,65 @@
 import 'package:flutter/material.dart';
-import 'posterProfile.dart';
+
+import '../models/boardPostItem.dart';
 import '../providers/fullPostHelper.dart';
+import 'posterProfile.dart';
 
 class Post {
-  final UniqueKey key;
-  final FullHelper instance;
   final String postID;
-  final PosterProfile poster;
+  final String clubName;
+  final String locationName;
   final String description;
-  final List<String> imgUrls;
-  final List<String> topics;
+  final dynamic location;
   final int numOfLikes;
   final int numOfComments;
   final int numOfTopics;
-  final DateTime postedDate;
   final bool sensitiveContent;
-  final dynamic location;
-  final String locationName;
-  Post({
-    required this.key,
-    required this.instance,
-    required this.postID,
-    required this.poster,
-    required this.description,
-    required this.imgUrls,
-    required this.topics,
-    required this.postedDate,
-    required this.sensitiveContent,
-    required this.numOfTopics,
-    required this.numOfLikes,
-    required this.numOfComments,
-    required this.location,
-    required this.locationName,
-  });
+  final bool commentsDisabled;
+  final bool isClubPost;
+  final bool isLiked;
+  final bool isFav;
+  final bool isHidden;
+  final bool isMod;
+  final List<String> imgUrls;
+  final List<String> topics;
+  final DateTime postedDate;
+  final UniqueKey key;
+  final PosterProfile poster;
+  final FullHelper instance;
+  final PostType postType;
+  final List<BoardPostItem> items;
+  final Color backgroundColor;
+  final Color gradientColor;
+  Post(
+      {required this.key,
+      required this.instance,
+      required this.postID,
+      required this.poster,
+      required this.clubName,
+      required this.description,
+      required this.imgUrls,
+      required this.topics,
+      required this.postedDate,
+      required this.sensitiveContent,
+      required this.commentsDisabled,
+      required this.numOfTopics,
+      required this.numOfLikes,
+      required this.numOfComments,
+      required this.location,
+      required this.locationName,
+      required this.isLiked,
+      required this.isFav,
+      required this.isHidden,
+      required this.isClubPost,
+      required this.isMod,
+      required this.postType,
+      required this.items,
+      required this.backgroundColor,
+      required this.gradientColor});
   void setter() {
-    instance.setUserImgUrl(poster.getProfileImage);
     instance.setTitle(poster.getUsername);
+    instance.setClubName(clubName);
     instance.setVisibility(poster.getVisibility);
-    instance.setNumOfLinks(poster.getNumberOflinks);
-    instance.setNumOfLinkedTos(poster.getNumberOfLinkedTos);
-    instance.setBio(poster.getBio);
     instance.setDescription(description);
     instance.setNumOfLikes(numOfLikes);
     instance.setNumOfComments(numOfComments);
@@ -52,6 +72,15 @@ class Post {
     instance.setPosterID(poster.getUsername);
     instance.setLocation(location);
     instance.setLocationName(locationName);
-    // instance.setInstance(instance);
+    instance.setIsLiked(isLiked);
+    instance.setIsFav(isFav);
+    instance.setIsHidden(isHidden);
+    instance.setIsClubPost(isClubPost);
+    instance.setIsMod(isMod);
+    instance.setCommentsDisabled(commentsDisabled);
+    instance.setPostType(postType);
+    instance.setBoardPostItems(items);
+    instance.setBoardPostBackground(backgroundColor);
+    instance.setBoardPostGradient(gradientColor);
   }
 }

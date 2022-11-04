@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 
-import '../models/profile.dart';
 import '../models/miniProfile.dart';
 import '../models/post.dart';
+import '../models/profile.dart';
 
 class OtherProfile with ChangeNotifier implements Profile {
   String _otherAdditionalWebsite = '';
@@ -13,11 +12,6 @@ class OtherProfile with ChangeNotifier implements Profile {
   String _otherAdditionalAddressName = '';
   String _otherProfileImageUrl = '';
   String _otherProfileBanner = '';
-  Color _otherProfilePrimary = Colors.blue;
-  Color _otherProfileAccent = Colors.yellow;
-  bool _bannerNSFW = false;
-  bool _showBanner = false;
-  bool _hasSpotlight = false;
   String _otherUsername = '';
   String _name = '';
   String _surname = '';
@@ -27,113 +21,68 @@ class OtherProfile with ChangeNotifier implements Profile {
   String _otherUserEmail = '';
   String _activityStatus = 'Away';
   int _age = 0;
-  late TheVisibility _otherUserVisibility;
-  List<String> _otherUserPostIDs = [];
-  List<Post> _otherUserPosts = [];
-  List<String> _otherUserTopics = [];
-  List<String> _otherUserLinkIDs = [];
-  List<Profile> _otherUserLinks = [];
-  List<String> _otherUserLinkedIDs = [];
-  List<Profile> _otherUserLinkedTos = [];
-  List<String> _otherUserBlockedIDs = [];
-  List<Profile> _otherUserBlockedUsers = [];
-  List<Map<String, String>> _otherUserPostLikesNotifs = [];
-  List<String> _otherUserNewLinksNotifs = [];
-  List<String> _otherUserLinkRequestsNotifs = [];
-  List<String> _otherUserLinkedToNotifs = [];
-  List<List<Map<String, String>>> _otherUserCommentNotifs = [];
   int _otherUserCommentsRemovedNotifs = 0;
   int _otherUserPostsRemovedNotifs = 0;
   int _numOfLinks = 0;
+  int _joinedClubs = 0;
   int _numOfLinkedTos = 0;
   int _numOfPosts = 0;
+  bool _bannerNSFW = false;
+  bool _showBanner = false;
+  bool _hasSpotlight = false;
+  bool _hasUnseenCollection = false;
   bool _linkedToMe = false;
   bool _imLinkedtoThem = false;
   bool _linkRequestSent = false;
   bool _isBlocked = false;
+  bool _isBanned = false;
   bool _imBlocked = false;
+  List<String> _otherUserPostIDs = [];
+  List<String> _otherUserTopics = [];
+  List<String> _otherUserLinkIDs = [];
+  List<String> _otherUserLinkedIDs = [];
+  List<String> _otherUserBlockedIDs = [];
+  List<String> _otherUserNewLinksNotifs = [];
+  List<String> _otherUserLinkRequestsNotifs = [];
+  List<String> _otherUserLinkedToNotifs = [];
+  List<Profile> _otherUserLinks = [];
+  List<Profile> _otherUserLinkedTos = [];
+  List<Profile> _otherUserBlockedUsers = [];
+  List<Map<String, String>> _otherUserPostLikesNotifs = [];
+  List<List<Map<String, String>>> _otherUserCommentNotifs = [];
+  List<MiniProfile> _mylinks = [];
+  List<MiniProfile> _mylinkedTo = [];
+  List<Post> _otherUserPosts = [];
+  Color _otherProfilePrimary = Colors.blue;
+  Color _otherProfileAccent = Colors.yellow;
+  Color _otherProfileLikeColor = Colors.green;
+  final ScrollController _profilePostsScrollController = ScrollController();
+  final ScrollController _otherProfileScrollController = ScrollController();
+  late TheVisibility _otherUserVisibility;
   bool get linkedToMe => _linkedToMe;
   bool get imLinkedToThem => _imLinkedtoThem;
   bool get linkRequestSent => _linkRequestSent;
   bool get isBlocked => _isBlocked;
+  bool get isBanned => _isBanned;
   bool get imBlocked => _imBlocked;
   String get activityStatus => _activityStatus;
+  int get getJoinedClubs => _joinedClubs;
+  bool get getBannerNSFW => _bannerNSFW;
+  bool get getShowBanner => _showBanner;
+  bool get getHasUnseen => _hasUnseenCollection;
+  Color get getPrimaryColor => _otherProfilePrimary;
+  Color get getAccentColor => _otherProfileAccent;
+  Color get getLikeColor => _otherProfileLikeColor;
   List<MiniProfile> get getMylinks => _mylinks;
   List<MiniProfile> get getMyLinkedTos => _mylinkedTo;
-
-  void setActivityStatus(String status) {
-    _activityStatus = status;
-  }
-
-  List<MiniProfile> _mylinks = [];
-  List<MiniProfile> _mylinkedTo = [];
-
-  void linkWithUser() {
-    _imLinkedtoThem = true;
-    _numOfLinks++;
-    notifyListeners();
-  }
-
-  void block() {
-    _isBlocked = true;
-    notifyListeners();
-  }
-
-  void unblock() {
-    _isBlocked = false;
-    notifyListeners();
-  }
-
-  void unlinkWithUser() {
-    _imLinkedtoThem = false;
-    _numOfLinks--;
-    notifyListeners();
-  }
-
-  void removeThem() {
-    _linkedToMe = false;
-    _numOfLinkedTos--;
-    notifyListeners();
-  }
-
-  void sendLinkRequest() {
-    _linkRequestSent = true;
-    notifyListeners();
-  }
-
-  void cancelLinkRequest() {
-    _linkRequestSent = false;
-    notifyListeners();
-  }
-
-  void setLinkedToMe(bool linkedTOMe) {
-    _linkedToMe = linkedTOMe;
-  }
-
-  void setImLinkedToThem(bool linkedToThem) {
-    _imLinkedtoThem = linkedToThem;
-  }
-
-  void setLinkedRequestSent(bool requestSent) {
-    _linkRequestSent = requestSent;
-  }
-
-  void setIsBlocked(bool isBlocked) {
-    _isBlocked = isBlocked;
-  }
-
-  void setImBlocked(bool imBlocked) {
-    _imBlocked = imBlocked;
-  }
-
+  ScrollController get getProfilePostsScrollController =>
+      _profilePostsScrollController;
+  ScrollController get getProfileScrollController =>
+      _otherProfileScrollController;
   @override
   String get getProfileImage => _otherProfileImageUrl;
   @override
   String get getProfileBanner => _otherProfileBanner;
-  Color get getPrimaryColor => _otherProfilePrimary;
-  Color get getAccentColor => _otherProfileAccent;
-  bool get getBannerNSFW => _bannerNSFW;
-  bool get getShowBanner => _showBanner;
   @override
   String get getAdditionalWebsite => _otherAdditionalWebsite;
   @override
@@ -145,8 +94,6 @@ class OtherProfile with ChangeNotifier implements Profile {
   @override
   String get getAdditionalAddressName => _otherAdditionalAddressName;
   @override
-  bool get getHasSpotlight => _hasSpotlight;
-  @override
   String get getUsername => _otherUsername;
   @override
   String get getEmail => _otherUserEmail;
@@ -156,6 +103,8 @@ class OtherProfile with ChangeNotifier implements Profile {
   String get getSurname => _surname;
   @override
   String get getBio => _otherUserbio;
+  @override
+  bool get getHasSpotlight => _hasSpotlight;
   @override
   get getActivity => _otherUserActivity;
   @override
@@ -172,7 +121,6 @@ class OtherProfile with ChangeNotifier implements Profile {
   int get getNumberOfPosts => _numOfPosts;
   @override
   List<String> get getTopics => _otherUserTopics;
-
   @override
   List<String> get getLinkIDs => _otherUserLinkIDs;
   @override
@@ -204,217 +152,131 @@ class OtherProfile with ChangeNotifier implements Profile {
   int get getcommentRemovedNotifs => _otherUserCommentsRemovedNotifs;
   @override
   int get getpostsRemovedNotifs => _otherUserPostsRemovedNotifs;
+  @override
+  set setAdditionalWebsite(String website) => _otherAdditionalWebsite = website;
+  @override
+  set setAdditionalEmail(String xemail) => _otherAdditionalEmail = xemail;
+  @override
+  set setAdditionalNumber(String xnumber) => _otherAdditionalNumber = xnumber;
+  @override
+  set setAdditionalAddress(dynamic xaddress) =>
+      _otherAdditionalAddress = xaddress;
+  @override
+  set setAdditionalAddressName(String xname) =>
+      _otherAdditionalAddressName = xname;
+  @override
+  set setHasSpotlight(bool xhasSpotlight) => _hasSpotlight = xhasSpotlight;
 
   @override
-  set setAdditionalWebsite(String website) {
-    _otherAdditionalWebsite = website;
-  }
-
-  void setOtherAdditionalWebsite(String website) {
-    _otherAdditionalWebsite = website;
-  }
-
+  set setpostLikesNotifs(List<Map<String, String>> postLikesNotifs) =>
+      _otherUserPostLikesNotifs = postLikesNotifs;
   @override
-  set setAdditionalEmail(String email) {
-    _otherAdditionalEmail = email;
-  }
-
-  void setOtherAdditionalEmail(String email) {
-    _otherAdditionalEmail = email;
-  }
-
+  set setnewLinksNotifs(List<String> newLinksNotifs) =>
+      _otherUserNewLinksNotifs = newLinksNotifs;
   @override
-  set setAdditionalNumber(String number) {
-    _otherAdditionalNumber = number;
-  }
-
-  void setOtherAdditionalNumber(String number) {
-    _otherAdditionalNumber = number;
-  }
-
+  set setlinkRequestNotifs(List<String> linkRequestNotifs) =>
+      _otherUserLinkRequestsNotifs = linkRequestNotifs;
   @override
-  set setAdditionalAddress(dynamic address) {
-    _otherAdditionalAddress = address;
-  }
-
-  void setOtherAdditionalAddress(dynamic address) {
-    _otherAdditionalAddress = address;
-  }
-
+  set setlinkedToNotifs(List<String> linkedToNotifs) =>
+      _otherUserLinkedToNotifs = linkedToNotifs;
   @override
-  set setAdditionalAddressName(String name) {
-    _otherAdditionalAddressName = name;
-  }
-
-  void setOtherAdditionalAddressName(String name) {
-    _otherAdditionalAddressName = name;
-  }
-
+  set setcommentNotifs(List<List<Map<String, String>>> commentNotifs) =>
+      _otherUserCommentNotifs = commentNotifs;
   @override
-  set setHasSpotlight(bool hasSpotlight) {
-    _hasSpotlight = hasSpotlight;
-  }
-
-  void setOtherHasSpotlight(bool hasSpotlight) {
-    _hasSpotlight = hasSpotlight;
-  }
-
+  set setcommentRemovedNotifs(int commentsRemoved) =>
+      _otherUserCommentsRemovedNotifs = commentsRemoved;
   @override
-  set setpostLikesNotifs(List<Map<String, String>> postLikesNotifs) {
-    _otherUserPostLikesNotifs = postLikesNotifs;
-  }
-
+  set setpostsRemovedNotifs(int postsRemoved) =>
+      _otherUserPostsRemovedNotifs = postsRemoved;
   @override
-  set setnewLinksNotifs(List<String> newLinksNotifs) {
-    _otherUserNewLinksNotifs = newLinksNotifs;
-  }
-
+  set setProfileImage(String imgUrl) => _otherProfileImageUrl = imgUrl;
   @override
-  set setlinkRequestNotifs(List<String> linkRequestNotifs) {
-    _otherUserLinkRequestsNotifs = linkRequestNotifs;
-  }
-
+  set setProfileBanner(String bannerUrl) => _otherProfileBanner = bannerUrl;
   @override
-  set setlinkedToNotifs(List<String> linkedToNotifs) {
-    _otherUserLinkedToNotifs = linkedToNotifs;
-  }
-
+  set setUsername(String username) => _otherUsername = username;
   @override
-  set setcommentNotifs(List<List<Map<String, String>>> commentNotifs) {
-    _otherUserCommentNotifs = commentNotifs;
-  }
-
+  set setEmail(String email) => null;
   @override
-  set setcommentRemovedNotifs(int commentsRemoved) {
-    _otherUserCommentsRemovedNotifs = commentsRemoved;
-  }
-
+  set setName(String name) => null;
   @override
-  set setpostsRemovedNotifs(int postsRemoved) {
-    _otherUserPostsRemovedNotifs = postsRemoved;
-  }
-
+  set setSurname(String surname) => null;
   @override
-  set setProfileImage(String imgUrl) {
-    _otherProfileImageUrl = imgUrl;
-  }
-
+  set setAge(int age) => _age = age;
   @override
-  set setProfileBanner(String bannerUrl) {
-    _otherProfileBanner = bannerUrl;
-  }
-
+  set setBio(String bio) => _otherUserbio = bio;
   @override
-  set setUsername(String username) {
-    _otherUsername = username;
-  }
-
+  set setActivity(String activity) => _otherUserActivity = activity;
   @override
-  set setEmail(String email) {
-    return null;
-  }
-
+  set setStatus(String status) => _otherUserStatus = status;
   @override
-  set setName(String name) {
-    return null;
-  }
-
+  set setPostIDs(List<String> postIDs) => _otherUserPostIDs = postIDs;
   @override
-  set setSurname(String surname) {
-    return null;
-  }
-
+  set setPosts(List<Post> posts) => _otherUserPosts = posts;
   @override
-  set setAge(int age) {
-    _age = age;
-  }
-
+  set setlinkIDs(List<String> linkIds) => _otherUserLinkIDs = linkIds;
   @override
-  set setBio(String bio) {
-    _otherUserbio = bio;
-  }
-
+  set setLinks(List<Profile> links) => _otherUserLinks = links;
   @override
-  set setActivity(String activity) {
-    _otherUserActivity = activity;
-  }
-
+  set setLinkedIDs(List<String> linkedIds) => _otherUserLinkedIDs = linkedIds;
   @override
-  set setStatus(String status) {
-    _otherUserStatus = status;
-  }
-
+  set setLinkedTos(List<Profile> linkedTos) => _otherUserLinkedTos = linkedTos;
   @override
-  set setPostIDs(List<String> postIDs) {
-    _otherUserPostIDs = postIDs;
-  }
-
+  set setBlockedIDs(List<String> blockedIds) =>
+      _otherUserBlockedIDs = blockedIds;
   @override
-  set setPosts(List<Post> posts) {
-    _otherUserPosts = posts;
-  }
-
+  set setBlockedUsers(List<Profile> blockedUsers) =>
+      _otherUserBlockedUsers = blockedUsers;
   @override
-  set setlinkIDs(List<String> linkIds) {
-    _otherUserLinkIDs = linkIds;
-  }
+  set setTopics(List<String> topics) => _otherUserTopics = topics;
+  set setVisibility(TheVisibility xvis) => _otherUserVisibility = xvis;
 
-  @override
-  set setLinks(List<Profile> links) {
-    _otherUserLinks = links;
-  }
+  void setOtherUserVis(TheVisibility xvis) => _otherUserVisibility = xvis;
+  void setOtherUserIMG(String ximgUrl) => _otherProfileImageUrl = ximgUrl;
+  void setOtherUserBanner(String xbannerUrl) =>
+      _otherProfileBanner = xbannerUrl;
+  void setOtherPrimary(Color xprimary) => _otherProfilePrimary = xprimary;
+  void setOtherAccent(Color xaccent) => _otherProfileAccent = xaccent;
+  void setOtherLike(Color xlike) => _otherProfileLikeColor = xlike;
+  void setOtherUserBannerNSFW(bool xbannerNSFW) => _bannerNSFW = xbannerNSFW;
+  void setOtherUsername(String xusername) => _otherUsername = xusername;
+  void setOtherUserBio(String xbio) => _otherUserbio = xbio;
+  void setOtherUserNumOfLinks(int xnumOfLinks) => _numOfLinks = xnumOfLinks;
+  void setOtherUserNumOfLinked(int xnumOfLinked) =>
+      _numOfLinkedTos = xnumOfLinked;
+  void setJoinedClubs(int xjoinedClubs) => _joinedClubs = xjoinedClubs;
+  void setOtherUserTopics(List<String> xtopics) => _otherUserTopics = xtopics;
+  void setOtherUserNumOfPosts(int xnumOfPosts) => _numOfPosts = xnumOfPosts;
+  void setOtherPostIDs(List<String> xpostIDs) => _otherUserPostIDs = xpostIDs;
+  void setOtherPosts(List<Post> xposts) => _otherUserPosts = xposts;
+  void setMyLinks(List<MiniProfile> xlinks) => _mylinks = xlinks;
+  void setMyLinkedTos(List<MiniProfile> xlinkedTos) => _mylinkedTo = xlinkedTos;
+  void setLinkedToMe(bool linkedTOMe) => _linkedToMe = linkedTOMe;
+  void setImLinkedToThem(bool linkedToThem) => _imLinkedtoThem = linkedToThem;
+  void setLinkedRequestSent(bool requestSent) => _linkRequestSent = requestSent;
+  void setIsBlocked(bool xisBlocked) => _isBlocked = xisBlocked;
+  void setActivityStatus(String xstatus) => _activityStatus = xstatus;
+  void setImBlocked(bool ximBlocked) => _imBlocked = ximBlocked;
+  void setOtherAdditionalEmail(String xemail) => _otherAdditionalEmail = xemail;
+  void setHasUnseen(bool xdoesHave) => _hasUnseenCollection = xdoesHave;
+  void disposePostsController() => _profilePostsScrollController.dispose();
+  void disposeProfileController() => _otherProfileScrollController.dispose();
+  void setOtherAdditionalWebsite(String website) =>
+      _otherAdditionalWebsite = website;
+  void setOtherAdditionalNumber(String xnumber) =>
+      _otherAdditionalNumber = xnumber;
+  void setOtherAdditionalAddress(dynamic xaddress) =>
+      _otherAdditionalAddress = xaddress;
+  void setOtherAdditionalAddressName(String xname) =>
+      _otherAdditionalAddressName = xname;
+  void setOtherHasSpotlight(bool xhasSpotlight) =>
+      _hasSpotlight = xhasSpotlight;
 
-  @override
-  set setLinkedIDs(List<String> linkedIds) {
-    _otherUserLinkedIDs = linkedIds;
-  }
-
-  @override
-  set setLinkedTos(List<Profile> linkedTos) {
-    _otherUserLinkedTos = linkedTos;
-  }
-
-  @override
-  set setBlockedIDs(List<String> blockedIds) {
-    _otherUserBlockedIDs = blockedIds;
-  }
-
-  @override
-  set setBlockedUsers(List<Profile> blockedUsers) {
-    _otherUserBlockedUsers = blockedUsers;
-  }
-
-  @override
-  set setTopics(List<String> topics) {
-    _otherUserTopics = topics;
-  }
-
-  set setVisibility(TheVisibility vis) {
-    _otherUserVisibility = vis;
-  }
-
-  void setOtherUserVis(TheVisibility vis) {
-    _otherUserVisibility = vis;
-  }
-
-  void setOtherUserIMG(String imgUrl) {
-    _otherProfileImageUrl = imgUrl;
-  }
-
-  void setOtherUserBanner(String bannerUrl) {
-    _otherProfileBanner = bannerUrl;
-  }
-
-  void setOtherPrimary(Color primary) {
-    _otherProfilePrimary = primary;
-  }
-
-  void setOtherAccent(Color accent) {
-    _otherProfileAccent = accent;
-  }
-
-  void setOtherUserBannerNSFW(bool bannerNSFW) {
-    _bannerNSFW = bannerNSFW;
+  void setIsBanned(String status) {
+    if (status == 'Allowed') {
+      _isBanned = false;
+    } else {
+      _isBanned = true;
+    }
   }
 
   void showNSFWBanner() {
@@ -422,73 +284,84 @@ class OtherProfile with ChangeNotifier implements Profile {
     notifyListeners();
   }
 
-  void setOtherUsername(String username) {
-    _otherUsername = username;
+  void linkWithUser() {
+    _imLinkedtoThem = true;
+    _numOfLinks++;
+    notifyListeners();
   }
 
-  void setOtherUserBio(String bio) {
-    _otherUserbio = bio;
+  void block() {
+    _isBlocked = true;
+    notifyListeners();
   }
 
-  void setOtherUserNumOfLinks(int numOfLinks) {
-    _numOfLinks = numOfLinks;
+  void ban() {
+    _isBanned = true;
+    notifyListeners();
   }
 
-  void setOtherUserNumOfLinked(int numOfLinked) {
-    _numOfLinkedTos = numOfLinked;
+  void unblock() {
+    _isBlocked = false;
+    notifyListeners();
   }
 
-  void setOtherUserTopics(List<String> topics) {
-    _otherUserTopics = topics;
+  void unban() {
+    _isBanned = false;
+    notifyListeners();
   }
 
-  void setOtherUserNumOfPosts(int numOfPosts) {
-    _numOfPosts = numOfPosts;
+  void unlinkWithUser() {
+    _imLinkedtoThem = false;
+    _numOfLinks--;
+    notifyListeners();
   }
 
-  void setOtherPostIDs(List<String> postIDs) {
-    _otherUserPostIDs = postIDs;
+  void removeThem() {
+    _linkedToMe = false;
+    _numOfLinkedTos--;
+    notifyListeners();
   }
 
-  void setOtherPosts(List<Post> posts) {
-    _otherUserPosts = posts;
+  void sendLinkRequest() {
+    _linkRequestSent = true;
+    notifyListeners();
   }
 
-  void setMyLinks(List<MiniProfile> links) {
-    _mylinks = links;
+  void cancelLinkRequest() {
+    _linkRequestSent = false;
+    notifyListeners();
   }
 
-  void setMyLinkedTos(List<MiniProfile> linkedTos) {
-    _mylinkedTo = linkedTos;
-  }
-
-  void setter({
-    required TheVisibility vis,
-    required String activity,
-    required String imgUrl,
-    required String bannerUrl,
-    required String additionalWebsite,
-    required String additionalEmail,
-    required String additionalNumber,
-    required dynamic additionalAddress,
-    required String additionalAddressName,
-    required String username,
-    required String bio,
-    required int numOfLinks,
-    required int numOfLinked,
-    required List<String> topics,
-    required int numOfPosts,
-    required List<String> postIDs,
-    required bool linkedTOMe,
-    required bool linkedToThem,
-    required bool requestSent,
-    required bool isBlocked,
-    required bool imBlocked,
-    required bool bannerNSFW,
-    required bool hasSpotlight,
-    required Color primaryColor,
-    required Color accentColor,
-  }) {
+  void setter(
+      {required TheVisibility vis,
+      required String activity,
+      required String imgUrl,
+      required String bannerUrl,
+      required String additionalWebsite,
+      required String additionalEmail,
+      required String additionalNumber,
+      required dynamic additionalAddress,
+      required String additionalAddressName,
+      required String username,
+      required String bio,
+      required String status,
+      required int numOfLinks,
+      required int numOfLinked,
+      required int joinedClubs,
+      required List<String> topics,
+      required int numOfPosts,
+      required List<String> postIDs,
+      required bool linkedTOMe,
+      required bool linkedToThem,
+      required bool requestSent,
+      required bool isBlocked,
+      required bool imBlocked,
+      required bool bannerNSFW,
+      required bool hasSpotlight,
+      required bool doesHaveUnseen,
+      required Color primaryColor,
+      required Color accentColor,
+      required Color likeColor}) {
     setActivityStatus(activity);
     setOtherUserVis(vis);
     setOtherUserIMG(imgUrl);
@@ -501,18 +374,22 @@ class OtherProfile with ChangeNotifier implements Profile {
     setOtherAdditionalAddressName(additionalAddressName);
     setOtherPrimary(primaryColor);
     setOtherAccent(accentColor);
+    setOtherLike(likeColor);
     setOtherHasSpotlight(hasSpotlight);
+    setHasUnseen(doesHaveUnseen);
     setOtherUsername(username);
     setOtherUserBio(bio);
     setOtherUserNumOfLinks(numOfLinks);
     setOtherUserNumOfLinked(numOfLinked);
     setOtherUserTopics(topics);
     setOtherUserNumOfPosts(numOfPosts);
+    setJoinedClubs(joinedClubs);
     setOtherPostIDs(postIDs);
     setLinkedToMe(linkedTOMe);
     setImLinkedToThem(linkedToThem);
     setLinkedRequestSent(requestSent);
     setIsBlocked(isBlocked);
+    setIsBanned(status);
     setImBlocked(imBlocked);
   }
 }

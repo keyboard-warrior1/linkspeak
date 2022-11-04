@@ -1,32 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 
 class CarouselPhysHelp with ChangeNotifier {
-  ScrollPhysics _alwaysPhysics = AlwaysScrollableScrollPhysics();
-  ScrollPhysics _neverScroll = NeverScrollableScrollPhysics();
   int current = 0;
   bool carouselPlay = false;
-  ScrollPhysics physics = AlwaysScrollableScrollPhysics();
+  ScrollPhysics _alwaysPhysics = const AlwaysScrollableScrollPhysics();
+  ScrollPhysics _neverScroll = const NeverScrollableScrollPhysics();
+  ScrollPhysics physics = const AlwaysScrollableScrollPhysics();
   ScrollPhysics get getPhysics => _alwaysPhysics;
   ScrollPhysics get getNeverScroll => _neverScroll;
 
   void noScrolling() {
-    _alwaysPhysics = NeverScrollableScrollPhysics();
+    _alwaysPhysics = const NeverScrollableScrollPhysics();
     notifyListeners();
   }
 
   void canScroll() {
-    _alwaysPhysics = AlwaysScrollableScrollPhysics();
+    _alwaysPhysics = const AlwaysScrollableScrollPhysics();
     notifyListeners();
   }
 
   void disallowScroll() {
-    physics = NeverScrollableScrollPhysics();
+    physics = const NeverScrollableScrollPhysics();
     notifyListeners();
   }
 
   void allowScroll() {
-    physics = AlwaysScrollableScrollPhysics();
+    physics = const AlwaysScrollableScrollPhysics();
     notifyListeners();
   }
 

@@ -4,12 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rxdart/rxdart.dart';
 
 class DataBloc<T> {
-  DataBloc({
-    required this.query,
-    required this.documentSnapshotToT,
-    this.numberToLoadAtATime = 30,
-    this.numberToLoadFromNextTime = 30,
-  }) {
+  DataBloc(
+      {required this.query,
+      required this.documentSnapshotToT,
+      this.numberToLoadAtATime = 30,
+      this.numberToLoadFromNextTime = 30}) {
     objectsList = [];
     blocController = BehaviorSubject<List<T>>();
     showIndicatorController = BehaviorSubject<bool>();

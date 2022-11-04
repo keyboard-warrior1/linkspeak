@@ -1,20 +1,27 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter/foundation.dart';
 import '../models/post.dart';
 
 class TopicScreenProvider with ChangeNotifier {
+  String _topicName = '';
   List<Post> _posts = [];
-
+  List<Post> _clubPosts = [];
+  final ScrollController _scrollController = ScrollController();
+  final ScrollController _clubScrollController = ScrollController();
+  String get getTopicName => _topicName;
   List<Post> get posts => _posts;
-  void clearPosts() {
-    _posts.clear();
-  }
+  List<Post> get clubPosts => _clubPosts;
+  ScrollController get getScrollController => _scrollController;
+  ScrollController get getClubController => _clubScrollController;
 
-  void setPosts(List<Post> posts) {
-    _posts = posts;
-  }
+  void setTopicName(String name) => _topicName = name;
+  void setPosts(List<Post> posts) => _posts = posts;
+  void setClubPosts(List<Post> posts) => _clubPosts = posts;
 
+  void disposeScrollController() => _scrollController.dispose();
+  void disposeClubController() => _clubScrollController.dispose();
+  void clearPosts() => _posts.clear();
+  void clearClubPosts() => _clubPosts.clear();
   void hidePost(String postID) {
     final thePost = _posts.firstWhere((element) => element.postID == postID);
     final index = _posts.indexOf(thePost);

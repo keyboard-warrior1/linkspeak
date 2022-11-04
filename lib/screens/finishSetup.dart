@@ -1,26 +1,32 @@
-import 'dart:io';
 import 'dart:async';
+import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dart_ipify/dart_ipify.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_nsfw/flutter_nsfw.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter_nsfw/flutter_nsfw.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import '../routes.dart';
-import '../my_flutter_app_icons.dart' as customIcons;
+
+import '../general.dart';
 import '../models/profile.dart';
+import '../my_flutter_app_icons.dart' as customIcons;
 import '../providers/myProfileProvider.dart';
-import '../widgets/settingsBar.dart';
-import '../widgets/addTopic.dart';
-import '../widgets/topicChip.dart';
-import '../widgets/profileImage.dart';
-import '../widgets/visSnack.dart';
-import '../widgets/registrationDialog.dart';
+import '../routes.dart';
+import '../widgets/auth/registrationDialog.dart';
+import '../widgets/common/chatProfileImage.dart';
+import '../widgets/common/nestedScroller.dart';
+import '../widgets/common/noglow.dart';
+import '../widgets/common/settingsBar.dart';
+import '../widgets/snackbar/visSnack.dart';
+import '../widgets/topics/addTopic.dart';
+import '../widgets/topics/topicChip.dart';
 
 class SetupProfileScreen extends StatefulWidget {
   const SetupProfileScreen();
@@ -39,14 +45,14 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
   List<String> _newTopicNames = [];
   TheVisibility _newVis = TheVisibility.public;
   String _myImgUrl = 'none';
-  List<AssetEntity>? assets;
+  List<AssetEntity> assets = [];
   String? _validateBio(String? value) {
     if (value!.isEmpty ||
         value.replaceAll(' ', '') == '' ||
         value.trim() == '') {
       return null;
     } else if (value.length > 1000) {
-      return 'This cannot be more than 1000 characters long.';
+      return 'Bio can be up to 1000 characters long';
     } else {
       return null;
     }
@@ -74,18 +80,17 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
 
   Future<void> _choose(String myUsername, Color primaryColor) async {
     const int _maxAssets = 1;
-    final _english = EnglishTextDelegate();
-    final List<AssetEntity>? _result = await AssetPicker.pickAssets(
-      context,
-      maxAssets: _maxAssets,
-      textDelegate: _english,
-      selectedAssets: assets,
-      requestType: RequestType.image,
-      themeColor: primaryColor,
-    );
+    const _english = const EnglishAssetPickerTextDelegate();
+    final List<AssetEntity>? _result = await AssetPicker.pickAssets(context,
+        pickerConfig: AssetPickerConfig(
+            maxAssets: _maxAssets,
+            textDelegate: _english,
+            selectedAssets: assets,
+            requestType: RequestType.image,
+            themeColor: primaryColor));
     if (_result != null) {
       assets = List<AssetEntity>.from(_result);
-      final imageFile = await assets![0].originFile;
+      final imageFile = await assets[0].originFile;
       final path = imageFile!.absolute.path;
       final name = path.split('/').last;
       _myImgUrl = 'Avatars/$myUsername/$name';
@@ -105,10 +110,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
               seconds: 3,
             ),
             backgroundColor: primarySwatch,
-            content: const VisSnack(
-              Icons.lock_outline,
-              'private',
-            ),
+            content: const VisSnack(Icons.lock_outline, 'private', false),
           ),
         );
         break;
@@ -121,22 +123,11 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
             ),
             backgroundColor: primarySwatch,
             content: const VisSnack(
-              customIcons.MyFlutterApp.globe_no_map,
-              'public',
-            ),
+                customIcons.MyFlutterApp.globe_no_map, 'public', false),
           ),
         );
         break;
     }
-  }
-
-  String generateVis(TheVisibility vis) {
-    if (vis == TheVisibility.public) {
-      return 'Public';
-    } else if (vis == TheVisibility.private) {
-      return 'Private';
-    }
-    return '';
   }
 
   Future<void> updateUser(BuildContext context, String myUsername) async {
@@ -152,6 +143,19 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
       );
     }
 
+    Future<void> handleTopic(String topicName) {
+      var batch = firestore.batch();
+      final thisTopic = firestore.collection('Topics').doc(topicName);
+      final thisTopicProfile = thisTopic.collection('profiles').doc(myUsername);
+      batch.set(thisTopic, {'profiles': FieldValue.increment(1)},
+          SetOptions(merge: true));
+      batch.set(
+          thisTopicProfile,
+          {'times': FieldValue.increment(1), 'date': DateTime.now()},
+          SetOptions(merge: true));
+      return batch.commit();
+    }
+
     if (_newTopicNames.length < 5) {
       setState(() {
         isLoading = false;
@@ -160,15 +164,15 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
         Icons.info_outline,
         Colors.blue,
         'Notice',
-        "Please add atleast 5 topics you like",
+        "Please add at least 5 topics you like",
       );
     } else {
       final users = firestore.collection('Users');
       if (_myImgUrl != 'none') {
-        File? imageFile = await assets![0].originFile;
+        File? imageFile = await assets[0].originFile;
         final String filePath = imageFile!.absolute.path;
         final int fileSize = imageFile.lengthSync();
-        if (fileSize > 15000000) {
+        if (fileSize > 30000000) {
           setState(() {
             isLoading = false;
           });
@@ -176,7 +180,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
             Icons.info_outline,
             Colors.blue,
             'Notice',
-            "Avatars can be up to 15 MB",
+            "Avatars can be up to 30 MB in size",
           );
         } else {
           EasyLoading.show(
@@ -201,7 +205,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
             numThreads: 4,
           );
           await FlutterNsfw.getPhotoNSFWScore(filePath).then((result) async {
-            if (result > 0.75) {
+            if (result > 0.759) {
               setState(() {
                 isLoading = false;
               });
@@ -213,6 +217,9 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                 "Image contains content that violates our avatar safety guidelines.",
               );
             } else {
+              for (var topicName in _newTopicNames) {
+                await handleTopic(topicName);
+              }
               await storage
                   .ref(_myImgUrl)
                   .putFile(imageFile)
@@ -224,7 +231,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                     'Activity': 'Online',
                     'Avatar': downloadUrl,
                     'SetupComplete': 'true',
-                    'Visibility': '${generateVis(_newVis)}',
+                    'Visibility': '${General.generateProfileVis(_newVis)}',
                     'Bio': '${_bioController.value.text}',
                     'Topics': _newTopicNames,
                     'IP address': '$_ipAddress',
@@ -237,9 +244,9 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                   profile.setMyAdditionalNumber('');
                   profile.setMyAdditionalAddress('');
                   profile.setMyAdditionalAddressName('');
-                  profile.setMyVis(generateVis(_newVis));
+                  profile.setMyVis(General.generateProfileVis(_newVis));
                   profile.setMyProfileImage(downloadUrl);
-                  profile.setMyProfileBanner('None');
+                  profile.setMyProfileBanner('None', false);
                   profile.setMyUsername(myUsername);
                   profile.changeBio(_bioController.value.text);
                   profile.setMyTopics(_newTopicNames);
@@ -288,14 +295,16 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
           status: 'Finishing',
           dismissOnTap: false,
         );
+        for (var topicName in _newTopicNames) {
+          await handleTopic(topicName);
+        }
         String _ipAddress = await Ipify.ipv4();
-
         await users.doc(myUsername).update(
           {
             'Activity': 'Online',
             'Avatar': _myImgUrl,
             'SetupComplete': 'true',
-            'Visibility': '${generateVis(_newVis)}',
+            'Visibility': '${General.generateProfileVis(_newVis)}',
             'Bio': '${_bioController.value.text}',
             'Topics': _newTopicNames,
             'IP address': '$_ipAddress',
@@ -308,9 +317,9 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
           profile.setMyAdditionalNumber('');
           profile.setMyAdditionalAddress('');
           profile.setMyAdditionalAddressName('');
-          profile.setMyVis(generateVis(_newVis));
+          profile.setMyVis(General.generateProfileVis(_newVis));
           profile.setMyProfileImage(_myImgUrl);
-          profile.setMyProfileBanner('None');
+          profile.setMyProfileBanner('None', false);
           profile.setMyUsername(myUsername);
           profile.changeBio(_bioController.value.text);
           profile.setMyTopics(_newTopicNames);
@@ -353,9 +362,9 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final double _deviceHeight = MediaQuery.of(context).size.height;
-    final Color _primaryColor = Theme.of(context).primaryColor;
-    final Color _accentColor = Theme.of(context).accentColor;
-    final double _deviceWidth = MediaQuery.of(context).size.width;
+    final Color _primaryColor = Theme.of(context).colorScheme.primary;
+    final Color _accentColor = Theme.of(context).colorScheme.secondary;
+    final double _deviceWidth = General.widthQuery(context);
     final String myUsername = Provider.of<MyProfile>(context).getUsername;
 
     const SizedBox _heightBox = SizedBox(
@@ -397,6 +406,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                   setState(() {
                     _myImgUrl = 'none';
                   });
+                  assets.clear();
                   Navigator.pop(context);
                 },
                 style: const ButtonStyle(splashFactory: NoSplash.splashFactory),
@@ -435,13 +445,12 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
       });
     }
 
-    final Widget _myImage = ProfileImage(
-      username: myUsername,
-      url: _myImgUrl,
-      factor: 0.20,
-      inEdit: true,
-      asset: (_myImgUrl != 'none') ? assets![0] : null,
-    );
+    final Widget _myImage = ChatProfileImage(
+        username: myUsername,
+        factor: 0.20,
+        inEdit: true,
+        asset: (_myImgUrl != 'none') ? assets[0] : null,
+        editUrl: _myImgUrl);
     final Widget visMenu = DropdownButton(
       onChanged: (_) => setState(() {}),
       underline: Container(color: Colors.transparent),
@@ -506,29 +515,12 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          minHeight: 150.0,
-          maxHeight: 600.0,
-          minWidth: _deviceWidth,
-          maxWidth: _deviceWidth,
-        ),
-        child: NotificationListener<OverscrollNotification>(
-          onNotification: (OverscrollNotification value) {
-            if (value.overscroll < 0 &&
-                scrollController.offset + value.overscroll <= 0) {
-              if (scrollController.offset != 0) scrollController.jumpTo(0);
-              return true;
-            }
-            if (scrollController.offset + value.overscroll >=
-                scrollController.position.maxScrollExtent) {
-              if (scrollController.offset !=
-                  scrollController.position.maxScrollExtent)
-                scrollController
-                    .jumpTo(scrollController.position.maxScrollExtent);
-              return true;
-            }
-            scrollController.jumpTo(scrollController.offset + value.overscroll);
-            return true;
-          },
+            minHeight: 150.0,
+            maxHeight: 600.0,
+            minWidth: _deviceWidth,
+            maxWidth: _deviceWidth),
+        child: NestedScroller(
+          controller: scrollController,
           child: SingleChildScrollView(
             child: Wrap(
               children: <Widget>[
@@ -547,7 +539,8 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                       ),
                       backgroundColor: Colors.white,
                       builder: (_) {
-                        return AddTopic(addTopic, _newTopicNames, false, false);
+                        return AddTopic(
+                            addTopic, _newTopicNames, false, false, false);
                       },
                     ),
                     child: TopicChip(
@@ -563,12 +556,8 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                             ),
                             backgroundColor: Colors.white,
                             builder: (_) {
-                              final _addTopic = AddTopic(
-                                addTopic,
-                                _newTopicNames,
-                                false,
-                                false,
-                              );
+                              final _addTopic = AddTopic(addTopic,
+                                  _newTopicNames, false, false, false);
                               return _addTopic;
                             }),
                         _accentColor,
@@ -583,10 +572,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
 
                   final _chip = TopicChip(
                       topic,
-                      Icon(
-                        Icons.cancel_rounded,
-                        color: Colors.red,
-                      ),
+                      const Icon(Icons.close, color: Colors.red),
                       removeTopic,
                       Colors.white,
                       FontWeight.normal);
@@ -631,11 +617,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
     );
     const Widget _bar = const SettingsBar('Finish Profile', null, false);
     final Widget _stuff = Expanded(
-      child: NotificationListener<OverscrollIndicatorNotification>(
-        onNotification: (overscroll) {
-          overscroll.disallowGlow();
-          return false;
-        },
+      child: Noglow(
         child: SingleChildScrollView(
           controller: scrollController,
           child: Column(
@@ -653,57 +635,38 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                   TextButton(
                     style: const ButtonStyle(
                         splashFactory: NoSplash.splashFactory),
-                    onPressed: () => showDialog(
-                        context: context,
-                        builder: (ctx) {
-                          return _myDialog;
-                        }),
+                    onPressed: kIsWeb
+                        ? () {}
+                        : () => showDialog(
+                            context: context,
+                            builder: (ctx) {
+                              return _myDialog;
+                            }),
                     child: _myImage,
                   ),
                 ],
               ),
               _heightBox,
               Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: NotificationListener<OverscrollNotification>(
-                  onNotification: (OverscrollNotification value) {
-                    if (value.overscroll < 0 &&
-                        scrollController.offset + value.overscroll <= 0) {
-                      if (scrollController.offset != 0)
-                        scrollController.jumpTo(0);
-                      return true;
-                    }
-                    if (scrollController.offset + value.overscroll >=
-                        scrollController.position.maxScrollExtent) {
-                      if (scrollController.offset !=
-                          scrollController.position.maxScrollExtent)
-                        scrollController
-                            .jumpTo(scrollController.position.maxScrollExtent);
-                      return true;
-                    }
-                    scrollController
-                        .jumpTo(scrollController.offset + value.overscroll);
-                    return true;
-                  },
-                  child: TextFormField(
-                    controller: _bioController,
-                    validator: _validateBio,
-                    keyboardType: TextInputType.multiline,
-                    decoration: InputDecoration(
-                      labelText: 'bio',
-                      counterText: '',
-                      hintText: 'Say something about yourself...',
-                      floatingLabelBehavior: FloatingLabelBehavior.always,
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(color: _primaryColor),
-                      ),
-                    ),
-                    minLines: 5,
-                    maxLines: 20,
-                    maxLength: 1000,
-                  ),
-                ),
-              ),
+                  padding: const EdgeInsets.all(8.0),
+                  child: NestedScroller(
+                      controller: scrollController,
+                      child: TextFormField(
+                          controller: _bioController,
+                          validator: _validateBio,
+                          keyboardType: TextInputType.multiline,
+                          decoration: InputDecoration(
+                            labelText: 'bio',
+                            counterText: '',
+                            hintText: 'Say something about yourself...',
+                            floatingLabelBehavior: FloatingLabelBehavior.always,
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide(color: _primaryColor),
+                            ),
+                          ),
+                          minLines: 5,
+                          maxLines: 20,
+                          maxLength: 1000))),
               _heightBox,
               _heightBox,
               Padding(
@@ -718,6 +681,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
     final Widget _page = GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
+        backgroundColor: Colors.white,
         body: SafeArea(
             child: Form(
           key: _formKey,

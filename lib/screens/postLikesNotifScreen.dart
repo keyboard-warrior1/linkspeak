@@ -1,9 +1,12 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:link_speak/providers/myProfileProvider.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../widgets/newLikes.dart';
-import '../widgets/settingsBar.dart';
+
+import '../general.dart';
+import '../providers/myProfileProvider.dart';
+import '../widgets/alerts/newLikes.dart';
+import '../widgets/common/noglow.dart';
+import '../widgets/common/settingsBar.dart';
 
 class PostLikeNotifScreen extends StatefulWidget {
   const PostLikeNotifScreen();
@@ -26,6 +29,7 @@ class _PostLikeNotifScreenState extends State<PostLikeNotifScreen> {
         .collection('Users')
         .doc(_myProfile.getUsername.toString())
         .collection('PostLikesNotifs')
+        .orderBy('date', descending: true)
         .limit(30)
         .get();
     final docs = _likesCollection.docs;
@@ -51,6 +55,7 @@ class _PostLikeNotifScreenState extends State<PostLikeNotifScreen> {
           .collection('Users')
           .doc(_myProfile.getUsername.toString())
           .collection('PostLikesNotifs')
+          .orderBy('date', descending: true)
           .startAfterDocument(lastItem)
           .limit(15)
           .get();
@@ -63,14 +68,6 @@ class _PostLikeNotifScreenState extends State<PostLikeNotifScreen> {
       }
       isLoading = false;
       setState(() {});
-    }
-  }
-
-  String _topicNumber(num value) {
-    if (value >= 99) {
-      return '99+';
-    } else {
-      return value.toString();
     }
   }
 
@@ -100,11 +97,12 @@ class _PostLikeNotifScreenState extends State<PostLikeNotifScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _num = Provider.of<MyProfile>(context).myNumOfPostLikesNotifs;
+    // final _num = Provider.of<MyProfile>(context).myNumOfPostLikesNotifs;
     const Widget emptyBox = SizedBox(height: 0, width: 0);
     final _deviceHeight = MediaQuery.of(context).size.height;
-    final _deviceWidth = MediaQuery.of(context).size.width;
+    final _deviceWidth = General.widthQuery(context);
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: null,
       body: SafeArea(
         child: Container(
@@ -114,7 +112,8 @@ class _PostLikeNotifScreenState extends State<PostLikeNotifScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.max,
             children: [
-              SettingsBar('Likes  ${_topicNumber(_num)}'),
+              // SettingsBar('Likes  ${General.topicNumber(_num)}'),
+              const SettingsBar('Likes'),
               FutureBuilder(
                 future: _likesFuture,
                 builder: (context, snapshot) {
@@ -125,7 +124,8 @@ class _PostLikeNotifScreenState extends State<PostLikeNotifScreen> {
                         children: <Widget>[
                           const Spacer(),
                           const Center(
-                            child: const CircularProgressIndicator(),
+                            child: const CircularProgressIndicator(
+                                strokeWidth: 1.50),
                           ),
                           const Spacer(),
                         ],
@@ -136,37 +136,41 @@ class _PostLikeNotifScreenState extends State<PostLikeNotifScreen> {
                       return Container();
                     } else {
                       return Expanded(
-                        child: ListView.builder(
-                          controller: _scrollController,
-                          itemCount: source.length + 1,
-                          itemBuilder: (BuildContext context, int index) {
-                            if (index == source.length) {
-                              if (isLoading) {
-                                return Center(
-                                  child: Container(
-                                    margin: const EdgeInsets.all(10.0),
-                                    height: 35.0,
-                                    width: 35.0,
-                                    child: Center(
-                                      child: const CircularProgressIndicator(),
+                        child: Noglow(
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            itemCount: source.length + 1,
+                            itemBuilder: (BuildContext context, int index) {
+                              if (index == source.length) {
+                                if (isLoading) {
+                                  return Center(
+                                    child: Container(
+                                      margin: const EdgeInsets.all(10.0),
+                                      height: 35.0,
+                                      width: 35.0,
+                                      child: Center(
+                                        child: const CircularProgressIndicator(
+                                            strokeWidth: 1.50),
+                                      ),
                                     ),
-                                  ),
+                                  );
+                                }
+                                if (isLastPage) {
+                                  return emptyBox;
+                                }
+                              } else {
+                                return NewLikes(
+                                  userName:
+                                      source[index].data()['user'].toString(),
+                                  postUrl:
+                                      source[index].data()['post'].toString(),
+                                  date: source[index].data()['date'].toDate(),
+                                  clubName: source[index].data()['clubName'],
                                 );
                               }
-                              if (isLastPage) {
-                                return emptyBox;
-                              }
-                            } else {
-                              return NewLikes(
-                                userName:
-                                    source[index].data()['user'].toString(),
-                                postUrl:
-                                    source[index].data()['post'].toString(),
-                                date: source[index].data()['date'].toDate(),
-                              );
-                            }
-                            return emptyBox;
-                          },
+                              return emptyBox;
+                            },
+                          ),
                         ),
                       );
                     }
@@ -180,5 +184,3 @@ class _PostLikeNotifScreenState extends State<PostLikeNotifScreen> {
     );
   }
 }
-
-// 

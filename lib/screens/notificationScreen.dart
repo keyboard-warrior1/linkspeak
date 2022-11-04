@@ -1,13 +1,13 @@
-import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../routes.dart';
-import 'package:badges/badges.dart';
+
+import '../general.dart';
 import '../providers/myProfileProvider.dart';
-import '../providers/themeModel.dart';
-import '../widgets/notificationTile.dart';
-import '../widgets/settingsBar.dart';
+import '../routes.dart';
+import '../widgets/alerts/notificationTile.dart';
+import '../widgets/common/noglow.dart';
+import '../widgets/common/settingsBar.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen();
@@ -18,14 +18,6 @@ class NotificationScreen extends StatefulWidget {
 class _NotificationScreenState extends State<NotificationScreen> {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   late Future<void> getNotifs;
-  String _topicNumber(num value) {
-    if (value >= 99) {
-      return '99+';
-    } else {
-      return value.toString();
-    }
-  }
-
   removeAllNotification() async {
     MyProfile _myProfile = Provider.of<MyProfile>(context, listen: false);
     final postLikesNotifsCollection = firestore
@@ -58,8 +50,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
         .doc('${_myProfile.getUsername}')
         .collection('CommentRepliesNotifs')
         .get();
-
-    // set values
+    final mentionBox = firestore
+        .collection('Users')
+        .doc('${_myProfile.getUsername}')
+        .collection('Mention Box')
+        .get();
     firestore.collection('Users').doc('${_myProfile.getUsername}').update({
       'numOfNewLinksNotifs': 0,
       'numOfNewLinkedNotifs': 0,
@@ -67,59 +62,49 @@ class _NotificationScreenState extends State<NotificationScreen> {
       'numOfPostLikesNotifs': 0,
       'numOfPostCommentsNotifs': 0,
       'numOfCommentRepliesNotifs': 0,
+      'PostsRemoved': 0,
+      'CommentsRemoved': 0,
+      'repliesRemoved': 0,
+      'numOfMentions': 0,
     });
 
-    // Delete Notifs Documents Values
-    //1
     postLikesNotifsCollection.then((snap) {
       for (DocumentSnapshot doc in snap.docs) {
         doc.reference.delete();
       }
     });
 
-    //2
     postCommentsNotifsCollection.then((snap) {
       for (DocumentSnapshot doc in snap.docs) {
         doc.reference.delete();
       }
     });
-    //3
     newLinksNotifsCollection.then((snap) {
       for (DocumentSnapshot doc in snap.docs) {
         doc.reference.delete();
       }
     });
-    //4
     newLinkedNotifsCollection.then((snap) {
       for (DocumentSnapshot doc in snap.docs) {
         doc.reference.delete();
       }
     });
-    //5
     linkRequestsNotifsCollection.then((snap) {
       for (DocumentSnapshot doc in snap.docs) {
         doc.reference.delete();
       }
     });
-    //6
     commentRepliesNotifsCollection.then((snap) {
       for (DocumentSnapshot doc in snap.docs) {
         doc.reference.delete();
       }
     });
-
-    // Set Provider
+    mentionBox.then((snap) {
+      for (DocumentSnapshot doc in snap.docs) {
+        doc.reference.delete();
+      }
+    });
     _myProfile.zero();
-  }
-
-  Future addCollection(String collectionName) async {
-    MyProfile _myProfile = Provider.of<MyProfile>(context, listen: false);
-    await firestore
-        .collection('Users')
-        .doc('${_myProfile.getUsername}')
-        .collection('$collectionName')
-        .doc()
-        .set({'0': 1});
   }
 
   Future<void> getNotifications({
@@ -132,6 +117,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
     required dynamic setNumOfCommentRepliesNotifs,
     required dynamic setmyNumOfPostsRemovedNotifs,
     required dynamic setNumOfCommentsRemovedNotifs,
+    required dynamic setNumOfRepliesRemovedNotifs,
+    required dynamic setNumOfMentions,
   }) async {
     final myUser = await firestore.collection('Users').doc('$myUsername').get();
     final numOfNewLinksNotifs = myUser.get('numOfNewLinksNotifs');
@@ -150,6 +137,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
     setmyNumOfPostsRemovedNotifs(postsRemoved);
     final commentsRemoved = myUser.get('CommentsRemoved');
     setNumOfCommentsRemovedNotifs(commentsRemoved);
+    final repliesRemoved = myUser.get('repliesRemoved');
+    setNumOfRepliesRemovedNotifs(repliesRemoved);
+    final newMentions = myUser.get('numOfMentions');
+    setNumOfMentions(newMentions);
   }
 
   @override
@@ -173,6 +164,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
         myProfileNo.setNumOfCommentsRemovedNotifs;
     final void Function(int) setmyNumOfPostsRemovedNotifs =
         myProfileNo.setmyNumOfPostsRemovedNotifs;
+    final void Function(int) setNumOfRepliesRemoved =
+        myProfileNo.setMyNumOfRepliessRemovedNotifs;
+    final void Function(int) setNumOfMentions = myProfileNo.setNumOfNewMentions;
     getNotifs = getNotifications(
       myUsername: _myUsername,
       setNumOfNewLinksNotifs: setNumOfNewLinksNotifs,
@@ -183,515 +177,521 @@ class _NotificationScreenState extends State<NotificationScreen> {
       setNumOfCommentRepliesNotifs: setNumOfCommentRepliesNotifs,
       setmyNumOfPostsRemovedNotifs: setmyNumOfPostsRemovedNotifs,
       setNumOfCommentsRemovedNotifs: setNumOfCommentsRemovedNotifs,
+      setNumOfRepliesRemovedNotifs: setNumOfRepliesRemoved,
+      setNumOfMentions: setNumOfMentions,
     );
     super.initState();
+  }
+
+  void _showDialog() {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: 150.0,
+              maxWidth: 150.0,
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 10.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(5.0),
+                color: Colors.white,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  const Text(
+                    'Clear alerts',
+                    softWrap: false,
+                    style: TextStyle(
+                      fontWeight: FontWeight.normal,
+                      decoration: TextDecoration.none,
+                      fontFamily: 'Roboto',
+                      fontSize: 19.0,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const Divider(
+                    thickness: 1.0,
+                    indent: 0.0,
+                    endIndent: 0.0,
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      TextButton(
+                        style:
+                            ButtonStyle(splashFactory: NoSplash.splashFactory),
+                        onPressed: () async {
+                          await removeAllNotification();
+                          Navigator.pop(context);
+                        },
+                        child: const Text(
+                          'Yes',
+                          style: TextStyle(
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        style:
+                            ButtonStyle(splashFactory: NoSplash.splashFactory),
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text(
+                          'No',
+                          style: TextStyle(
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final double _deviceHeight = MediaQuery.of(context).size.height;
     final ThemeData _theme = Theme.of(context);
-    final Color _primarySwatch = _theme.primaryColor;
-    final Color _accentColor = _theme.accentColor;
-    final themeIconHelper = Provider.of<ThemeModel>(context, listen: false);
-    final Color likeColor = themeIconHelper.likeColor;
-    final String currentIconName = themeIconHelper.selectedIconName;
-    final IconData currentIcon = themeIconHelper.themeIcon;
-    final String activeIconPath = themeIconHelper.themeIconPathActive;
+    final Color _primarySwatch = _theme.colorScheme.primary;
+    final Color _accentColor = _theme.colorScheme.secondary;
+    final MyProfile myProfileNo =
+        Provider.of<MyProfile>(context, listen: false);
+    final String _myUsername = myProfileNo.getUsername;
+    final void Function(int) setNumOfNewLinksNotifs =
+        myProfileNo.setNumOfNewLinksNotifs;
+    final void Function(int) setNumOfNewLinkedNotifs =
+        myProfileNo.setNumOfNewLinkedNotifs;
+    final void Function(int) setNumOfLinkRequestNotifs =
+        myProfileNo.setNumOfLinkRequestNotifs;
+    final void Function(int) setNumOfPostLikesNotifs =
+        myProfileNo.setNumOfPostLikesNotifs;
+    final void Function(int) setNumOfPostCommentsNotifs =
+        myProfileNo.setNumOfPostCommentsNotifs;
+    final void Function(int) setNumOfCommentRepliesNotifs =
+        myProfileNo.setNumOfCommentRepliesNotifs;
+    final void Function(int) setNumOfCommentsRemovedNotifs =
+        myProfileNo.setNumOfCommentsRemovedNotifs;
+    final void Function(int) setmyNumOfPostsRemovedNotifs =
+        myProfileNo.setmyNumOfPostsRemovedNotifs;
+    final void Function(int) setNumOfRepliesRemoved =
+        myProfileNo.setMyNumOfRepliessRemovedNotifs;
+    final void Function(int) setMyNumOfMentions =
+        myProfileNo.setNumOfNewMentions;
     return Scaffold(
-      backgroundColor: Colors.grey.shade200,
-      appBar: null,
-      body: FutureBuilder(
-          future: getNotifs,
-          builder: (ctx, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 7.0),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: <Widget>[
-                        const SettingsBar('Alerts'),
-                        const Spacer(),
-                        const CircularProgressIndicator(),
-                        const Spacer(),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }
-            if (snapshot.hasError) {
-              return SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 7.0),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: <Widget>[
-                        const SettingsBar('Alerts'),
-                        const Spacer(),
-                        Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
+        backgroundColor: Colors.white,
+        appBar: null,
+        body: SafeArea(
+            child: Padding(
+                padding: const EdgeInsets.only(bottom: 7.0),
+                child: FutureBuilder(
+                    future: getNotifs,
+                    builder: (ctx, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
                             children: <Widget>[
-                              const Text(
-                                'An unknown error has occured',
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                              const SizedBox(width: 15.0),
-                              TextButton(
-                                style: ButtonStyle(
-                                  backgroundColor:
-                                      MaterialStateProperty.all<Color?>(
-                                    _primarySwatch,
-                                  ),
-                                  padding: MaterialStateProperty.all<
-                                      EdgeInsetsGeometry?>(
-                                    const EdgeInsets.all(0.0),
-                                  ),
-                                  shape: MaterialStateProperty.all<
-                                      OutlinedBorder?>(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10.0),
-                                    ),
-                                  ),
-                                ),
-                                onPressed: () => setState(() {}),
-                                child: Center(
-                                  child: Text(
-                                    'Retry',
-                                    style: TextStyle(
-                                      color: _accentColor,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                              const SettingsBar('Alerts'),
+                              const Spacer(),
+                              const Icon(Icons.notifications_outlined),
+                              const Spacer(),
                             ],
                           ),
-                        ),
-                        const Spacer(),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }
-            final MyProfile myProfile = Provider.of<MyProfile>(context);
-            final int myNumOfNewLinksNotifs = myProfile.myNumOfNewLinksNotifs;
-            final int myNumOfNewLinkedNotifs = myProfile.myNumOfNewLinkedNotifs;
-            final int myNumOfLinkRequestNotifs =
-                myProfile.myNumOfLinkRequestNotifs;
-            final int myNumOfPostLikesNotifs = myProfile.myNumOfPostLikesNotifs;
-            final int myNumOfPostCommentsNotifs =
-                myProfile.myNumOfPostCommentsNotifs;
-            final int myNumOfCommentRepliesNotifs =
-                myProfile.myNumOfCommentRepliesNotifs;
-            final int myNumOfCommentsRemovedNotifs =
-                myProfile.myNumOfCommentsRemovedNotifs;
-            final int myNumOfPostsRemovedNotifs =
-                myProfile.myNumOfPostsRemovedNotifs;
-            final bool hasNotifications = myNumOfNewLinksNotifs != 0 ||
-                myNumOfNewLinkedNotifs != 0 ||
-                myNumOfLinkRequestNotifs != 0 ||
-                myNumOfPostLikesNotifs != 0 ||
-                myNumOfPostCommentsNotifs != 0 ||
-                myNumOfCommentRepliesNotifs != 0 ||
-                myNumOfCommentsRemovedNotifs != 0 ||
-                myNumOfPostsRemovedNotifs != 0;
-
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 7.0),
-                child: Center(
-                  child: Column(
-                    children: <Widget>[
-                      const SettingsBar('Alerts'),
-                      if (hasNotifications)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: <Widget>[
-                            const Spacer(),
-                            TextButton(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (_) {
-                                    return Center(
-                                      child: ConstrainedBox(
-                                        constraints: BoxConstraints(
-                                          minWidth: 150.0,
-                                          maxWidth: 150.0,
-                                        ),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 10.0),
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(5.0),
-                                            color: Colors.white,
-                                          ),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            mainAxisSize: MainAxisSize.min,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: <Widget>[
-                                              const Text(
-                                                'Clear alerts',
-                                                softWrap: false,
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.normal,
-                                                  decoration:
-                                                      TextDecoration.none,
-                                                  fontFamily: 'Roboto',
-                                                  fontSize: 19.0,
-                                                  color: Colors.black,
-                                                ),
-                                              ),
-                                              const Divider(
-                                                thickness: 1.0,
-                                                indent: 0.0,
-                                                endIndent: 0.0,
-                                              ),
-                                              Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: <Widget>[
-                                                  TextButton(
-                                                    style: ButtonStyle(
-                                                        splashFactory: NoSplash
-                                                            .splashFactory),
-                                                    onPressed: () async {
-                                                      await removeAllNotification();
-                                                      Navigator.pop(context);
-                                                    },
-                                                    child: const Text(
-                                                      'Yes',
-                                                      style: TextStyle(
-                                                        color: Colors.red,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  TextButton(
-                                                    style: ButtonStyle(
-                                                        splashFactory: NoSplash
-                                                            .splashFactory),
-                                                    onPressed: () =>
-                                                        Navigator.pop(context),
-                                                    child: const Text(
-                                                      'No',
-                                                      style: TextStyle(
-                                                        color: Colors.red,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                              child: const Center(
-                                child: const Text(
-                                  'Clear all alerts',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 23,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const Spacer(),
-                            IconButton(
-                              onPressed: () => Navigator.pushNamed(context,
-                                  RouteGenerator.notificationSettingScreen),
-                              icon: const Icon(
-                                Icons.settings,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ],
-                        ),
-                      Expanded(
-                        child: SizedBox(
-                          height: _deviceHeight * 91,
-                          width: double.infinity,
-                          child: (!hasNotifications)
-                              ? Column(
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: <Widget>[
+                              const SettingsBar('Alerts'),
+                              const Spacer(),
+                              Center(
+                                child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: <Widget>[
-                                    Center(
-                                      child: const Icon(
-                                        Icons.notifications,
-                                        size: 45.0,
-                                        color: Colors.grey,
+                                    const Text(
+                                      'An unknown error has occured',
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                    const SizedBox(width: 15.0),
+                                    TextButton(
+                                      style: ButtonStyle(
+                                        backgroundColor:
+                                            MaterialStateProperty.all<Color?>(
+                                          _primarySwatch,
+                                        ),
+                                        padding: MaterialStateProperty.all<
+                                            EdgeInsetsGeometry?>(
+                                          const EdgeInsets.all(0.0),
+                                        ),
+                                        shape: MaterialStateProperty.all<
+                                            OutlinedBorder?>(
+                                          RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10.0),
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(
-                                      height: 15.0,
-                                    ),
-                                    Center(
-                                      child: const Text(
-                                        'You have no new alerts',
-                                        style: TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 25.0,
+                                      onPressed: () => setState(() {
+                                        getNotifs = getNotifications(
+                                          myUsername: _myUsername,
+                                          setNumOfNewLinksNotifs:
+                                              setNumOfNewLinksNotifs,
+                                          setNumOfNewLinkedNotifs:
+                                              setNumOfNewLinkedNotifs,
+                                          setNumOfLinkRequestNotifs:
+                                              setNumOfLinkRequestNotifs,
+                                          setNumOfPostLikesNotifs:
+                                              setNumOfPostLikesNotifs,
+                                          setNumOfPostCommentsNotifs:
+                                              setNumOfPostCommentsNotifs,
+                                          setNumOfCommentRepliesNotifs:
+                                              setNumOfCommentRepliesNotifs,
+                                          setmyNumOfPostsRemovedNotifs:
+                                              setmyNumOfPostsRemovedNotifs,
+                                          setNumOfCommentsRemovedNotifs:
+                                              setNumOfCommentsRemovedNotifs,
+                                          setNumOfRepliesRemovedNotifs:
+                                              setNumOfRepliesRemoved,
+                                          setNumOfMentions: setMyNumOfMentions,
+                                        );
+                                      }),
+                                      child: Center(
+                                        child: Text(
+                                          'Retry',
+                                          style: TextStyle(
+                                            color: _accentColor,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ],
-                                )
-                              : NotificationListener<
-                                  OverscrollIndicatorNotification>(
-                                  onNotification: (overscroll) {
-                                    overscroll.disallowGlow();
-                                    return false;
-                                  },
-                                  child: ListView(
-                                    children: <Widget>[
-                                      if (myNumOfPostLikesNotifs != 0 &&
-                                          currentIconName != 'Custom')
-                                        NotificationTile(
-                                          title: 'Likes',
-                                          mykey: null,
-                                          icon: currentIcon,
-                                          mainIconColor: likeColor,
-                                          badgeColor:
-                                              Colors.lightGreenAccent.shade700,
-                                          badgeText:
-                                              '${_topicNumber(myNumOfPostLikesNotifs)}',
-                                          navigate: true,
-                                          routeName: RouteGenerator
-                                              .postLikesNotifScreen,
-                                          enabled: true,
+                                ),
+                              ),
+                              const Spacer(),
+                            ],
+                          ),
+                        );
+                      }
+                      final MyProfile myProfile =
+                          Provider.of<MyProfile>(context);
+                      final int myNumOfNewLinksNotifs =
+                          myProfile.myNumOfNewLinksNotifs;
+                      final int myNumOfNewLinkedNotifs =
+                          myProfile.myNumOfNewLinkedNotifs;
+                      final int myNumOfRepliesRemoved =
+                          myProfile.myNumOfRepliesRemovedNotifs;
+                      final int myNumOfLinkRequestNotifs =
+                          myProfile.myNumOfLinkRequestNotifs;
+                      final int myNumOfPostLikesNotifs =
+                          myProfile.myNumOfPostLikesNotifs;
+                      final int myNumOfPostCommentsNotifs =
+                          myProfile.myNumOfPostCommentsNotifs;
+                      final int myNumOfCommentRepliesNotifs =
+                          myProfile.myNumOfCommentRepliesNotifs;
+                      final int myNumOfCommentsRemovedNotifs =
+                          myProfile.myNumOfCommentsRemovedNotifs;
+                      final int myNumOfPostsRemovedNotifs =
+                          myProfile.myNumOfPostsRemovedNotifs;
+                      final int myNumOfMentions = myProfile.myNumOfMentions;
+                      final bool hasNotifications =
+                          myNumOfNewLinksNotifs != 0 ||
+                              myNumOfNewLinkedNotifs != 0 ||
+                              myNumOfLinkRequestNotifs != 0 ||
+                              myNumOfPostLikesNotifs != 0 ||
+                              myNumOfPostCommentsNotifs != 0 ||
+                              myNumOfCommentRepliesNotifs != 0 ||
+                              myNumOfCommentsRemovedNotifs != 0 ||
+                              myNumOfPostsRemovedNotifs != 0 ||
+                              myNumOfRepliesRemoved != 0 ||
+                              myNumOfMentions != 0;
+
+                      return Center(
+                        child: Column(
+                          children: <Widget>[
+                            const SettingsBar('Alerts'),
+                            if (hasNotifications)
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: <Widget>[
+                                  IconButton(
+                                    onPressed: () => {},
+                                    icon: const Icon(
+                                      Icons.settings,
+                                      color: Colors.transparent,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  TextButton(
+                                    onPressed: () {
+                                      _showDialog();
+                                    },
+                                    child: const Center(
+                                      child: const Text(
+                                        'Clear all alerts',
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 23,
                                         ),
-                                      if (myNumOfPostLikesNotifs != 0 &&
-                                          currentIconName == 'Custom')
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 8.0, vertical: 0.0),
-                                          child: Card(
-                                            shadowColor: Colors.grey.shade300,
-                                            color: Colors.white,
-                                            margin: const EdgeInsets.all(
-                                              .5,
+                                      ),
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  IconButton(
+                                    onPressed: () => Navigator.pushNamed(
+                                        context,
+                                        RouteGenerator
+                                            .notificationSettingScreen),
+                                    icon: const Icon(
+                                      Icons.settings,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            Expanded(
+                              child: SizedBox(
+                                height: _deviceHeight * 91,
+                                width: double.infinity,
+                                child: (!hasNotifications)
+                                    ? Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: <Widget>[
+                                          Center(
+                                            child: const Icon(
+                                              Icons.notifications,
+                                              size: 45.0,
+                                              color: Colors.grey,
                                             ),
-                                            elevation: 9.0,
-                                            child: ListTile(
-                                              enabled: true,
-                                              onTap: () {
-                                                Navigator.of(context).pushNamed(
-                                                    RouteGenerator
-                                                        .postLikesNotifScreen);
-                                              },
-                                              enableFeedback: false,
-                                              leading: ImageIcon(
-                                                FileImage(
-                                                  File(activeIconPath),
-                                                ),
-                                                size: 35.0,
-                                              ),
-                                              title: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.start,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                children: <Widget>[
-                                                  Text(
-                                                    'Likes',
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.black,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 10.0),
-                                                  Badge(
-                                                    elevation: 0.0,
-                                                    toAnimate: false,
-                                                    badgeColor: Colors
-                                                        .lightGreenAccent
-                                                        .shade700,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5.0),
-                                                    shape: BadgeShape.square,
-                                                    badgeContent: Center(
-                                                      child: Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                    .symmetric(
-                                                                horizontal:
-                                                                    2.0),
-                                                        child: Stack(
-                                                          children: <Widget>[
-                                                            Text(
-                                                              '${_topicNumber(myNumOfPostLikesNotifs)}',
-                                                              softWrap: false,
-                                                              textAlign:
-                                                                  TextAlign.end,
-                                                              style: TextStyle(
-                                                                foreground:
-                                                                    Paint()
-                                                                      ..style =
-                                                                          PaintingStyle
-                                                                              .stroke
-                                                                      ..strokeWidth =
-                                                                          .5
-                                                                      ..color =
-                                                                          Colors
-                                                                              .black,
-                                                              ),
-                                                            ),
-                                                            Text(
-                                                              '${_topicNumber(myNumOfPostLikesNotifs)}',
-                                                              softWrap: false,
-                                                              textAlign:
-                                                                  TextAlign.end,
-                                                              style:
-                                                                  const TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
+                                          ),
+                                          const SizedBox(
+                                            height: 15.0,
+                                          ),
+                                          Center(
+                                            child: const Text(
+                                              'You have no new alerts',
+                                              style: TextStyle(
+                                                color: Colors.grey,
+                                                fontSize: 25.0,
                                               ),
                                             ),
                                           ),
+                                        ],
+                                      )
+                                    : Noglow(
+                                        child: ListView(
+                                          children: <Widget>[
+                                            if (myNumOfPostLikesNotifs != 0)
+                                              NotificationTile(
+                                                title: 'Likes',
+                                                mykey: null,
+                                                badgeColor: Colors
+                                                    .lightGreenAccent.shade700,
+                                                badgeText:
+                                                    '${General.topicNumber(myNumOfPostLikesNotifs)}',
+                                                navigate: true,
+                                                routeName: RouteGenerator
+                                                    .postLikesNotifScreen,
+                                                enabled: true,
+                                                isClub: false,
+                                                isFlare: false,
+                                                username: '',
+                                                clubName: '',
+                                                decreaseNotifs: () {},
+                                                addMembers: () {},
+                                              ),
+                                            if (myNumOfMentions != 0)
+                                              NotificationTile(
+                                                title: 'Mentions',
+                                                mykey: null,
+                                                badgeColor: Colors
+                                                    .lightGreenAccent.shade700,
+                                                badgeText:
+                                                    '${General.topicNumber(myNumOfMentions)}',
+                                                navigate: true,
+                                                routeName: RouteGenerator
+                                                    .mentionsScreen,
+                                                enabled: true,
+                                                isClub: false,
+                                                isFlare: false,
+                                                username: '',
+                                                clubName: '',
+                                                decreaseNotifs: () {},
+                                                addMembers: () {},
+                                              ),
+                                            if (myNumOfNewLinksNotifs != 0)
+                                              NotificationTile(
+                                                title: 'New links',
+                                                mykey: null,
+                                                badgeColor: Colors
+                                                    .lightGreenAccent.shade700,
+                                                badgeText:
+                                                    '${General.topicNumber(myNumOfNewLinksNotifs)}',
+                                                navigate: true,
+                                                routeName: RouteGenerator
+                                                    .linksNotifsScreen,
+                                                enabled: true,
+                                                isClub: false,
+                                                isFlare: false,
+                                                username: '',
+                                                clubName: '',
+                                                decreaseNotifs: () {},
+                                                addMembers: () {},
+                                              ),
+                                            if (myNumOfLinkRequestNotifs != 0)
+                                              NotificationTile(
+                                                title: 'Link requests',
+                                                mykey: null,
+                                                badgeColor: Colors
+                                                    .lightGreenAccent.shade700,
+                                                badgeText:
+                                                    '${General.topicNumber(myNumOfLinkRequestNotifs)}',
+                                                navigate: true,
+                                                routeName: RouteGenerator
+                                                    .linkRequestScreen,
+                                                enabled: true,
+                                                isClub: false,
+                                                isFlare: false,
+                                                username: '',
+                                                clubName: '',
+                                                decreaseNotifs: () {},
+                                                addMembers: () {},
+                                              ),
+                                            if (myNumOfNewLinkedNotifs != 0)
+                                              NotificationTile(
+                                                title: 'Linked',
+                                                mykey: null,
+                                                badgeColor: Colors
+                                                    .lightGreenAccent.shade700,
+                                                badgeText:
+                                                    '${General.topicNumber(myNumOfNewLinkedNotifs)}',
+                                                navigate: true,
+                                                routeName: RouteGenerator
+                                                    .linkedNotifScreen,
+                                                enabled: true,
+                                                isClub: false,
+                                                isFlare: false,
+                                                username: '',
+                                                clubName: '',
+                                                decreaseNotifs: () {},
+                                                addMembers: () {},
+                                              ),
+                                            if (myNumOfPostCommentsNotifs != 0)
+                                              NotificationTile(
+                                                title: 'Comments',
+                                                mykey: null,
+                                                badgeColor: Colors
+                                                    .lightGreenAccent.shade700,
+                                                badgeText:
+                                                    '${General.topicNumber(myNumOfPostCommentsNotifs)}',
+                                                navigate: true,
+                                                routeName: RouteGenerator
+                                                    .postCommentsNotifScreen,
+                                                enabled: true,
+                                                isClub: false,
+                                                isFlare: false,
+                                                username: '',
+                                                clubName: '',
+                                                decreaseNotifs: () {},
+                                                addMembers: () {},
+                                              ),
+                                            if (myNumOfCommentRepliesNotifs !=
+                                                0)
+                                              NotificationTile(
+                                                title: 'Replies',
+                                                mykey: null,
+                                                badgeColor: Colors
+                                                    .lightGreenAccent.shade700,
+                                                badgeText:
+                                                    '${General.topicNumber(myNumOfCommentRepliesNotifs)}',
+                                                navigate: true,
+                                                routeName: RouteGenerator
+                                                    .commentRepliesNotifScreen,
+                                                enabled: true,
+                                                isClub: false,
+                                                isFlare: false,
+                                                username: '',
+                                                clubName: '',
+                                                decreaseNotifs: () {},
+                                                addMembers: () {},
+                                              ),
+                                            if (myNumOfCommentsRemovedNotifs !=
+                                                0)
+                                              NotificationTile(
+                                                title: 'Comments removed',
+                                                mykey: null,
+                                                badgeColor: Colors.red,
+                                                badgeText:
+                                                    '${General.topicNumber(myNumOfCommentsRemovedNotifs)}',
+                                                navigate: false,
+                                                routeName: null,
+                                                enabled: false,
+                                                isClub: false,
+                                                isFlare: false,
+                                                username: '',
+                                                clubName: '',
+                                                decreaseNotifs: () {},
+                                                addMembers: () {},
+                                              ),
+                                            if (myNumOfPostsRemovedNotifs != 0)
+                                              NotificationTile(
+                                                title: 'Posts removed',
+                                                mykey: null,
+                                                badgeColor: Colors.red,
+                                                badgeText:
+                                                    '${General.topicNumber(myNumOfPostsRemovedNotifs)}',
+                                                navigate: false,
+                                                routeName: null,
+                                                enabled: false,
+                                                isClub: false,
+                                                isFlare: false,
+                                                username: '',
+                                                clubName: '',
+                                                decreaseNotifs: () {},
+                                                addMembers: () {},
+                                              ),
+                                            if (myNumOfRepliesRemoved != 0)
+                                              NotificationTile(
+                                                title: 'Replies removed',
+                                                mykey: null,
+                                                badgeColor: Colors.red,
+                                                badgeText:
+                                                    '${General.topicNumber(myNumOfRepliesRemoved)}',
+                                                navigate: false,
+                                                routeName: null,
+                                                enabled: false,
+                                                isClub: false,
+                                                isFlare: false,
+                                                username: '',
+                                                clubName: '',
+                                                decreaseNotifs: () {},
+                                                addMembers: () {},
+                                              ),
+                                          ],
                                         ),
-                                      if (myNumOfNewLinksNotifs != 0)
-                                        NotificationTile(
-                                          title: 'New links',
-                                          mykey: null,
-                                          icon: Icons.person_add,
-                                          mainIconColor: _primarySwatch,
-                                          badgeColor:
-                                              Colors.lightGreenAccent.shade700,
-                                          badgeText:
-                                              '${_topicNumber(myNumOfNewLinksNotifs)}',
-                                          navigate: true,
-                                          routeName:
-                                              RouteGenerator.linksNotifsScreen,
-                                          enabled: true,
-                                        ),
-                                      if (myNumOfLinkRequestNotifs != 0)
-                                        NotificationTile(
-                                          title: 'Link requests',
-                                          mykey: null,
-                                          icon: Icons.link,
-                                          mainIconColor: _primarySwatch,
-                                          badgeColor:
-                                              Colors.lightGreenAccent.shade700,
-                                          badgeText:
-                                              '${_topicNumber(myNumOfLinkRequestNotifs)}',
-                                          navigate: true,
-                                          routeName:
-                                              RouteGenerator.linkRequestScreen,
-                                          enabled: true,
-                                        ),
-                                      if (myNumOfNewLinkedNotifs != 0)
-                                        NotificationTile(
-                                          title: 'Linked',
-                                          mykey: null,
-                                          icon: Icons.people,
-                                          mainIconColor: _primarySwatch,
-                                          badgeColor:
-                                              Colors.lightGreenAccent.shade700,
-                                          badgeText:
-                                              '${_topicNumber(myNumOfNewLinkedNotifs)}',
-                                          navigate: true,
-                                          routeName:
-                                              RouteGenerator.linkedNotifScreen,
-                                          enabled: true,
-                                        ),
-                                      if (myNumOfPostCommentsNotifs != 0)
-                                        NotificationTile(
-                                          title: 'Comments',
-                                          mykey: null,
-                                          icon: Icons.chat_bubble_rounded,
-                                          mainIconColor: _primarySwatch,
-                                          badgeColor:
-                                              Colors.lightGreenAccent.shade700,
-                                          badgeText:
-                                              '${_topicNumber(myNumOfPostCommentsNotifs)}',
-                                          navigate: true,
-                                          routeName: RouteGenerator
-                                              .postCommentsNotifScreen,
-                                          enabled: true,
-                                        ),
-                                      if (myNumOfCommentRepliesNotifs != 0)
-                                        NotificationTile(
-                                          title: 'Replies',
-                                          mykey: null,
-                                          icon: Icons.reply_all_rounded,
-                                          mainIconColor: _primarySwatch,
-                                          badgeColor:
-                                              Colors.lightGreenAccent.shade700,
-                                          badgeText:
-                                              '${_topicNumber(myNumOfCommentRepliesNotifs)}',
-                                          navigate: true,
-                                          routeName: RouteGenerator
-                                              .commentRepliesNotifScreen,
-                                          enabled: true,
-                                        ),
-                                      if (myNumOfCommentsRemovedNotifs != 0)
-                                        NotificationTile(
-                                          title: 'Comments removed',
-                                          mykey: null,
-                                          icon: Icons.warning,
-                                          mainIconColor: Colors.red,
-                                          badgeColor: Colors.red,
-                                          badgeText:
-                                              '${_topicNumber(myNumOfCommentsRemovedNotifs)}',
-                                          navigate: false,
-                                          routeName: null,
-                                          enabled: false,
-                                        ),
-                                      if (myNumOfPostsRemovedNotifs != 0)
-                                        NotificationTile(
-                                          title: 'Posts removed',
-                                          mykey: null,
-                                          icon: Icons.warning,
-                                          mainIconColor: Colors.red,
-                                          badgeColor: Colors.red,
-                                          badgeText:
-                                              '${_topicNumber(myNumOfPostsRemovedNotifs)}',
-                                          navigate: false,
-                                          routeName: null,
-                                          enabled: false,
-                                        ),
-                                    ],
-                                  ),
-                                ),
+                                      ),
+                              ),
+                            )
+                          ],
                         ),
-                      )
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
-    );
+                      );
+                    }))));
   }
 }
