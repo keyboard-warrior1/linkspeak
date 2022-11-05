@@ -1,7 +1,7 @@
 name: link_speak
 description: A new Flutter project.
 publish_to: "none"
-version: 22.1.0+42
+version: 23.1.0+43
 environment:
   sdk: ">=2.17.6"
   flutter: ^3.3.1
