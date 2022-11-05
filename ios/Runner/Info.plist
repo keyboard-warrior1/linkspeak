@@ -22,7 +22,7 @@
 				</array>
 			</dict>
 		</array>
-		<key>CFBundleURLTypes</key>
+<!-- 		<key>CFBundleURLTypes</key>
 		<array>
 			<dict>
 				<key>CFBundleURLSchemes</key>
@@ -30,7 +30,7 @@
 					<string>270986471513771</string>
 				</array>
 			</dict>
-		</array>
+		</array> -->
 		<key>FacebookAppID</key>
 		<string>270986471513771</string>
 		<key>FacebookClientToken</key>
