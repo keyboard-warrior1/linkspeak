@@ -25,6 +25,10 @@ workflows:
 #         script: pod init
 #       - name: install pods
 #         script: pod install
+      - name: enter ios file
+        script: cd ios
+      - name: install pods
+        script: pod install
       - name: Build ipa for distribution
         script: flutter build ios --release
     artifacts:
