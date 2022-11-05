@@ -13,6 +13,8 @@ workflows:
         - ios_config
         - appstore_credentials
     scripts:
+      - name: show build settings
+        script: xcode-project show-build-settings
       - name: Set up code signing settings on Xcode project
         script: xcode-project use-profiles
       - name: pub get
