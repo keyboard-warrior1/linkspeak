@@ -21,12 +21,13 @@ workflows:
         script: |
           find . -name "Podfile" -execdir pod install \;
       - name: Build ipa for distribution
-        script: flutter build ipa --release \
-          --build-name=Runner \
-          --export-options-plist=/Users/builder/export_options.plist
+        script: |
+            set -ex
+            flutter build ios --release
+            cd ios
+            xcodebuild \
+              -workspace Runner.xcworkspace \
+              -scheme Runner \
+              -config Flutter/Release.xcconfig
     artifacts:
-#       - build/ios/iphoneos/*.app
-     - build/ios/ipa/*.ipa
-     - /tmp/xcodebuild_logs/*.log
-     - flutter_drive.log
-
+      - build/ios/iphoneos/*.app
