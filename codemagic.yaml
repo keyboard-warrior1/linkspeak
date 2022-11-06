@@ -28,11 +28,11 @@ workflows:
               -workspace Runner.xcworkspace \
               -scheme Runner \
               -config Flutter/Release.xcconfig \
-              -sdk iphoneos -archivePath Flutter/linkspeak.xcarchive
+              -sdk iphoneos -archivePath Flutter/Runner.xcarchive
             xcodebuild \
-              -exportArchive -archivePath Flutter/linkspeak.xcarchive \
+              -exportArchive -archivePath Flutter/Runner.xcarchive \
               -exportOptionsPlist /Users/builder/export_options.plist \
-              -exportPath build/ios/ipa/linkspeak.ipa
+              -exportPath Flutter/Runner.ipa
     artifacts:
 #       - build/ios/iphoneos/*.app
-      - build/ios/ipa/*.ipa
+      - ios/Flutter/*.ipa
