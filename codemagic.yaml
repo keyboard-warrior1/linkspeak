@@ -30,4 +30,4 @@ workflows:
               --config Flutter/Release.xcconfig
     artifacts:
 #       - build/ios/iphoneos/*.app
-      - build/ios/ipa/*.ipa
+      - ios/build/ios/ipa/*.ipa
