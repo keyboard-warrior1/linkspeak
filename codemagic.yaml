@@ -23,11 +23,16 @@ workflows:
       - name: Build ipa for distribution
         script: |
             set -ex
-            flutter build ios --release
             cd ios
             xcodebuild \
               -workspace Runner.xcworkspace \
               -scheme Runner \
-              -config Flutter/Release.xcconfig
+              -config Flutter/Release.xcconfig \
+              -sdk iphoneos -archivePath Flutter/linkspeak.xcarchive
+            xcodebuild \
+              -exportArchive -archivePath Flutter/linkspeak.xcarchive \
+              -exportOptionsPlist /Users/builder/export_options.plist \
+              -exportPath build/ios/ipa/linkspeak.ipa
     artifacts:
-      - build/ios/iphoneos/*.app
+#       - build/ios/iphoneos/*.app
+      - build/ios/ipa/*.ipa
