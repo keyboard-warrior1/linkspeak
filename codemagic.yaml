@@ -21,8 +21,7 @@ workflows:
         script: |
           find . -name "Podfile" -execdir pod install \;
       - name: Build ipa for distribution
-        script: | 
-        flutter build ipa --release \
+        script: flutter build ipa --release \
           --build-name=1.0.0 \
           --export-options-plist=/Users/builder/export_options.plistflutter build ipa --release
     artifacts:
