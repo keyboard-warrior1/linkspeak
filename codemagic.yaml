@@ -24,19 +24,10 @@ workflows:
         script: |
             set -ex
             cd ios
-            xcodebuild \
-              -workspace Runner.xcworkspace \
-              -scheme Runner \
-              -config Flutter/Release.xcconfig \
-              -sdk iphoneos -archivePath /Users/builder/clone/ios/Flutter/Runner.xcarchive
-      - name: do ipa
-        script: |
-            set -ex
-            cd ios
-            xcodebuild \
-              -exportArchive -archivePath /Users/builder/clone/ios/Flutter/Runner.xcarchive \
-              -exportOptionsPlist /Users/builder/export_options.plist \
-              -exportPath Flutter/Runner.ipa
+            xcode-project build-ipa \
+              --workspace Runner.xcworkspace \
+              --scheme Runner \
+              --config Flutter/Release.xcconfig
     artifacts:
 #       - build/ios/iphoneos/*.app
-      - ios/Flutter/*.ipa
+      - build/ios/ipa/*.ipa
