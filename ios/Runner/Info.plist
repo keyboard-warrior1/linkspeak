@@ -43,15 +43,19 @@
 			<true/>
 		</dict>
 		<key>NSPhotoLibraryUsageDescription</key>
-		<string>Linkspeak requires permission to access your storage</string>
+		<string>Linkspeak requires permission to access your storage to choose media files.</string>
 		<key>io.flutter.embedded_views_preview</key>
 		<true/>
+		<key>NSLocationAlwaysUsageDescription</key>
+		<string>Linkspeak requires permission to access your location for this task.</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>Linkspeak requires permission to access your location for this task.</string>
 		<key>NSCameraUsageDescription</key>
-		<string>Linkspeak requires permission to use your camera</string>
+		<string>Linkspeak requires permission to use your camera for taking pictures or recording videos.</string>
 		<key>NSMicrophoneUsageDescription</key>
-		<string>Linkspeak requires permission to use your microphone</string>
+		<string>Linkspeak requires permission to use your microphone for recording and audio message.</string>
 		<key>NSLocationWhenInUsageDescription</key>
-		<string>Linkspeak requires permission to access your location</string>
+		<string>Linkspeak requires permission to access your location for this task.</string>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleExecutable</key>
