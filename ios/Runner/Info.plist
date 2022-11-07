@@ -53,7 +53,7 @@
 		<key>NSCameraUsageDescription</key>
 		<string>Linkspeak requires permission to use your camera for taking pictures or recording videos.</string>
 		<key>NSMicrophoneUsageDescription</key>
-		<string>Linkspeak requires permission to use your microphone for recording and audio message.</string>
+		<string>Linkspeak requires permission to use your microphone for recording an audio message.</string>
 		<key>NSLocationWhenInUsageDescription</key>
 		<string>Linkspeak requires permission to access your location for this task.</string>
 		<key>CFBundleDevelopmentRegion</key>
