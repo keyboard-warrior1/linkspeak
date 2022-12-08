@@ -43,19 +43,19 @@
 			<true/>
 		</dict>
 		<key>NSPhotoLibraryUsageDescription</key>
-		<string>Linkspeak requires permission to access your storage to choose media files.</string>
+		<string>Linkspeak requires permission to access your storage to choose media files. Granting access will allow you to choose photos or videos and attach them to the fields.</string>
 		<key>io.flutter.embedded_views_preview</key>
 		<true/>
-		<key>NSLocationAlwaysUsageDescription</key>
-		<string>Linkspeak requires permission to access your location for this task.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>Linkspeak requires permission to access your location for this task. Granting access will only use your location for this field.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
-		<string>Linkspeak requires permission to access your location for this task.</string>
+		<string>Linkspeak requires permission to access your location for this task. Granting access will only use your location for this field.</string>
 		<key>NSCameraUsageDescription</key>
-		<string>Linkspeak requires permission to use your camera for taking pictures or recording videos.</string>
+		<string>Linkspeak requires permission to use your camera for taking pictures or recording videos. Granting access will allow you to take photos or videos and attach them to the fields.</string>
 		<key>NSMicrophoneUsageDescription</key>
-		<string>Linkspeak requires permission to use your microphone for recording an audio message.</string>
+		<string>Linkspeak requires permission to use your microphone for recording an audio message. Granting access will allow you to record and audio message.</string>
 		<key>NSLocationWhenInUsageDescription</key>
-		<string>Linkspeak requires permission to access your location for this task.</string>
+		<string>Linkspeak requires permission to access your location for this task. Granting access will only use your location for this field.</string>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleExecutable</key>
