@@ -26,9 +26,9 @@ workflows:
             set -ex
             cd ios
             xcode-project build-ipa \
-#              --workspace Runner.xcworkspace \
               --scheme Runner \
               --config Flutter/Release.xcconfig
     artifacts:
 #       - build/ios/iphoneos/*.app
       - ios/build/ios/ipa/*.ipa
+#              --workspace Runner.xcworkspace \
