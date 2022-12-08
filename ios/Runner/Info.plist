@@ -48,6 +48,8 @@
 		<true/>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 		<string>Linkspeak requires permission to access your location for this task. Granting access will only use your location for this field.</string>
+		<key>NSLocationAlwaysUsageDescription</key>
+		<string>Linkspeak requires permission to access your location for this task. Granting access will only use your location for this field.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>Linkspeak requires permission to access your location for this task. Granting access will only use your location for this field.</string>
 		<key>NSCameraUsageDescription</key>
