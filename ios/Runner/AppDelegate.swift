@@ -11,8 +11,8 @@ import google_mobile_ads
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GMSServices.provideAPIKey("AIzaSyBC0Waje9kAnLXpGRm5odsPWgXW_5t59sk")
-    GeneratedPluginRegistrant.register(with: self)
     FirebaseApp.configure()
+    GeneratedPluginRegistrant.register(with: self)
     let nativeAdFactory = NativeAdFactoryExample()
     FLTGoogleMobileAdsPlugin.registerNativeAdFactory(
         self, factoryId: "adFactoryExample", nativeAdFactory: nativeAdFactory)
