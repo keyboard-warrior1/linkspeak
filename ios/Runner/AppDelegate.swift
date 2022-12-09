@@ -10,17 +10,16 @@ import google_mobile_ads
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    GeneratedPluginRegistrant.register(with: self)
     FirebaseApp.configure()
     GMSServices.provideAPIKey("AIzaSyBC0Waje9kAnLXpGRm5odsPWgXW_5t59sk")
-    GeneratedPluginRegistrant.register(with: self)
-    // TODO: Register ListTileNativeAdFactory
     let nativeAdFactory = NativeAdFactoryExample()
     FLTGoogleMobileAdsPlugin.registerNativeAdFactory(
         self, factoryId: "adFactoryExample", nativeAdFactory: nativeAdFactory)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
-  // TODO: Implement ListTileNativeAdFactory
+
 class NativeAdFactoryExample : FLTNativeAdFactory {
 
     func createNativeAd(_ nativeAd: GADNativeAd,
