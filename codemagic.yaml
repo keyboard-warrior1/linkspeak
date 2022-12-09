@@ -12,7 +12,6 @@ workflows:
       groups:
         - ios_config
         - appstore_credentials
-      flutter: 3.3.3
     scripts:
       - name: Set up code signing settings on Xcode project
         script: xcode-project use-profiles
@@ -32,3 +31,4 @@ workflows:
     artifacts:
 #       - build/ios/iphoneos/*.app
       - ios/build/ios/ipa/*.ipa
+#       flutter: 3.3.3
