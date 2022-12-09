@@ -15,8 +15,12 @@ workflows:
     scripts:
       - name: Set up code signing settings on Xcode project
         script: xcode-project use-profiles
+      - name: pub repair
+        script: flutter pub cache repair
       - name: pub get
         script: flutter pub get
+      - name: pub repair2
+        script: flutter pub cache repair
       - name: Install pods
         script: |
           find . -name "Podfile" -execdir pod install \;
