@@ -1,6 +1,7 @@
 import UIKit
 import Flutter
 import Firebase
+import GoogleMaps
 import google_mobile_ads
 
 @UIApplicationMain
@@ -10,6 +11,7 @@ import google_mobile_ads
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     FirebaseApp.configure()
+    GMSServices.provideAPIKey("AIzaSyBC0Waje9kAnLXpGRm5odsPWgXW_5t59sk")
     GeneratedPluginRegistrant.register(with: self)
     // TODO: Register ListTileNativeAdFactory
     let nativeAdFactory = NativeAdFactoryExample()
