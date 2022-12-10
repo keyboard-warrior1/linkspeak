@@ -21,9 +21,10 @@ workflows:
         script: |
           find . -name "Podfile" -execdir pod install \;
       - name: Build ipa for distribution
-        script: flutter build ios --release
+        script: flutter build ipa --release
     artifacts:
       - build/ios/iphoneos/*.app
+      - build/ios/*.ipa
 #         script: |
 #             set -ex
 #             cd ios
