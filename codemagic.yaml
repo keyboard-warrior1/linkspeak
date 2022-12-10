@@ -23,8 +23,8 @@ workflows:
       - name: Build ipa for distribution
         script: flutter build ipa --release
     artifacts:
-      - build/ios/iphoneos/*.app
       - build/ios/*.ipa
+#       - build/ios/iphoneos/*.app
 #         script: |
 #             set -ex
 #             cd ios
