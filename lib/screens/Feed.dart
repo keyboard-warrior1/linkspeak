@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -454,9 +453,6 @@ class _FeedState extends State<Feed> with AutomaticKeepAliveClientMixin {
     final List<String> myTopics =
         Provider.of<MyProfile>(context, listen: false).getTopics;
     _getPosts = getPosts(myTopics, setPosts, false, clearPosts);
-    FirebaseMessaging messaging = FirebaseMessaging.instance;
-    if(!kIsWeb && Platform.isIOS){
-    messaging.requestPermission(alert: true, announcement: false, badge: true, carPlay: false, criticalAlert: false, provisional: false, sound: true);}
     scrollController.addListener(() {
       if (mounted) {
         if (scrollController.position.pixels ==
