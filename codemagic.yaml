@@ -21,15 +21,16 @@ workflows:
         script: |
           find . -name "Podfile" -execdir pod install \;
       - name: Build ipa for distribution
-        script: |
-            set -ex
-            cd ios
-            xcode-project build-ipa \
-              --workspace Runner.xcworkspace \
-              --scheme Runner \
-              --config Flutter/Release.xcconfig
+        script: flutter build ipa --release
     artifacts:
-    - ios/build/ios/ipa/*.ipa
-#       - build/ios/*.ipa
+    - build/ios/*.ipa
+#     - ios/build/ios/ipa/*.ipa
 #       - build/ios/iphoneos/*.app
 #       flutter: 3.3.3
+# |
+#             set -ex
+#             cd ios
+#             xcode-project build-ipa \
+#               --workspace Runner.xcworkspace \
+#               --scheme Runner \
+#               --config Flutter/Release.xcconfig
