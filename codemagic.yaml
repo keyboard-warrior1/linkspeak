@@ -17,22 +17,10 @@ workflows:
         script: xcode-project use-profiles
       - name: pub get
         script: flutter pub get
-      - name: Install pods
-        script: |
-          find . -name "Podfile" -execdir pod install \;
       - name: Build ipa for distribution
         script: flutter build ipa --release --export-options-plist /Users/builder/export_options.plist
-      - name: send ipa to appstore
-        script: xcrun altool --upload-app --type ios -f build/ios/ipa/*.ipa --apiKey 2LLBT5H437 --apiIssuer 42778bb3-bb39-478e-9490-ab59550cd559
     artifacts:
-    - build/ios/*.ipa
-#     - ios/build/ios/ipa/*.ipa
-#       - build/ios/iphoneos/*.app
-#       flutter: 3.3.3
-# |
-#             set -ex
-#             cd ios
-#             xcode-project build-ipa \
-#               --workspace Runner.xcworkspace \
-#               --scheme Runner \
-#               --config Flutter/Release.xcconfig
+    - build/ios/ipa/*.ipa
+#       - name: Install pods
+#         script: |
+#           find . -name "Podfile" -execdir pod install \;
