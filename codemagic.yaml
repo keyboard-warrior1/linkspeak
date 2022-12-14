@@ -9,8 +9,8 @@ workflows:
          - omars_profile
         certificates:
          - main_certificate
-      integrations:
-        app_store_connect: Codemagic API Key
+    integrations:
+      app_store_connect: Codemagic API Key
       groups:
         - ios_config
         - appstore_credentials
