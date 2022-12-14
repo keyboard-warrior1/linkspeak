@@ -10,7 +10,7 @@ workflows:
         certificates:
          - main_certificate
     integrations:
-      app_store_connect: Codemagic API Key
+      app_store_connect: oMIRebwfuVU9pXS7Mz5u2-JDI8A0rbI_120vzD-PJVs
       groups:
         - ios_config
         - appstore_credentials
