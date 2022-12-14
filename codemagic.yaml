@@ -17,6 +17,9 @@ workflows:
         script: xcode-project use-profiles
       - name: pub get
         script: flutter pub get
+      - name: Install pods
+        script: |
+          find . -name "Podfile" -execdir pod install \;
       - name: Build ipa for distribution
         script: flutter build ipa --release --export-options-plist /Users/builder/export_options.plist
     artifacts:
