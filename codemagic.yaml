@@ -13,7 +13,7 @@ workflows:
         - ios_config
         - appstore_credentials
     integrations:
-      app_store_connect: oMIRebwfuVU9pXS7Mz5u2-JDI8A0rbI_120vzD-PJVs
+      app_store_connect: Codemagic API Key
     scripts:
       - name: Set up code signing settings on Xcode project
         script: xcode-project use-profiles
