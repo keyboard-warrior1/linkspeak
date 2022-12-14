@@ -12,8 +12,6 @@ workflows:
       groups:
         - ios_config
         - appstore_credentials
-    integrations:
-      app_store_connect: Codemagic API Key
     scripts:
       - name: Set up code signing settings on Xcode project
         script: xcode-project use-profiles
@@ -29,7 +27,7 @@ workflows:
     publishing:
       app_store_connect:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        key_id: $APP_STORE_CONNECT_SECKEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_app_store: true
 #       - name: Install pods
