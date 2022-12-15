@@ -13,23 +13,18 @@ workflows:
         - ios_config
         - appstore_credentials
     scripts:
-      - name: Set up code signing settings on Xcode project
-        script: xcode-project use-profiles
-      - name: pub get
-        script: flutter pub get
-      - name: Install pods
-        script: |
-          find . -name "Podfile" -execdir pod install \;
-      - name: Build ipa for distribution
-        script: flutter build ipa --release --export-options-plist /Users/builder/export_options.plist
-    artifacts:
-    - build/ios/ipa/*.ipa
-    publishing:
-      app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_SECKEY_IDENTIFIER
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-        submit_to_app_store: true
+      - name: open simulator
+        script: open -a simulator
+      - name: run debug
+        script: flutter run
+#     artifacts:
+#     - build/ios/ipa/*.ipa
+#       - name: Set up code signing settings on Xcode project
+#         script: xcode-project use-profiles
+#       - name: pub get
+#         script: flutter pub get
 #       - name: Install pods
 #         script: |
 #           find . -name "Podfile" -execdir pod install \;
+#       - name: Build ipa for distribution
+#         script: flutter build ipa --release --export-options-plist /Users/builder/export_options.plist
