@@ -240,8 +240,6 @@
 		</dict>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Linkspeak requires permission to access your storage to choose media files. Granting access will allow you to choose photos or videos and attach them to the fields.</string>
-		<key>NSUserTrackingUsageDescription</key>
-		<string>This identifier will be used to deliver personalized ads to you.</string>
 		<key>io.flutter.embedded_views_preview</key>
 		<true/>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
