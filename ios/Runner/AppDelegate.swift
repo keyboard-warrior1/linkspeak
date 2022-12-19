@@ -11,9 +11,9 @@ import google_mobile_ads
   ) -> Bool {
     GMSServices.provideAPIKey("AIzaSyBC0Waje9kAnLXpGRm5odsPWgXW_5t59sk")
     GeneratedPluginRegistrant.register(with: self)
-    let nativeAdFactory = NativeAdFactoryExample()
-    FLTGoogleMobileAdsPlugin.registerNativeAdFactory(
-        self, factoryId: "adFactoryExample", nativeAdFactory: nativeAdFactory)
+//     let nativeAdFactory = NativeAdFactoryExample()
+//     FLTGoogleMobileAdsPlugin.registerNativeAdFactory(
+//         self, factoryId: "adFactoryExample", nativeAdFactory: nativeAdFactory)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
  
