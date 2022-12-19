@@ -91,7 +91,7 @@ class _NativeAdsState extends State<NativeAds>
   @override
   void initState() {
     super.initState();
-    if (!kIsWeb) {
+    if (!kIsWeb && !Platform.isIOS) {
       final String myUsername =
           Provider.of<MyProfile>(context, listen: false).getUsername;
       listener = NativeAdListener(onAdLoaded: (_) {
@@ -121,7 +121,7 @@ class _NativeAdsState extends State<NativeAds>
   @override
   void dispose() {
     super.dispose();
-    if (!kIsWeb) ad!.dispose();
+    if (!kIsWeb && !Platform.isIOS) ad!.dispose();
   }
 
   Widget buildErrorWidget() {
@@ -161,7 +161,7 @@ class _NativeAdsState extends State<NativeAds>
     super.build(context);
     return kIsWeb
         ? Container()
-        : Container(
+        : Platform.isIOS ? Container() : Container(
             key: UniqueKey(),
             alignment: Alignment.center,
             width: 500,
