@@ -1,0 +1,5 @@
+<resources>
+  <string name="app_name">Linkspeak</string>
+  <string name="facebook_app_id">270986471513771</string>
+  <string name="fb_login_protocol_scheme">270986471513771</string>
+</resources>

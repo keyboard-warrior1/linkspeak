@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "linkspeak-9817c"
+  },
+  "targets": {
+    "linkspeak-9817c": {
+      "hosting": {
+        "linkspeakmain": [
+          "linkspeak"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

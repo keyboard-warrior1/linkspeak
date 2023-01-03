@@ -1,0 +1,26 @@
+workflows:
+  my-workflow:
+    name: my IOS workflow
+    instance_type: mac_mini_m1
+    max_build_duration: 120
+    environment:
+      ios_signing:
+        provisioning_profiles:
+         - omars_profile
+        certificates:
+         - main_certificate
+      groups:
+        - ios_config
+        - appstore_credentials
+    scripts:
+      - name: Install pods
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+#     artifacts:
+#     - build/ios/ipa/*.ipa
+#       - name: Set up code signing settings on Xcode project
+#         script: xcode-project use-profiles
+#       - name: pub get
+#         script: flutter pub get
+#       - name: Build ipa for distribution
+#         script: flutter build ipa --release --export-options-plist /Users/builder/export_options.plist
