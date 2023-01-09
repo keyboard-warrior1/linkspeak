@@ -79,16 +79,17 @@ class _BranchPostWidgetState extends State<BranchPostWidget> {
   List<String> mediaList = [];
   final ScrollController _controllre = ScrollController();
   final FirebaseStorage storage = FirebaseStorage.instance;
-  Widget giveStacked(String text, bool isSub) => Text(text,
-      softWrap: isSub,
-      style: TextStyle(
-          fontSize: isSub
-              ? widget.inPreview
-                  ? 15.0
-                  : 16.0
-              : 16.0,
-          fontWeight: FontWeight.normal,
-          color: Colors.black));
+  Widget giveStacked(String text, bool isSub, String _stamp) =>
+      Text(!isSub ? text : text + ' ' + _stamp,
+          softWrap: isSub,
+          style: TextStyle(
+              fontSize: isSub
+                  ? widget.inPreview
+                      ? 15.0
+                      : 16.0
+                  : 16.0,
+              fontWeight: FontWeight.normal,
+              color: Colors.black));
   Widget buildTextField(String description) {
     String shownDescription = description;
     if (widget.inPreview && description.length > 200)
@@ -389,6 +390,10 @@ class _BranchPostWidgetState extends State<BranchPostWidget> {
   Widget build(BuildContext context) {
     final lang = General.language(context);
     final FullHelper helper = Provider.of<FullHelper>(context, listen: false);
+    final locale =
+        Provider.of<ThemeModel>(context, listen: false).serverLangCode;
+    final date = helper.postedDate;
+    final stamp = General.timeStamp(date, locale, context);
     final bool isClubPost = helper.isClubPost;
     final String poster = helper.title;
     final String clubName = helper.clubName;
@@ -457,12 +462,12 @@ class _BranchPostWidgetState extends State<BranchPostWidget> {
             ]),
         title: GestureDetector(
             onTap: () => visitProfile(myUsername, poster),
-            child: giveStacked(poster, false)),
+            child: giveStacked(poster, false, '')),
         subtitle: isClubPost
             ? GestureDetector(
                 onTap: () => visitClub(clubName),
-                child: giveStacked(clubName, true))
-            : Container(),
+                child: giveStacked(clubName, true, stamp))
+            : giveStacked(stamp, true, ''),
         trailing: BoardPopupMenu(() => setState(() {}), false));
     return GestureDetector(
         onTap: () {
