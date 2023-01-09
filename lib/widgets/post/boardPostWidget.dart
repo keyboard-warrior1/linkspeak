@@ -78,8 +78,9 @@ class _BoardPostWidgetState extends State<BoardPostWidget> {
   List<String> mediaList = [];
   final ScrollController _controllre = ScrollController();
   final FirebaseStorage storage = FirebaseStorage.instance;
-  Widget giveStacked(String text, bool isSub) => Stack(children: <Widget>[
-        Text(text,
+  Widget giveStacked(String text, bool isSub, String _stamp) =>
+      Stack(children: <Widget>[
+        Text(!isSub ? text : text + ' ' + _stamp,
             softWrap: isSub,
             style: TextStyle(
                 fontSize: isSub ? 13.0 : 15.0,
@@ -88,7 +89,7 @@ class _BoardPostWidgetState extends State<BoardPostWidget> {
                   ..style = PaintingStyle.stroke
                   ..strokeWidth = 3.00
                   ..color = Colors.black)),
-        Text(text,
+        Text(!isSub ? text : text + ' ' + _stamp,
             softWrap: isSub,
             style: TextStyle(
                 fontSize: isSub ? 13.0 : 15.0,
@@ -372,6 +373,10 @@ class _BoardPostWidgetState extends State<BoardPostWidget> {
   Widget build(BuildContext context) {
     final lang = General.language(context);
     final FullHelper helper = Provider.of<FullHelper>(context, listen: false);
+    final locale =
+        Provider.of<ThemeModel>(context, listen: false).serverLangCode;
+    final date = helper.postedDate;
+    final stamp = General.timeStamp(date, locale, context);
     final bool isClubPost = helper.isClubPost;
     final String poster = helper.title;
     final String clubName = helper.clubName;
@@ -512,12 +517,12 @@ class _BoardPostWidgetState extends State<BoardPostWidget> {
                           ]),
                       title: GestureDetector(
                           onTap: () => visitProfile(myUsername, poster),
-                          child: giveStacked(poster, false)),
+                          child: giveStacked(poster, false, '')),
                       subtitle: isClubPost
                           ? GestureDetector(
                               onTap: () => visitClub(clubName),
-                              child: giveStacked(clubName, true))
-                          : Container(),
+                              child: giveStacked(clubName, true, stamp))
+                          : giveStacked(stamp, true, ''),
                       trailing: BoardPopupMenu(() => setState(() {}), true)),
                   if (!nsfwCondition && widget.inPreview || !widget.inPreview)
                     Expanded(
