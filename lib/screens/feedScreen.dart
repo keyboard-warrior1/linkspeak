@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:in_app_review/in_app_review.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -208,6 +209,19 @@ class _FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
     });
   }
 
+  Future<void> handleAppReview(String myUsername) async {
+    final getUser = await firestore.collection('Users').doc(myUsername).get();
+    final data = getUser.data();
+    if (data!.containsKey('logins')) {
+      final logins = getUser.get('logins');
+      if (logins > 1) {
+        final InAppReview review = InAppReview.instance;
+        final status = await review.isAvailable();
+        if (status) review.requestReview();
+      }
+    }
+  }
+
   void pageHandler(int index) {
     FocusScope.of(context).unfocus();
     if (FeedScreen.controller != null && FeedScreen.sheetOpen) {
@@ -266,6 +280,7 @@ class _FeedScreenState extends State<FeedScreen> with WidgetsBindingObserver {
         Provider.of<MyProfile>(context, listen: false).getUsername;
     _goOnline = () => goOnline(myUsername);
     _goOffline = () => goOffline(myUsername);
+    if (!kIsWeb) handleAppReview(myUsername);
     WidgetsBinding.instance.addObserver(this);
     feedController.addListener(() {
       if (mounted) {
